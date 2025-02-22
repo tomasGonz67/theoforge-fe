@@ -1,0 +1,10 @@
+# docker-compose.yml
+version: "3.8"
+
+services:
+  theoforge:
+    platform: linux/amd64
+    build:
+      context: .
+    ports:
+      - "8000:8000"
