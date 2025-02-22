@@ -1,4 +1,4 @@
-# Theoforge Dashboard
+# Theoforge
 
 A modern, feature-rich dashboard application built with React, TypeScript, and Material Tailwind. This application provides a comprehensive interface for managing users, guests, and marketplace functionalities with a focus on AI solutions and business services.
 
@@ -78,6 +78,26 @@ A modern, feature-rich dashboard application built with React, TypeScript, and M
    ```
 
 5. Open your browser and visit `http://localhost:5173`
+
+## Docker & Docker Compose Usage
+
+If you’d like to containerize and run the Theoforge dashboard using Docker:
+
+1. Make sure you have **Docker** and **Docker Compose** installed.
+2. In the root directory of the project, you should have a **Dockerfile** and a **docker-compose.yml** (as provided in this repository).
+
+### Building and Running via Docker Compose
+
+```bash
+# Build and run the container
+docker compose up
+
+# (Or explicitly build first)
+docker compose build
+docker compose up
+
+```
+Once the container is running, open your browser to http://localhost:8000 to access the application.
 
 ### Test Account
 
