@@ -144,7 +144,8 @@ function LandingPage() {
       <Navbar className="mx-auto max-w-screen-xl px-4 py-2">
         <div className="flex items-center justify-between text-blue-gray-900">
           <Link to="/" className="flex items-center">
-            <BeakerIcon className="h-8 w-8 text-primary-600" />
+            {/* <BeakerIcon className="h-8 w-8 text-primary-600" /> */}
+            <img src="/logo.png" alt="Theoforge Logo" className="h-16 w-16" />
             <Typography
               variant="h3"
               className="ml-2 cursor-pointer font-bold"
@@ -356,7 +357,8 @@ function LandingPage() {
           <div className="border-t border-gray-800 py-8">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
               <div className="flex items-center gap-2">
-                <BeakerIcon className="h-8 w-8 text-primary-500" />
+                {/* <BeakerIcon className="h-8 w-8 text-primary-500" /> */}
+                <img src="/logo.png" alt="Theoforge Logo" className="h-16 w-16" />
                 <Typography variant="h5" className="text-white">
                   Theoforge
                 </Typography>

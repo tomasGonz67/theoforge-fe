@@ -165,7 +165,8 @@ export function Dashboard() {
               <MenuIcon className="h-6 w-6" />
             </IconButton>
             <div className="flex items-center gap-2">
-              <BeakerIcon className="h-8 w-8 text-teal-500" />
+              {/* <BeakerIcon className="h-8 w-8 text-teal-500" /> */}
+              <img src="/logo.png" alt="Theoforge Logo" className="h-16 w-16" />
               <Typography variant="h5" color="blue-gray">
                 Theoforge
               </Typography>
