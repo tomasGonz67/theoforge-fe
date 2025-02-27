@@ -4,15 +4,14 @@ import react from '@vitejs/plugin-react';
 // https://vitejs.dev/config/
 export default defineConfig({
   server: {
-    host: '0.0.0.0', // Allow external access
     port: 8000,      // Ensure it matches Docker's exposed port
     strictPort: true,
   },
   preview: {
-    allowedHosts: ['theoforge.com', 'www.theoforge.com', '0.0.0.0'],
+    allowedHosts: ['dev.theoforge.com', 'www.dev.theoforge.com', 'qa.theoforge.com', 'www.qa.theoforge.com', 'theoforge.com' ,'www.theoforge.com'],
   },
   plugins: [react()],
-  optimizeDeps: {
+  optimizeDeps:  {
     exclude: ['lucide-react'],
   },
 });
