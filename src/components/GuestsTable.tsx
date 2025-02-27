@@ -297,6 +297,7 @@ export function GuestsTable() {
       >
         <DialogHeader>Edit Guest</DialogHeader>
         <DialogBody>
+          <div></div>
           {editFormData && (
             <div className="grid gap-6">
               <Input

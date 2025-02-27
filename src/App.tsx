@@ -139,26 +139,24 @@ function LandingPage() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      <Navbar className="mx-auto max-w-screen-xl px-4 py-2"
-      placeholder={undefined} onPointerEnterCapture={undefined} onPointerLeaveCapture={undefined}>
+      <Navbar className="mx-auto max-w-screen-xl px-4 py-2">
         <div className="flex items-center justify-between text-blue-gray-900">
           <Link to="/" className="flex items-center">
             {/* <BeakerIcon className="h-8 w-8 text-primary-600" /> */}
             <img src="/logo.png" alt="Theoforge Logo" className="h-16 w-16" />
             <Typography
               variant="h3"
-              className="ml-2 cursor-pointer font-bold"
-              placeholder={undefined} onPointerEnterCapture={undefined} onPointerLeaveCapture={undefined}            >
+              className="ml-2 cursor-pointer font-bold">
               Theoforge
             </Typography>
           </Link>
           <div className="hidden lg:block">
             <div className="flex items-center gap-4">
               <Link to="/login">
-                <Button variant="text" color="blue-gray" placeholder={undefined} onPointerEnterCapture={undefined} onPointerLeaveCapture={undefined}>Sign in</Button>
+                <Button variant="text" color="blue-gray">Sign in</Button>
               </Link>
               <Link to="/register">
-                <Button variant="gradient" color="teal" placeholder={undefined} onPointerEnterCapture={undefined} onPointerLeaveCapture={undefined}>Get Started</Button>
+                <Button variant="gradient" color="teal">Get Started</Button>
               </Link>
             </div>
           </div>
@@ -166,7 +164,7 @@ function LandingPage() {
             variant="text"
             color="blue-gray"
             className="lg:hidden"
-            onClick={() => setIsMenuOpen(!isMenuOpen)} placeholder={undefined} onPointerEnterCapture={undefined} onPointerLeaveCapture={undefined}          >
+            onClick={() => setIsMenuOpen(!isMenuOpen)}>
             {isMenuOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
           </IconButton>
         </div>
@@ -183,12 +181,12 @@ function LandingPage() {
                   <span className="text-sm font-medium">Powered by Advanced AI</span>
                 </div>
               </div>
-              <Typography variant="h1" className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl mb-6" placeholder={undefined} onPointerEnterCapture={undefined} onPointerLeaveCapture={undefined}>
+              <Typography variant="h1" className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl mb-6">
                 Transform Your Business
                 <br />
                 <span className="text-primary-600">With Advanced AI Solutions</span>
               </Typography>
-              <Typography variant="lead" color="blue-gray" className="mt-3 max-w-2xl mx-auto text-xl" placeholder={undefined} onPointerEnterCapture={undefined} onPointerLeaveCapture={undefined}>
+              <Typography variant="lead" color="blue-gray" className="mt-3 max-w-2xl mx-auto text-xl">
                 Unlock the full potential of AI technology with Theoforge. We specialize in custom AI solutions, from ETL and Knowledge Graphs to LLM training, helping businesses innovate and scale.
               </Typography>
               <div className="mt-8 flex justify-center gap-4">
@@ -196,14 +194,14 @@ function LandingPage() {
                   size="lg"
                   className="flex items-center gap-3"
                   color="teal"
-                  onClick={() => setIsChatOpen(true)} placeholder={undefined} onPointerEnterCapture={undefined} onPointerLeaveCapture={undefined}                >
+                  onClick={() => setIsChatOpen(true)}>
                   <SparklesIcon className="h-5 w-5" /> Discuss Your Project
                 </Button>
                 <Button
                   size="lg"
                   variant="outlined"
                   color="teal"
-                  className="flex items-center gap-2" placeholder={undefined} onPointerEnterCapture={undefined} onPointerLeaveCapture={undefined}                >
+                  className="flex items-center gap-2">
                   Learn More <ArrowRightIcon className="h-4 w-4" />
                 </Button>
               </div>
@@ -224,31 +222,31 @@ function LandingPage() {
           <div className="bg-gray-50 py-16">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="text-center mb-12">
-                <Typography variant="h2" className="mb-4" placeholder={undefined} onPointerEnterCapture={undefined} onPointerLeaveCapture={undefined}>Our Expertise</Typography>
-                <Typography variant="paragraph" color="blue-gray" className="max-w-2xl mx-auto" placeholder={undefined} onPointerEnterCapture={undefined} onPointerLeaveCapture={undefined}>
+                <Typography variant="h2" className="mb-4">Our Expertise</Typography>
+                <Typography variant="paragraph" color="blue-gray" className="max-w-2xl mx-auto">
                   Comprehensive AI solutions tailored to your business needs, powered by cutting-edge technology and industry expertise.
                 </Typography>
               </div>
               <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
                 {services.map((service, index) => (
-                  <Card key={index} className="hover:shadow-lg transition-shadow duration-300" placeholder={undefined} onPointerEnterCapture={undefined} onPointerLeaveCapture={undefined}>
-                    <CardHeader color="teal" className="relative h-16 flex items-center justify-center" placeholder={undefined} onPointerEnterCapture={undefined} onPointerLeaveCapture={undefined}>
-                      <Typography variant="h3" color="white" className="text-2xl font-bold" placeholder={undefined} onPointerEnterCapture={undefined} onPointerLeaveCapture={undefined}>
+                  <Card key={index} className="hover:shadow-lg transition-shadow duration-300">
+                    <CardHeader color="teal" className="relative h-16 flex items-center justify-center">
+                      <Typography variant="h3" color="white" className="text-2xl font-bold">
                         {service.title}
                       </Typography>
                     </CardHeader>
-                    <CardBody placeholder={undefined} onPointerEnterCapture={undefined} onPointerLeaveCapture={undefined}>
-                      <Typography variant="h3" className="text-gray-600 text-sm" placeholder={undefined} onPointerEnterCapture={undefined} onPointerLeaveCapture={undefined}>
+                    <CardBody>
+                      <Typography variant="h3" className="text-gray-600 text-sm">
                         {service.subtitle}
                       </Typography>
-                      <Typography className="mb-4" placeholder={undefined} onPointerEnterCapture={undefined} onPointerLeaveCapture={undefined}>
+                      <Typography className="mb-4">
                         {service.description}
                       </Typography>
                       <ul className="space-y-2">
                         {service.features.map((feature, index) => (
                           <li key={index} className="flex items-center gap-2">
                             <CheckCircleIcon className="h-4 w-4 text-primary-600" />
-                            <Typography variant="small" placeholder={undefined} onPointerEnterCapture={undefined} onPointerLeaveCapture={undefined}>{feature}</Typography>
+                            <Typography variant="small">{feature}</Typography>
                           </li>
                         ))}
                       </ul>
@@ -264,20 +262,20 @@ function LandingPage() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
                 <div>
-                  <Typography variant="h3" color="teal" placeholder={undefined} onPointerEnterCapture={undefined} onPointerLeaveCapture={undefined}>500+</Typography>
-                  <Typography color="blue-gray" placeholder={undefined} onPointerEnterCapture={undefined} onPointerLeaveCapture={undefined}>Projects Delivered</Typography>
+                  <Typography variant="h3" color="teal">500+</Typography>
+                  <Typography color="blue-gray">Projects Delivered</Typography>
                 </div>
                 <div>
-                  <Typography variant="h3" color="teal" placeholder={undefined} onPointerEnterCapture={undefined} onPointerLeaveCapture={undefined}>98%</Typography>
-                  <Typography color="blue-gray" placeholder={undefined} onPointerEnterCapture={undefined} onPointerLeaveCapture={undefined}>Client Satisfaction</Typography>
+                  <Typography variant="h3" color="teal">98%</Typography>
+                  <Typography color="blue-gray">Client Satisfaction</Typography>
                 </div>
                 <div>
-                  <Typography variant="h3" color="teal" placeholder={undefined} onPointerEnterCapture={undefined} onPointerLeaveCapture={undefined}>24/7</Typography>
-                  <Typography color="blue-gray" placeholder={undefined} onPointerEnterCapture={undefined} onPointerLeaveCapture={undefined}>Expert Support</Typography>
+                  <Typography variant="h3" color="teal">24/7</Typography>
+                  <Typography color="blue-gray">Expert Support</Typography>
                 </div>
                 <div>
-                  <Typography variant="h3" color="teal" placeholder={undefined} onPointerEnterCapture={undefined} onPointerLeaveCapture={undefined}>50+</Typography>
-                  <Typography color="blue-gray" placeholder={undefined} onPointerEnterCapture={undefined} onPointerLeaveCapture={undefined}>Industry Partners</Typography>
+                  <Typography variant="h3" color="teal">50+</Typography>
+                  <Typography color="blue-gray">Industry Partners</Typography>
                 </div>
               </div>
             </div>
@@ -291,7 +289,7 @@ function LandingPage() {
           {/* Upper Footer */}
           <div className="py-12 grid grid-cols-2 md:grid-cols-4 gap-8">
             <div>
-              <Typography variant="h6" className="text-white mb-4" placeholder={undefined} onPointerEnterCapture={undefined} onPointerLeaveCapture={undefined}>Solutions</Typography>
+              <Typography variant="h6" className="text-white mb-4">Solutions</Typography>
               <ul className="space-y-3">
                 {footerNavigation.solutions.map((item) => (
                   <li key={item.name}>
@@ -303,7 +301,7 @@ function LandingPage() {
               </ul>
             </div>
             <div>
-              <Typography variant="h6" className="text-white mb-4" placeholder={undefined} onPointerEnterCapture={undefined} onPointerLeaveCapture={undefined}>Company</Typography>
+              <Typography variant="h6" className="text-white mb-4">Company</Typography>
               <ul className="space-y-3">
                 {footerNavigation.company.map((item) => (
                   <li key={item.name}>
@@ -315,7 +313,7 @@ function LandingPage() {
               </ul>
             </div>
             <div>
-              <Typography variant="h6" className="text-white mb-4" placeholder={undefined} onPointerEnterCapture={undefined} onPointerLeaveCapture={undefined}>Resources</Typography>
+              <Typography variant="h6" className="text-white mb-4">Resources</Typography>
               <ul className="space-y-3">
                 {footerNavigation.resources.map((item) => (
                   <li key={item.name}>
@@ -327,7 +325,7 @@ function LandingPage() {
               </ul>
             </div>
             <div>
-              <Typography variant="h6" className="text-white mb-4" placeholder={undefined} onPointerEnterCapture={undefined} onPointerLeaveCapture={undefined}>Contact</Typography>
+              <Typography variant="h6" className="text-white mb-4">Contact</Typography>
               <ul className="space-y-3">
                 <li className="flex items-center gap-2 text-gray-400">
                   <EnvelopeIcon className="h-5 w-5" />
@@ -355,7 +353,7 @@ function LandingPage() {
               <div className="flex items-center gap-2">
                 {/* <BeakerIcon className="h-8 w-8 text-primary-500" /> */}
                 <img src="/logo.png" alt="Theoforge Logo" className="h-16 w-16" />
-                <Typography variant="h5" className="text-white" placeholder={undefined} onPointerEnterCapture={undefined} onPointerLeaveCapture={undefined}>
+                <Typography variant="h5" className="text-white">
                   Theoforge
                 </Typography>
               </div>
@@ -370,7 +368,7 @@ function LandingPage() {
                   </a>
                 ))}
               </div>
-              <Typography className="text-gray-400 text-sm" placeholder={undefined} onPointerEnterCapture={undefined} onPointerLeaveCapture={undefined}>
+              <Typography className="text-gray-400 text-sm">
                 © {new Date().getFullYear()} Theoforge. All rights reserved.
               </Typography>
             </div>
