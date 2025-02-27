@@ -242,22 +242,22 @@ export function UsersTable() {
           Page {currentPage} of {totalPages}
         </Typography>
         <div className="flex gap-2">
-          <IconButton
+          <Button
             variant="outlined"
             size="sm"
             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
             disabled={currentPage === 1}
           >
             Previous
-          </IconButton>
-          <IconButton
+          </Button>
+          <Button
             variant="outlined"
             size="sm"
             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
             disabled={currentPage === totalPages}
           >
             Next
-          </IconButton>
+          </Button>
         </div>
       </div>
 
@@ -269,6 +269,7 @@ export function UsersTable() {
       >
         <DialogHeader>Edit User</DialogHeader>
         <DialogBody>
+          <div></div>
           {editFormData && (
             <div className="grid gap-6">
               <Input

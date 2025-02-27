@@ -1,9 +1,8 @@
 import '@testing-library/jest-dom'
-import React from "react";
 import { fireEvent, render, screen } from "@testing-library/react"
 import { AuthForm } from "../components/AuthForm"
-const mockUseNavigate = jest.fn()
-  jest.mock('react-router-dom', () => ({
+const mockUseNavigate = jest.fn();
+jest.mock('react-router-dom', () => ({
     ...jest.requireActual('react-router-dom'),
     useNavigate: () => mockUseNavigate,
 }));
@@ -21,8 +20,8 @@ function validateForm(authType: AuthFormType) {
   const emailInput = screen.getByPlaceholderText('Enter your email');
   const passwordInput = screen.getByPlaceholderText('Enter your password');
   let submitButton;
-  if (authType.type === 'login' ) submitButton = screen.getByRole('button', {name: /Sign In/});
-  if (authType.type === 'register') submitButton = screen.getByRole('button', {name: /Sign Up/});
+  if (authType.type === 'login' ) submitButton = screen.getByRole('button', {name: 'Sign In'});
+  if (authType.type === 'register') submitButton = screen.getByRole('button', {name: 'Sign Up'});
   // input element of type email and password have a default error message
   // on default error message: does not submit form and sends no alert
   if(submitButton) {
@@ -110,9 +109,9 @@ describe('When rendering login page', () => {
     renderAuthForm({type: 'login'});
     const emailInput = screen.getByText('Email Address');
     const passwordInput = screen.getByText('Password');
-    const createAccountButton = screen.queryByRole('button', {name: /Sign Up/});
-    const signInButton = screen.queryByRole('button', {name: /Sign In/});
-    const guestButton = screen.queryByRole('button', {name: /Guest Account/});
+    const createAccountButton = screen.queryByRole('button', {name: 'Sign Up'});
+    const signInButton = screen.queryByRole('button', {name: 'Sign In'});
+    const guestButton = screen.queryByRole('button', {name: 'Guest Account'});
     expect(emailInput).toBeDefined();
     expect(passwordInput).toBeDefined();
     expect(createAccountButton).toBeNull();
@@ -153,9 +152,9 @@ describe('When rendering registration page', () => {
     renderAuthForm({type: 'register'});
     const emailInput = screen.getByText('Email Address');
     const passwordInput = screen.getByText('Password');
-    const createAccountButton = screen.queryByRole('button', {name: /Sign Up/});
-    const signInButton = screen.queryByRole('button', {name: /Sign In/});
-    const guestButton = screen.queryByRole('button', {name: /Guest Account/});
+    const createAccountButton = screen.queryByRole('button', {name: 'Sign Up'});
+    const signInButton = screen.queryByRole('button', {name: 'Sign In'});
+    const guestButton = screen.queryByRole('button', {name: 'Guest Account'});
     expect(emailInput).toBeDefined();
     expect(passwordInput).toBeDefined();
     expect(createAccountButton).not.toBeNull();

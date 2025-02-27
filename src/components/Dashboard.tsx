@@ -349,7 +349,8 @@ export function Dashboard() {
             {breadcrumbs.map((breadcrumb/*, index*/) => (
               <a
                 key={breadcrumb.href}
-                href={breadcrumb.href}
+                //href={breadcrumb.href} navigating to dashboard logs you out
+                onClick={() => handleNavigation(breadcrumb.href)}
                 className={cn(
                   "opacity-60",
                   breadcrumb.current ? "opacity-100 text-teal-500" : ""
