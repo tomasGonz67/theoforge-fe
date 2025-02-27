@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { AdminView } from '/components/AdminView';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
 import {
   BeakerIcon,
