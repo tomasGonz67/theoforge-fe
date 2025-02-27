@@ -2,9 +2,29 @@
 version: "3.8"
 
 services:
-  theoforge:
-    platform: linux/amd64
-    build:
-      context: .
+  theoforge-fe:
+    image: tgonz67/theoforge-fe:prod
+    container_name: theoforge
+    pull_policy: always
+    restart: always
+    networks:
+       - traefik
+       - backend
     ports:
-      - "8000:8000"
+      - "8002:8000"
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+      - traefik.enable=true
+      - traefik.docker.network=traefik
+      - traefik.http.routers.theoforge.rule=Host(`www.theoforge.com`) || Host(`theoforge.com`)
+      - traefik.http.routers.theoforge.entrypoints=https
+      - traefik.http.routers.theoforge.tls=true
+      - traefik.http.routers.theoforge.tls.certresolver=simple-resolver
+      - traefik.http.services.theoforge.loadbalancer.server.port=8000
+networks:
+  traefik:
+      name: traefik
+      external: true
+  backend:
+      name: backend
+      external: true
