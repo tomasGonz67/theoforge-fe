@@ -79,6 +79,7 @@ export function ChatBox({ isOpen, onClose }: ChatBoxProps) {
       handleAssistantMessage(conversationFlow[0].message);
       setIsInitialized(true);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, isInitialized]);
 
   const extractInformation = (message: string, stage: number) => {
@@ -89,11 +90,12 @@ export function ChatBox({ isOpen, onClose }: ChatBoxProps) {
       case 'projectType':
         updatedInfo.projectType = message.toLowerCase().split(/[,.]/).map(s => s.trim());
         break;
-      case 'industry':
+      case 'industry': {
         const companyInfo = message.split(/[,.]/);
         updatedInfo.company = companyInfo[0]?.trim();
         updatedInfo.industry = companyInfo[1]?.trim();
         break;
+      }
       case 'painPoints':
         updatedInfo.painPoints = message.toLowerCase().split(/[,.]/).map(s => s.trim());
         break;
@@ -232,12 +234,10 @@ export function ChatBox({ isOpen, onClose }: ChatBoxProps) {
               placeholder="Tell us about your project..."
               className="flex-1"
               labelProps={{
-                className: "hidden",
               }}
               containerProps={{
                 className: "min-w-0",
-              }}
-            />
+              }} crossOrigin={undefined}            />
             <IconButton
               color="teal"
               onClick={handleSend}

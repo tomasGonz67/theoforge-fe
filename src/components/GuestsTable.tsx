@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { MagnifyingGlassIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
-import axios from 'axios';
+//import axios from 'axios';
 import {
   Card,
   CardHeader,
@@ -15,7 +15,7 @@ import {
   DialogBody,
   DialogFooter,
 } from "@material-tailwind/react";
-import { cn } from '../lib/utils';
+//import { cn } from '../lib/utils';
 
 interface Guest {
   id: number;
@@ -83,7 +83,7 @@ export function GuestsTable() {
 
     try {
       // In a real application, this would be an API call
-      await axios.put(`/api/guests/${editFormData.id}`, editFormData);
+      //await axios.put(`/api/guests/${editFormData.id}`, editFormData);
       
       // Update the local state
       setGuests(guests.map(guest => 
@@ -103,7 +103,7 @@ export function GuestsTable() {
 
     try {
       // In a real application, this would be an API call
-      await axios.delete(`/api/guests/${selectedGuest.id}`);
+      //await axios.delete(`/api/guests/${selectedGuest.id}`);
       
       // Update the local state
       setGuests(guests.filter(guest => guest.id !== selectedGuest.id));
@@ -162,8 +162,7 @@ export function GuestsTable() {
                 label="Search"
                 icon={<MagnifyingGlassIcon className="h-5 w-5" />}
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+                onChange={(e) => setSearchTerm(e.target.value)} crossOrigin={undefined}              />
             </div>
           </div>
         </div>
@@ -271,22 +270,22 @@ export function GuestsTable() {
           Page {currentPage} of {totalPages}
         </Typography>
         <div className="flex gap-2">
-          <IconButton
+          <Button
             variant="outlined"
             size="sm"
             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
             disabled={currentPage === 1}
           >
             Previous
-          </IconButton>
-          <IconButton
+          </Button>
+          <Button
             variant="outlined"
             size="sm"
             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
             disabled={currentPage === totalPages}
           >
             Next
-          </IconButton>
+          </Button>
         </div>
       </div>
 
@@ -303,28 +302,23 @@ export function GuestsTable() {
               <Input
                 label="Name"
                 value={editFormData.name}
-                onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
-              />
+                onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })} crossOrigin={undefined}              />
               <Input
                 label="Company"
                 value={editFormData.company}
-                onChange={(e) => setEditFormData({ ...editFormData, company: e.target.value })}
-              />
+                onChange={(e) => setEditFormData({ ...editFormData, company: e.target.value })} crossOrigin={undefined}              />
               <Input
                 label="Industry"
                 value={editFormData.industry}
-                onChange={(e) => setEditFormData({ ...editFormData, industry: e.target.value })}
-              />
+                onChange={(e) => setEditFormData({ ...editFormData, industry: e.target.value })} crossOrigin={undefined}              />
               <Input
                 label="Contact Info"
                 value={editFormData.contactInfo}
-                onChange={(e) => setEditFormData({ ...editFormData, contactInfo: e.target.value })}
-              />
+                onChange={(e) => setEditFormData({ ...editFormData, contactInfo: e.target.value })} crossOrigin={undefined}              />
               <Input
                 label="Project Type"
                 value={editFormData.projectType}
-                onChange={(e) => setEditFormData({ ...editFormData, projectType: e.target.value })}
-              />
+                onChange={(e) => setEditFormData({ ...editFormData, projectType: e.target.value })} crossOrigin={undefined}              />
               <div>
                 <Typography variant="small" color="blue-gray" className="mb-2">
                   Status

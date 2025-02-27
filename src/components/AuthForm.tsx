@@ -27,6 +27,19 @@ export function AuthForm({ type }: AuthFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if(!email || !password) {
+      setError('Please fill out all fields');
+      return;
+    }
+    const pattern = /^[\w\-.]+@([\w-]+\.)+[\w-]{2,}$/
+    if(!pattern.test(email)) {
+      setError('Invalid email');
+      return;
+    }
+    if(password.length < 8) {
+      setError('Password must be at least 8 characters');
+      return;
+    }
     setError('');
 
     if (type === 'login') {
@@ -41,7 +54,7 @@ export function AuthForm({ type }: AuthFormProps) {
     }
   };
 
-  const handleTestLogin = () => {
+  const handleGuestLogin = () => {
     const success = login('test@test.com', 'test123');
     if (success) {
       navigate('/dashboard');
@@ -95,6 +108,7 @@ export function AuthForm({ type }: AuthFormProps) {
                 <Input
                   type="email"
                   label="Email Address"
+                  placeholder='Enter your email'
                   size="lg"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -102,8 +116,7 @@ export function AuthForm({ type }: AuthFormProps) {
                   containerProps={{
                     className: "min-w-0",
                   }}
-                  required
-                />
+                  required crossOrigin={undefined}                />
               </div>
 
               <div className="relative">
@@ -113,6 +126,7 @@ export function AuthForm({ type }: AuthFormProps) {
                 <Input
                   type="password"
                   label="Password"
+                  placeholder='Enter your password'
                   size="lg"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -120,8 +134,7 @@ export function AuthForm({ type }: AuthFormProps) {
                   containerProps={{
                     className: "min-w-0",
                   }}
-                  required
-                />
+                  required crossOrigin={undefined}                />
               </div>
 
               <Button
@@ -131,7 +144,7 @@ export function AuthForm({ type }: AuthFormProps) {
                 className="mt-2"
                 fullWidth
               >
-                {type === 'login' ? 'Sign In' : 'Create Account'}
+                {type === 'login' ? 'Sign In' : 'Sign Up'}
               </Button>
             </form>
 
@@ -151,10 +164,10 @@ export function AuthForm({ type }: AuthFormProps) {
                   color="teal"
                   size="lg"
                   fullWidth
-                  onClick={handleTestLogin}
+                  onClick={handleGuestLogin}
                   className="flex items-center justify-center gap-3"
                 >
-                  Test Account
+                  Guest Account
                 </Button>
               </>
             )}
