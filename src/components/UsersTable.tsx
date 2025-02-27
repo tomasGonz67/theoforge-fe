@@ -15,7 +15,7 @@ import {
   DialogBody,
   DialogFooter,
 } from "@material-tailwind/react";
-import { cn } from '../lib/utils';
+//import { cn } from '../lib/utils';
 
 interface User {
   id: number;
@@ -144,8 +144,7 @@ export function UsersTable() {
                 label="Search"
                 icon={<MagnifyingGlassIcon className="h-5 w-5" />}
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+                onChange={(e) => setSearchTerm(e.target.value)} crossOrigin={undefined}              />
             </div>
           </div>
         </div>
@@ -275,18 +274,15 @@ export function UsersTable() {
               <Input
                 label="Name"
                 value={editFormData.name}
-                onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
-              />
+                onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })} crossOrigin={undefined}              />
               <Input
                 label="Email"
                 value={editFormData.email}
-                onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
-              />
+                onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })} crossOrigin={undefined}              />
               <Input
                 label="Role"
                 value={editFormData.role}
-                onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value })}
-              />
+                onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value })} crossOrigin={undefined}              />
               <div>
                 <Typography variant="small" color="blue-gray" className="mb-2">
                   Status
