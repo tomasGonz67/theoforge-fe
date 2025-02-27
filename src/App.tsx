@@ -186,7 +186,7 @@ function LandingPage() {
                 </div>
               </div>
               <Typography variant="h1" className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl mb-6">
-                Transform Your Business Tests
+                Transform Your Business
                 <br />
                 <span className="text-primary-600">With Advanced AI Solutions</span>
               </Typography>
