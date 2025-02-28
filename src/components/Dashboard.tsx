@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../App';
 import {
@@ -13,10 +13,12 @@ import {
   Bars3Icon as MenuIcon,
   CreditCardIcon,
   BuildingLibraryIcon,
-  BeakerIcon
+  ChartBarIcon,
+  SwitchHorizontalIcon
 } from '@heroicons/react/24/outline';
 import { UsersTable } from './UsersTable';
 import { GuestsTable } from './GuestsTable';
+import { AdminView } from './AdminView';
 import {
   Card,
   Typography,
@@ -40,15 +42,10 @@ import {
   Tab,
   TabPanel,
   Input,
-  Button
+  Button,
+  Switch
 } from "@material-tailwind/react";
 import { cn } from '../lib/utils';
-
-const navigation = [
-  { name: 'Users', href: '/dashboard/users', icon: UsersIcon },
-  { name: 'Guests', href: '/dashboard/guests', icon: HomeIcon },
-  { name: 'Marketplace', href: '/dashboard/marketplace', icon: ShoppingBagIcon },
-];
 
 const TABS = [
   {
@@ -77,6 +74,7 @@ export function Dashboard() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("personal");
+  const [viewAsRegularUser, setViewAsRegularUser] = useState(false);
 
   const [userData, setUserData] = useState({
     firstName: "Test",
@@ -84,7 +82,7 @@ export function Dashboard() {
     email: "test@test.com",
     phone: "+1 (555) 123-4567",
     company: "Theoforge",
-    role: "Administrator",
+    role: "Administrator", // User is an admin
     address: "123 Main St",
     city: "Newark",
     state: "NJ",
@@ -94,6 +92,21 @@ export function Dashboard() {
     language: "English",
     notifications: true
   });
+  
+  // Check if user is admin, but respect viewAsRegularUser toggle
+  const actualRole = userData.role === "Administrator";
+  const isAdmin = actualRole && !viewAsRegularUser;
+
+  useEffect(() => {
+    // Redirect to dashboard when toggling between admin/regular view
+    if (
+      (viewAsRegularUser && (location.pathname === '/dashboard/users' || location.pathname === '/dashboard/guests')) ||
+      (currentPage === 'users' || currentPage === 'guests')
+    ) {
+      navigate('/dashboard');
+      setCurrentPage('dashboard');
+    }
+  }, [viewAsRegularUser, location.pathname, navigate]);
 
   const handleLogout = () => {
     logout();
@@ -102,6 +115,7 @@ export function Dashboard() {
 
   const handleNavigation = (path: string) => {
     const page = path.split('/').pop() || 'dashboard';
+    console.log("Setting current page to:", page);
     setCurrentPage(page);
     navigate(path);
   };
@@ -115,6 +129,38 @@ export function Dashboard() {
       current: index === array.length - 1,
     }));
 
+  // Define navigation items based on user role
+  let navItems = [
+    {
+      path: '/dashboard',
+      name: 'Dashboard',
+      icon: ChartBarIcon
+    },
+    {
+      path: '/dashboard/marketplace',
+      name: 'Marketplace',
+      icon: ShoppingBagIcon
+    }
+  ];
+  
+  // Add admin-only items if user is an admin
+  if (isAdmin) {
+    navItems = [
+      navItems[0],  // Keep Dashboard as first item
+      {
+        path: '/dashboard/users',
+        name: 'Users',
+        icon: UsersIcon
+      },
+      {
+        path: '/dashboard/guests',
+        name: 'Guests',
+        icon: HomeIcon
+      },
+      navItems[1]   // Add Marketplace at the end
+    ];
+  }
+
   const Sidebar = () => (
     <Card className={cn(
       "h-screen p-4 shadow-xl shadow-blue-gray-900/5",
@@ -126,8 +172,9 @@ export function Dashboard() {
         </IconButton>
       </div>
       <List>
-        {navigation.map((item) => {
-          const isActive = location.pathname === item.href || currentPage === item.name.toLowerCase();
+        {navItems.map((item) => {
+          const isActive = location.pathname === item.path || currentPage === item.name.toLowerCase();
+          
           return (
             <ListItem
               key={item.name}
@@ -135,7 +182,7 @@ export function Dashboard() {
                 "hover:bg-teal-50/80",
                 isActive && "bg-teal-50/80 text-teal-500"
               )}
-              onClick={() => handleNavigation(item.href)}
+              onClick={() => handleNavigation(item.path)}
             >
               <ListItemPrefix>
                 <item.icon className={cn(
@@ -151,6 +198,30 @@ export function Dashboard() {
     </Card>
   );
 
+  // Role switcher component
+  const RoleSwitcher = () => {
+    // Only show for actual admin users
+    if (!actualRole) return null;
+    
+    return (
+      <div className="flex items-center gap-2 mb-4 px-4 py-2 bg-white rounded-lg shadow-sm">
+        <Typography variant="h6" color={!viewAsRegularUser ? "teal" : "gray"}>
+          Admin
+        </Typography>
+        <Switch 
+          color="teal"
+          checked={viewAsRegularUser}
+          onChange={() => setViewAsRegularUser(!viewAsRegularUser)}
+          label=""
+          crossOrigin={undefined}
+        />
+        <Typography variant="h6" color={viewAsRegularUser ? "teal" : "gray"}>
+          User
+        </Typography>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-50/50">
       <Navbar className="sticky top-0 z-10 h-max max-w-full rounded-none px-4 py-2 lg:px-8 lg:py-4">
@@ -165,7 +236,6 @@ export function Dashboard() {
               <MenuIcon className="h-6 w-6" />
             </IconButton>
             <div className="flex items-center gap-2">
-              {/* <BeakerIcon className="h-8 w-8 text-teal-500" /> */}
               <img src="/logo.png" alt="Theoforge Logo" className="h-16 w-16" />
               <Typography variant="h5" color="blue-gray">
                 Theoforge
@@ -371,27 +441,101 @@ export function Dashboard() {
             ))}
           </Breadcrumbs>
 
+          {/* Role Switcher */}
+          <RoleSwitcher />
+
           <div className="bg-white rounded-lg shadow-sm">
             {currentPage === 'dashboard' && (
-              <div className="p-6">
-                <Typography variant="h4" color="blue-gray">
-                  Welcome to Dashboard
-                </Typography>
-                <Typography color="gray" className="mt-2">
-                  Select a section from the sidebar to get started.
-                </Typography>
-              </div>
+              <>
+                {isAdmin ? (
+                  <AdminView />
+                ) : (
+                  <div className="p-6">
+                    <Typography variant="h4" color="blue-gray">
+                      Welcome to Dashboard
+                    </Typography>
+                    <Typography color="gray" className="mt-2">
+                      Select a section from the sidebar to get started.
+                    </Typography>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
+                      <Card className="p-6">
+                        <Typography variant="h5" color="blue-gray" className="mb-2">
+                          Current Projects
+                        </Typography>
+                        <Typography color="gray">
+                          You have no active projects. Visit the marketplace to explore options.
+                        </Typography>
+                      </Card>
+                      <Card className="p-6">
+                        <Typography variant="h5" color="blue-gray" className="mb-2">
+                          Recent Activity
+                        </Typography>
+                        <Typography color="gray">
+                          No recent activity to display.
+                        </Typography>
+                      </Card>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
-            {currentPage === 'users' && <UsersTable />}
-            {currentPage === 'guests' && <GuestsTable />}
+            {currentPage === 'users' && isAdmin && <UsersTable />}
+            {currentPage === 'guests' && isAdmin && <GuestsTable />}
             {currentPage === 'marketplace' && (
               <div className="p-6">
                 <Typography variant="h4" color="blue-gray">
                   Marketplace
                 </Typography>
-                <Typography color="gray" className="mt-2">
-                  Coming soon...
+                <Typography color="gray" className="mt-2 mb-8">
+                  Browse available solutions and services
                 </Typography>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <Card className="p-4">
+                    <div className="text-center mb-4">
+                      <ShoppingBagIcon className="h-12 w-12 mx-auto text-teal-500" />
+                    </div>
+                    <Typography variant="h5" className="text-center mb-2">
+                      AI Training Package
+                    </Typography>
+                    <Typography color="gray" className="text-center mb-4">
+                      Custom AI model training and deployment
+                    </Typography>
+                    <Button color="teal" fullWidth>
+                      View Details
+                    </Button>
+                  </Card>
+                  
+                  <Card className="p-4">
+                    <div className="text-center mb-4">
+                      <ShoppingBagIcon className="h-12 w-12 mx-auto text-teal-500" />
+                    </div>
+                    <Typography variant="h5" className="text-center mb-2">
+                      ETL Solutions
+                    </Typography>
+                    <Typography color="gray" className="text-center mb-4">
+                      Data extraction, transformation, and loading
+                    </Typography>
+                    <Button color="teal" fullWidth>
+                      View Details
+                    </Button>
+                  </Card>
+                  
+                  <Card className="p-4">
+                    <div className="text-center mb-4">
+                      <ShoppingBagIcon className="h-12 w-12 mx-auto text-teal-500" />
+                    </div>
+                    <Typography variant="h5" className="text-center mb-2">
+                      Knowledge Graphs
+                    </Typography>
+                    <Typography color="gray" className="text-center mb-4">
+                      Build and deploy custom knowledge graphs
+                    </Typography>
+                    <Button color="teal" fullWidth>
+                      View Details
+                    </Button>
+                  </Card>
+                </div>
               </div>
             )}
           </div>
