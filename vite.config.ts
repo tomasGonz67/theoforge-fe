@@ -11,7 +11,7 @@ export default defineConfig({
     allowedHosts: ['dev.theoforge.com', 'www.dev.theoforge.com', 'qa.theoforge.com', 'www.qa.theoforge.com', 'theoforge.com' ,'www.theoforge.com'],
   },
   plugins: [react()],
-  optimizeDeps:  {
+  optimizeDeps: {
     exclude: ['lucide-react'],
   },
 });

@@ -23,34 +23,120 @@ import {
   CardBody,
   CardHeader
 } from "@material-tailwind/react";
-
+import axios from 'axios';
+type Role = 'none' | 'guest' | 'user' | 'admin';
 export const AuthContext = React.createContext<{
   isAuthenticated: boolean;
-  login: (email: string, password: string) => boolean;
+  role: Role;
+  login: (email: string, password: string) => Promise<boolean>;
+  register: (email: string, passsword: string) => Promise<number>;
   logout: () => void;
 }>({
   isAuthenticated: false,
-  login: () => false,
+  role: 'none',
+  login: async () => false,
+  register: async () => 500,
   logout: () => {},
 });
 
-function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [role, setRole] = useState('none' as Role);
 
-  const login = (email: string, password: string) => {
-    if (email === 'test@test.com' && password === 'test123') {
-      setIsAuthenticated(true);
-      return true;
+  const login = async (email: string, password: string) => {
+    if (email === 'guest' && password === 'guest') {
+      try {
+        await axios.post('http://localhost:8000/guests', {
+          // Params will be updated once backend team finishes
+          "additional_notes": "Looking for a long-term partnership",
+          "budget": "$10,000 - $20,000",
+          "company": "Tech Solutions",
+          "contact_info": "john.doe@example.com",
+          "current_tech": [
+            "React",
+            "Node.js"
+          ],
+          "industry": "Software",
+          "interaction_events": [
+            "clicked_contact_form"
+          ],
+          "interaction_history": [
+            {
+              "event": "filled_contact_form",
+              "timestamp": "2025-03-01T15:30:00Z"
+            }
+          ],
+          "name": "John Doe",
+          "page_views": [
+            "/home",
+            "/contact"
+          ],
+          "pain_points": [
+            "Scalability issues",
+            "Need for automation"
+          ],
+          "project_type": [
+            "Web Development"
+          ],
+          "session_id": "session_test123",
+          "status": "NEW",
+          "timeline": "Q2 2025"
+        });
+        setRole('guest');
+        setIsAuthenticated(true);
+        return true;
+      } catch {
+        return false;
+      }
     }
-    return false;
+    else {
+      try {
+        const params = new URLSearchParams();
+        params.append('username', email);
+        params.append('password', password);
+        await axios.post('http://localhost:8000/auth/login', params);
+        setRole('user');
+        setIsAuthenticated(true);
+        return true;
+      } catch {
+        return false;
+      }
+    }
+  };
+
+  const register = async (email: string, password: string) => {
+    let response = 500;
+    await axios.post('http://localhost:8000/auth/register', {
+      "email": email,
+      "first_name": 'John',
+      "last_name": 'Doe',
+      "nickname": 'johndoe2',
+      "password": password,
+    }).then(() => {
+      setRole('user');
+      setIsAuthenticated(true);
+      response = 200;
+    }).catch(err => {
+      if (err.response.data.detail === '400: Email already exists') {
+        response = 400;
+      } else if (err.response.data.detail === 'Not Found') {
+        response = 404;
+      } else {
+        response = 500;
+      }
+    })
+    return response;
   };
 
   const logout = () => {
+    // TODO: if role is guest, remove the guest by session id(currently session id is not unique)
     setIsAuthenticated(false);
+    setRole('none');
+    console.log("logout");
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, role, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

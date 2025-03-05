@@ -7,7 +7,7 @@ import {
   ShoppingBagIcon,
   UserCircleIcon,
   Cog6ToothIcon,
-  ArrowRightOnRectangleIcon,
+  ArrowRightStartOnRectangleIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   Bars3Icon as MenuIcon,
@@ -131,6 +131,7 @@ export function Dashboard() {
             <ListItem
               key={item.name}
               className={cn(
+                isSidebarCollapsed ? "w-10" : "", //icon hover highlight should also change size on collapse
                 "hover:bg-teal-50/80",
                 isActive ? "bg-teal-50/80 text-teal-500" : ""
               )}
@@ -191,7 +192,7 @@ export function Dashboard() {
                 className="flex items-center gap-2 rounded hover:bg-red-50 text-red-500"
                 onClick={handleLogout}
               >
-                <ArrowRightOnRectangleIcon className="h-4 w-4" />
+                <ArrowRightStartOnRectangleIcon className="h-4 w-4" />
                 <Typography variant="small" className="font-normal">
                   Sign Out
                 </Typography>
