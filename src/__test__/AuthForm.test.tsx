@@ -21,11 +21,11 @@ async function validateForm(authType: AuthFormType) {
   jest.clearAllMocks();
   render(<AuthProvider><AuthForm type={authType.type}></AuthForm></AuthProvider>);
   // MUI input element's text is in a separate label element, so query by placeholder
-  const emailInput = screen.getByPlaceholderText('Enter your email');
-  const passwordInput = screen.getByPlaceholderText('Enter your password');
+  const emailInput = screen.getByPlaceholderText('your@email.com');
+  const passwordInput = screen.getByPlaceholderText('••••••••');
   let submitButton;
-  if (authType.type === 'login' ) submitButton = screen.getByRole('button', {name: 'Sign In'});
-  if (authType.type === 'register') submitButton = screen.getByRole('button', {name: 'Sign Up'});
+  if (authType.type === 'login' ) submitButton = screen.getByRole('button', {name: 'Login'});
+  if (authType.type === 'register') submitButton = screen.getByRole('button', {name: 'Register'});
   // input element of type email and password have a default error message
   // on default error message: does not submit form and sends no alert
   if(submitButton) {
@@ -139,7 +139,7 @@ async function validateForm(authType: AuthFormType) {
         expect(mockUseNavigate).toHaveBeenCalledWith('/dashboard');
       });
     }
-  } else fail('Invalid authentication form type')
+  } else fail('Invalid authentication form type');
 }
 
 describe('When rendering login page', () => {
@@ -156,13 +156,13 @@ describe('When rendering login page', () => {
     renderAuthForm({type: 'login'});
     const emailInput = screen.getByText('Email Address');
     const passwordInput = screen.getByText('Password');
-    const createAccountButton = screen.queryByRole('button', {name: 'Sign Up'});
-    const signInButton = screen.queryByRole('button', {name: 'Sign In'});
+    const registerButton = screen.queryByRole('button', {name: 'Register'});
+    const loginButton = screen.queryByRole('button', {name: 'Login'});
     const guestButton = screen.queryByRole('button', {name: 'Guest Account'});
     expect(emailInput).toBeDefined();
     expect(passwordInput).toBeDefined();
-    expect(createAccountButton).toBeNull();
-    expect(signInButton).not.toBeNull();
+    expect(registerButton).toBeNull();
+    expect(loginButton).not.toBeNull();
     expect(guestButton).not.toBeNull();
   });
   it('contains links to the home page and registration page', () => {
@@ -175,10 +175,14 @@ describe('When rendering login page', () => {
     fireEvent.click(homePageButton[0]);
     expect(mockUseNavigate).toHaveBeenCalledWith('/');
     // There should be a link to the registration page
-    const signUpLink = screen.getByText('Sign Up');
-    expect(signUpLink).toBeDefined();
-    fireEvent.click(signUpLink);
-    expect(mockUseNavigate).toHaveBeenCalledWith('/register');
+    const signInButton = screen.queryByRole('button', {name: 'Sign In'});
+    const signUpButton = screen.queryByRole('button', {name: 'Sign Up'});
+    expect(signInButton).toBeNull();
+    expect(signUpButton).not.toBeNull();
+    if (signUpButton) {
+      fireEvent.click(signUpButton);
+      expect(mockUseNavigate).toHaveBeenCalledWith('/register');
+    }
   });
   it('validates the email and password', async () => {
     await validateForm({type: 'login'});
@@ -199,13 +203,13 @@ describe('When rendering registration page', () => {
     renderAuthForm({type: 'register'});
     const emailInput = screen.getByText('Email Address');
     const passwordInput = screen.getByText('Password');
-    const createAccountButton = screen.queryByRole('button', {name: 'Sign Up'});
-    const signInButton = screen.queryByRole('button', {name: 'Sign In'});
+    const registerButton = screen.queryByRole('button', {name: 'Register'});
+    const loginButton = screen.queryByRole('button', {name: 'Login'});
     const guestButton = screen.queryByRole('button', {name: 'Guest Account'});
     expect(emailInput).toBeDefined();
     expect(passwordInput).toBeDefined();
-    expect(createAccountButton).not.toBeNull();
-    expect(signInButton).toBeNull();
+    expect(registerButton).not.toBeNull();
+    expect(loginButton).toBeNull();
     expect(guestButton).toBeNull();
   });
   it('contains links to the home page and registration page', () => {
@@ -218,10 +222,14 @@ describe('When rendering registration page', () => {
     fireEvent.click(homePageButton[0]);
     expect(mockUseNavigate).toHaveBeenCalledWith('/');
     // There should be a link to the registration page
-    const signInLink = screen.getByText('Sign In');
-    expect(signInLink).toBeDefined();
-    fireEvent.click(signInLink);
-    expect(mockUseNavigate).toHaveBeenCalledWith('/login');
+    const signInButton = screen.queryByRole('button', {name: 'Sign In'});
+    const signUpButton = screen.queryByRole('button', {name: 'Sign Up'});
+    expect(signInButton).not.toBeNull();
+    expect(signUpButton).toBeNull();
+    if (signInButton) {
+      fireEvent.click(signInButton);
+      expect(mockUseNavigate).toHaveBeenCalledWith('/login');
+    }
   });
   it('validates the email and password', async () => {
     await validateForm({type: 'register'});
