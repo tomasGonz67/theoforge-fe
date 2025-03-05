@@ -8,11 +8,8 @@ import {
 } from '@heroicons/react/24/outline';
 import { AuthContext } from '../App';
 import {
-  Card,
-  CardBody,
   Button,
   Typography,
-  IconButton,
   Alert
 } from "@material-tailwind/react";
 
@@ -26,7 +23,7 @@ export function AuthForm({ type }: AuthFormProps) {
   const [error, setError] = useState('');
   const [isVisible, setIsVisible] = useState(false);
   const navigate = useNavigate();
-  const { login } = useContext(AuthContext);
+  const { login, register } = useContext(AuthContext);
 
   useEffect(() => {
     setIsVisible(true);
@@ -34,22 +31,51 @@ export function AuthForm({ type }: AuthFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    if(!email || !password) {
+      setError('Please fill out all fields');
+      return;
+    }
+    let pattern = /^[\w\-.]+@([\w-]+\.)+[\w-]{2,}$/;
+    if(!pattern.test(email)) {
+      setError('Invalid email');
+      return;
+    }
+    if(password.length < 8) {
+      setError('Password must be at least 8 characters');
+      return;
+    }
+    pattern = /[A-Z]/;
+    if(!pattern.test(password)){
+      setError('Password must contain at least 1 uppercase character');
+      return;
+    }
+    pattern = /[`!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?~]/
+    if(!pattern.test(password)){
+      setError('Password must contain at least 1 special character');
+      return;
+    }
 
     if (type === 'login') {
-      const success = login(email, password);
+      const success = await login(email, password);
       if (success) {
         navigate('/dashboard');
       } else {
         setError('Invalid credentials');
       }
     } else {
-      setError('Registration is currently disabled. Please use test@test.com / test123');
+      const response = await register(email, password);
+      if (response === 200) {
+        navigate('/dashboard');
+      } else if (response === 400) {
+        setError('Email already taken');
+      } else {
+        setError('Failed to contact server. Please try again later.')
+      }
     }
   };
 
-  const handleTestLogin = () => {
-    const success = login('test@test.com', 'test123');
+  const handleGuestLogin = async () => {
+    const success = await login('guest', 'guest');
     if (success) {
       navigate('/dashboard');
     }
@@ -165,7 +191,7 @@ export function AuthForm({ type }: AuthFormProps) {
                 className="w-full py-3 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 active:scale-98 mt-4"
                 fullWidth
               >
-                {type === 'login' ? 'Sign In' : 'Create Account'}
+                {type === 'login' ? 'Login' : 'Register'}
               </Button>
             </form>
 
@@ -189,12 +215,12 @@ export function AuthForm({ type }: AuthFormProps) {
                 variant="outlined"
                 color="teal"
                 size="lg"
-                onClick={handleTestLogin}
+                onClick={handleGuestLogin}
                 className="w-full flex items-center justify-center gap-2 shadow-sm hover:bg-teal-50 transition-all duration-200"
                 fullWidth
               >
                 <SparklesIcon className="h-5 w-5" />
-                Test Account
+                Guest Account
               </Button>
             )}
 

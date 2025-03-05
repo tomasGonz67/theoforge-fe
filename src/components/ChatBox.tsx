@@ -14,9 +14,7 @@ import {
   CardBody,
   CardFooter,
   Typography,
-  Input,
-  IconButton,
-  Button
+  IconButton
 } from "@material-tailwind/react";
 
 interface Message {
@@ -82,6 +80,7 @@ export function ChatBox({ isOpen, onClose }: ChatBoxProps) {
     conversationHistory: []
   });
   const [input, setInput] = useState('');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isLoading, setIsLoading] = useState(false);
   const [currentStage, setCurrentStage] = useState<PromptStage>(PromptStage.NAME);
   const [attemptCount, setAttemptCount] = useState<Record<PromptStage, number>>({} as Record<PromptStage, number>);
@@ -103,7 +102,7 @@ export function ChatBox({ isOpen, onClose }: ChatBoxProps) {
   }, [messages]);
 
   useEffect(() => {
-    loadChatHistory();
+    //loadChatHistory();  Fix this. Chat history is loaded every time you redirect to landing page
   }, []);
 
   // Resize functionality
@@ -177,8 +176,8 @@ export function ChatBox({ isOpen, onClose }: ChatBoxProps) {
         return "What is your name?";
       case PromptStage.COMPANY:
         // Make sure we're not using "Hello" as the name if it was stored
-        const displayName = userInfo.name && !isGenericGreeting(userInfo.name) ? userInfo.name : '';
-        return `Nice to meet you${displayName ? ', ' + displayName : ''}! What's your company name?`;
+        { const displayName = userInfo.name && !isGenericGreeting(userInfo.name) ? userInfo.name : '';
+        return `Nice to meet you${displayName ? ', ' + displayName : ''}! What's your company name?`; }
       case PromptStage.INDUSTRY:
         return "What industry are you in?";
       case PromptStage.PROJECT_TYPE:
@@ -216,6 +215,7 @@ export function ChatBox({ isOpen, onClose }: ChatBoxProps) {
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const loadChatHistory = async () => {
     try {
       const [handle] = await window.showOpenFilePicker({
@@ -230,11 +230,12 @@ export function ChatBox({ isOpen, onClose }: ChatBoxProps) {
       const loadedUserInfo = determineUserInfoFromMessages(data);
       setUserInfo(loadedUserInfo);
       setCurrentStage(determineCurrentStage(loadedUserInfo));
-    } catch (error) {
+    } catch {
       console.error("No previous chat found, starting fresh.");
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const determineUserInfoFromMessages = (messages: Message[]): UserInfo => {
     // Initialize with default values
     const userInfo: UserInfo = {
@@ -389,12 +390,12 @@ export function ChatBox({ isOpen, onClose }: ChatBoxProps) {
       
       case PromptStage.CONTACT_INFO:
         // Be more forgiving with contact info format after first attempt
-        if (attemptForStage >= 1) return trimmed.length >= 3;
+        { if (attemptForStage >= 1) return trimmed.length >= 3;
         
         // Basic email or phone validation
         const isEmail = /\S+@\S+\.\S+/.test(trimmed);
-        const isPhone = /[\d\s\(\)\-\+]{7,}/.test(trimmed);
-        return isEmail || isPhone;
+        const isPhone = /[\d\s()\-+]{7,}/.test(trimmed);
+        return isEmail || isPhone; }
       
       default:
         // For other fields, just ensure there's some content
@@ -573,7 +574,7 @@ export function ChatBox({ isOpen, onClose }: ChatBoxProps) {
     }
   
     // Add user message to chat
-    const newMessages = [...messages, { 
+    const newMessages: Message[] = [...messages, { 
       role: 'user', 
       content: userMessage,
       timestamp: new Date().toISOString()
@@ -630,7 +631,7 @@ export function ChatBox({ isOpen, onClose }: ChatBoxProps) {
       // Add both the uncertainty response and the next prompt
       const responseMessage = `${uncertaintyResponse} ${nextPrompt}`;
       const botResponse = await simulateTypingEffect(responseMessage);
-      const updatedMessages = [...newMessages, { 
+      const updatedMessages: Message[] = [...newMessages, { 
         role: 'assistant', 
         content: botResponse,
         timestamp: new Date().toISOString()
@@ -654,7 +655,7 @@ export function ChatBox({ isOpen, onClose }: ChatBoxProps) {
     
     // Add assistant response
     const botResponse = await simulateTypingEffect(nextPrompt);
-    const updatedMessages = [...newMessages, { 
+    const updatedMessages: Message[] = [...newMessages, { 
       role: 'assistant', 
       content: botResponse,
       timestamp: new Date().toISOString()

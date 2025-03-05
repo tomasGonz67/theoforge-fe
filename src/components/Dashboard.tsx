@@ -7,13 +7,12 @@ import {
   ShoppingBagIcon,
   UserCircleIcon,
   Cog6ToothIcon,
-  ArrowRightOnRectangleIcon,
+  ArrowRightStartOnRectangleIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   Bars3Icon as MenuIcon,
   CreditCardIcon,
   BuildingLibraryIcon,
-  BeakerIcon
 } from '@heroicons/react/24/outline';
 import { UsersTable } from './UsersTable';
 import { GuestsTable } from './GuestsTable';
@@ -132,8 +131,9 @@ export function Dashboard() {
             <ListItem
               key={item.name}
               className={cn(
+                isSidebarCollapsed ? "w-10" : "", //icon hover highlight should also change size on collapse
                 "hover:bg-teal-50/80",
-                isActive && "bg-teal-50/80 text-teal-500"
+                isActive ? "bg-teal-50/80 text-teal-500" : ""
               )}
               onClick={() => handleNavigation(item.href)}
             >
@@ -192,7 +192,7 @@ export function Dashboard() {
                 className="flex items-center gap-2 rounded hover:bg-red-50 text-red-500"
                 onClick={handleLogout}
               >
-                <ArrowRightOnRectangleIcon className="h-4 w-4" />
+                <ArrowRightStartOnRectangleIcon className="h-4 w-4" />
                 <Typography variant="small" className="font-normal">
                   Sign Out
                 </Typography>
@@ -219,7 +219,7 @@ export function Dashboard() {
                   onClick={() => setActiveTab(value)}
                   className={cn(
                     "border-b-2 border-transparent py-4",
-                    activeTab === value && "border-teal-500 text-teal-500"
+                    activeTab === value ? "border-teal-500 text-teal-500" : ""
                   )}
                 >
                   <div className="flex items-center gap-2">
@@ -235,54 +235,44 @@ export function Dashboard() {
                   <Input
                     label="First Name"
                     value={userData.firstName}
-                    onChange={(e) => setUserData({ ...userData, firstName: e.target.value })}
-                  />
+                    onChange={(e) => setUserData({ ...userData, firstName: e.target.value })} crossOrigin={undefined}                  />
                   <Input
                     label="Last Name"
                     value={userData.lastName}
-                    onChange={(e) => setUserData({ ...userData, lastName: e.target.value })}
-                  />
+                    onChange={(e) => setUserData({ ...userData, lastName: e.target.value })} crossOrigin={undefined}                  />
                   <Input
                     label="Email"
                     type="email"
                     value={userData.email}
-                    onChange={(e) => setUserData({ ...userData, email: e.target.value })}
-                  />
+                    onChange={(e) => setUserData({ ...userData, email: e.target.value })} crossOrigin={undefined}                  />
                   <Input
                     label="Phone Number"
                     value={userData.phone}
-                    onChange={(e) => setUserData({ ...userData, phone: e.target.value })}
-                  />
+                    onChange={(e) => setUserData({ ...userData, phone: e.target.value })} crossOrigin={undefined}                  />
                   <Input
                     label="Company"
                     value={userData.company}
-                    onChange={(e) => setUserData({ ...userData, company: e.target.value })}
-                  />
+                    onChange={(e) => setUserData({ ...userData, company: e.target.value })} crossOrigin={undefined}                  />
                   <Input
                     label="Role"
                     value={userData.role}
-                    onChange={(e) => setUserData({ ...userData, role: e.target.value })}
-                  />
+                    onChange={(e) => setUserData({ ...userData, role: e.target.value })} crossOrigin={undefined}                  />
                   <Input
                     label="Address"
                     value={userData.address}
-                    onChange={(e) => setUserData({ ...userData, address: e.target.value })}
-                  />
+                    onChange={(e) => setUserData({ ...userData, address: e.target.value })} crossOrigin={undefined}                  />
                   <Input
                     label="City"
                     value={userData.city}
-                    onChange={(e) => setUserData({ ...userData, city: e.target.value })}
-                  />
+                    onChange={(e) => setUserData({ ...userData, city: e.target.value })} crossOrigin={undefined}                  />
                   <Input
                     label="State"
                     value={userData.state}
-                    onChange={(e) => setUserData({ ...userData, state: e.target.value })}
-                  />
+                    onChange={(e) => setUserData({ ...userData, state: e.target.value })} crossOrigin={undefined}                  />
                   <Input
                     label="ZIP Code"
                     value={userData.zipCode}
-                    onChange={(e) => setUserData({ ...userData, zipCode: e.target.value })}
-                  />
+                    onChange={(e) => setUserData({ ...userData, zipCode: e.target.value })} crossOrigin={undefined}                  />
                   <div className="md:col-span-2 flex justify-end gap-4">
                     <Button variant="outlined" color="teal" onClick={() => setIsSettingsOpen(false)}>
                       Cancel
@@ -357,13 +347,14 @@ export function Dashboard() {
 
         <div className="flex-1 p-4">
           <Breadcrumbs className="bg-white rounded-lg p-3 mb-4">
-            {breadcrumbs.map((breadcrumb, index) => (
+            {breadcrumbs.map((breadcrumb/*, index*/) => (
               <a
                 key={breadcrumb.href}
-                href={breadcrumb.href}
+                //href={breadcrumb.href} navigating to dashboard logs you out
+                onClick={() => handleNavigation(breadcrumb.href)}
                 className={cn(
                   "opacity-60",
-                  breadcrumb.current && "opacity-100 text-teal-500"
+                  breadcrumb.current ? "opacity-100 text-teal-500" : ""
                 )}
               >
                 <span>{breadcrumb.name}</span>
