@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
 import {
-  BeakerIcon,
   Bars3Icon,
   XMarkIcon,
   SparklesIcon,
@@ -24,7 +23,9 @@ import {
   CardBody,
   CardHeader
 } from "@material-tailwind/react";
-import { cn } from './lib/utils';
+import { GuestsTable } from './components/GuestsTable';
+import { Chat } from './components/ChatApp';
+{/* import ChatApp from './components/ChatApp'; */}
 
 export const AuthContext = React.createContext<{
   isAuthenticated: boolean;
@@ -148,8 +149,7 @@ function LandingPage() {
             <img src="/logo.png" alt="Theoforge Logo" className="h-16 w-16" />
             <Typography
               variant="h3"
-              className="ml-2 cursor-pointer font-bold"
-            >
+              className="ml-2 cursor-pointer font-bold">
               Theoforge
             </Typography>
           </Link>
@@ -167,8 +167,7 @@ function LandingPage() {
             variant="text"
             color="blue-gray"
             className="lg:hidden"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-          >
+            onClick={() => setIsMenuOpen(!isMenuOpen)}>
             {isMenuOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
           </IconButton>
         </div>
@@ -198,16 +197,14 @@ function LandingPage() {
                   size="lg"
                   className="flex items-center gap-3"
                   color="teal"
-                  onClick={() => setIsChatOpen(true)}
-                >
+                  onClick={() => setIsChatOpen(true)}>
                   <SparklesIcon className="h-5 w-5" /> Discuss Your Project
                 </Button>
                 <Button
                   size="lg"
                   variant="outlined"
                   color="teal"
-                  className="flex items-center gap-2"
-                >
+                  className="flex items-center gap-2">
                   Learn More <ArrowRightIcon className="h-4 w-4" />
                 </Button>
               </div>
@@ -395,6 +392,8 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<AuthForm type="login" />} />
           <Route path="/register" element={<AuthForm type="register" />} />
+          <Route path="Guests" element={<GuestsTable/>} />
+          <Route path="/chat" element={<Chat />} /> 
           <Route
             path="/dashboard/*"
             element={
