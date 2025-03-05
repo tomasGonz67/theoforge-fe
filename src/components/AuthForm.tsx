@@ -23,7 +23,7 @@ export function AuthForm({ type }: AuthFormProps) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  const { login } = useContext(AuthContext);
+  const { login, register } = useContext(AuthContext);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +31,7 @@ export function AuthForm({ type }: AuthFormProps) {
       setError('Please fill out all fields');
       return;
     }
-    const pattern = /^[\w\-.]+@([\w-]+\.)+[\w-]{2,}$/
+    let pattern = /^[\w\-.]+@([\w-]+\.)+[\w-]{2,}$/;
     if(!pattern.test(email)) {
       setError('Invalid email');
       return;
@@ -40,22 +40,38 @@ export function AuthForm({ type }: AuthFormProps) {
       setError('Password must be at least 8 characters');
       return;
     }
-    setError('');
+    pattern = /[A-Z]/;
+    if(!pattern.test(password)){
+      setError('Password must contain at least 1 uppercase character');
+      return;
+    }
+    pattern = /[`!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?~]/
+    if(!pattern.test(password)){
+      setError('Password must contain at least 1 special character');
+      return;
+    }
 
     if (type === 'login') {
-      const success = login(email, password);
+      const success = await login(email, password);
       if (success) {
         navigate('/dashboard');
       } else {
         setError('Invalid credentials');
       }
     } else {
-      setError('Registration is currently disabled. Please use test@test.com / test123');
+      const response = await register(email, password);
+      if (response === 200) {
+        navigate('/dashboard');
+      } else if (response === 400) {
+        setError('Email already taken');
+      } else {
+        setError('Failed to contact server. Please try again later.')
+      }
     }
   };
 
-  const handleGuestLogin = () => {
-    const success = login('test@test.com', 'test123');
+  const handleGuestLogin = async () => {
+    const success = await login('guest', 'guest');
     if (success) {
       navigate('/dashboard');
     }

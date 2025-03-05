@@ -1,21 +1,25 @@
-import '@testing-library/jest-dom'
-import { fireEvent, render, screen } from "@testing-library/react"
-import { AuthForm } from "../components/AuthForm"
+import '@testing-library/jest-dom';
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { AuthForm } from "../components/AuthForm";
+import { AuthProvider } from '../App';
+import axios, { AxiosError, AxiosResponse } from 'axios';
+jest.mock('axios');
 const mockUseNavigate = jest.fn();
 jest.mock('react-router-dom', () => ({
     ...jest.requireActual('react-router-dom'),
     useNavigate: () => mockUseNavigate,
 }));
 interface AuthFormType {
-  type: 'login' | 'register'
+  type: 'login' | 'register';
 }
 function renderAuthForm(authType: AuthFormType) {
   if (authType.type === 'login') render(<AuthForm type='login'></AuthForm>);
-  else if (authType.type === 'register') render(<AuthForm type='register'></AuthForm>)
+  else if (authType.type === 'register') render(<AuthForm type='register'></AuthForm>);
   else throw Error;
 }
-function validateForm(authType: AuthFormType) {
-  renderAuthForm({type: authType.type})
+async function validateForm(authType: AuthFormType) {
+  jest.clearAllMocks();
+  render(<AuthProvider><AuthForm type={authType.type}></AuthForm></AuthProvider>);
   // MUI input element's text is in a separate label element, so query by placeholder
   const emailInput = screen.getByPlaceholderText('Enter your email');
   const passwordInput = screen.getByPlaceholderText('Enter your password');
@@ -59,38 +63,81 @@ function validateForm(authType: AuthFormType) {
     errorMessage = screen.queryByText('Invalid email');
     expect(errorMessage).toBeInTheDocument();
     // email domain must be at least 2 characters
-    fireEvent.change(emailInput, { target: { value: 'test@test.t' } });
+    fireEvent.change(emailInput, { target: { value: 'test@test.c' } });
     fireEvent.change(passwordInput, { target: { value: 'test' } });
     fireEvent.click(submitButton);
     errorMessage = screen.queryByText('Invalid email');
     expect(errorMessage).toBeInTheDocument();
     // password must be at least 8 characters
-    fireEvent.change(emailInput, { target: { value: 'test@test.test' } });
+    fireEvent.change(emailInput, { target: { value: 'test@test.com' } });
     fireEvent.change(passwordInput, { target: { value: 'test' } });
     fireEvent.click(submitButton);
-    errorMessage = screen.queryByText('Password must be at least 8 characters');
+    // password must contain an uppercase letter
+    fireEvent.change(emailInput, { target: { value: 'test@test.com' } });
+    fireEvent.change(passwordInput, { target: { value: 'test1234' } });
+    fireEvent.click(submitButton);
+    errorMessage = screen.queryByText('Password must contain at least 1 uppercase character');
+    // password must contain a special character
+    fireEvent.change(emailInput, { target: { value: 'test@test.com' } });
+    fireEvent.change(passwordInput, { target: { value: 'Test1234' } });
+    fireEvent.click(submitButton);
+    errorMessage = screen.queryByText('Password must contain at least 1 special character');
     expect(errorMessage).toBeInTheDocument();
     if(authType.type === 'login') {
-      // remove this once backend is implemented
-      // invalid credentials if not test account
-      // email: test@test.com
-      // password: test123
-      fireEvent.change(emailInput, { target: { value: 'test@test.test' } });
-      fireEvent.change(passwordInput, { target: { value: 'testtest' } });
+      // displays a message when using invalid credentials
+      const response: AxiosResponse = {
+        data: {detail: '400: Invalid username/password'},
+        status: 500,
+      } as AxiosResponse;
+      const axiosError = {
+        config: {},
+        request: {},
+        response: response} as AxiosError;
+      (axios.post as jest.MockedFunction<typeof axios.get>).mockImplementationOnce(() => Promise.reject(axiosError));
+      fireEvent.change(emailInput, { target: { value: 'test@test.com' } });
+      fireEvent.change(passwordInput, { target: { value: 'Test12345!' } });
       fireEvent.click(submitButton);
-      errorMessage = screen.queryByText('Invalid credentials');
-      expect(errorMessage).toBeInTheDocument();
+      await waitFor(() => {
+        expect(axios.post).toHaveBeenCalledTimes(1);
+        expect(screen.queryByText('Invalid credentials')).toBeInTheDocument();
+      });
+      jest.clearAllMocks();
+      // navigates to the dashboard when using valid credentials
+      fireEvent.change(emailInput, { target: { value: 'test@test.com' } });
+      fireEvent.change(passwordInput, { target: { value: 'Test1234!' } });
+      fireEvent.click(submitButton);
+      await waitFor(() => {
+        expect(axios.post).toHaveBeenCalledTimes(1);
+        expect(mockUseNavigate).toHaveBeenCalledWith('/dashboard');
+      });
     }
     if(authType.type === 'register') {
-      // remove this once backend is implemented
-      // invalid credentials if not test account
-      // email: test@test.com
-      // password: test123
-      fireEvent.change(emailInput, { target: { value: 'test@test.test' } });
-      fireEvent.change(passwordInput, { target: { value: 'testtest' } });
+      // display a message if the email is already taken
+      const response: AxiosResponse = {
+        data: {detail: '400: Email already exists'},
+        status: 500,
+      } as AxiosResponse;
+      const axiosError = {
+        config: {},
+        request: {},
+        response: response} as AxiosError;
+      (axios.post as jest.MockedFunction<typeof axios.get>).mockImplementationOnce(() => Promise.reject(axiosError));
+      fireEvent.change(emailInput, { target: { value: 'test@test.com' } });
+      fireEvent.change(passwordInput, { target: { value: 'Test1234!' } });
       fireEvent.click(submitButton);
-      errorMessage = screen.queryByText('Registration is currently disabled. Please use test@test.com / test123');
-      expect(errorMessage).toBeInTheDocument();
+      await waitFor(() => {
+        expect(axios.post).toHaveBeenCalledTimes(1);
+        expect(screen.queryByText('Email already taken')).toBeInTheDocument();
+      });
+      jest.clearAllMocks();
+      // navigates to the dashboard if a valid account is created
+      fireEvent.change(emailInput, { target: { value: 'test@test.com' } });
+      fireEvent.change(passwordInput, { target: { value: 'Test1234!' } });
+      fireEvent.click(submitButton);
+      await waitFor(() => {
+        expect(axios.post).toHaveBeenCalledTimes(1);
+        expect(mockUseNavigate).toHaveBeenCalledWith('/dashboard');
+      });
     }
   } else fail('Invalid authentication form type')
 }
@@ -119,7 +166,7 @@ describe('When rendering login page', () => {
     expect(guestButton).not.toBeNull();
   });
   it('contains links to the home page and registration page', () => {
-    renderAuthForm({type: 'login'})
+    renderAuthForm({type: 'login'});
     mockUseNavigate.mockReset();
     // The first button should be the home page button
     const homePageButton = screen.getAllByRole('button');
@@ -133,8 +180,8 @@ describe('When rendering login page', () => {
     fireEvent.click(signUpLink);
     expect(mockUseNavigate).toHaveBeenCalledWith('/register');
   });
-  it('validates the email and password', () => {
-    validateForm({type: 'login'});
+  it('validates the email and password', async () => {
+    await validateForm({type: 'login'});
   });
 });
 
@@ -176,7 +223,7 @@ describe('When rendering registration page', () => {
     fireEvent.click(signInLink);
     expect(mockUseNavigate).toHaveBeenCalledWith('/login');
   });
-  it('validates the email and password', () => {
-    validateForm({type: 'register'});
+  it('validates the email and password', async () => {
+    await validateForm({type: 'register'});
   });
 });
