@@ -1,4 +1,7 @@
 // utils.ts
+/*
+ * Implementation if setting cookie in backend
+ *
 const API_BASE_URL = "http://localhost:8000"; // FastAPI backend URL
 
 export const login = async (username: string, password: string) => {
@@ -57,3 +60,5 @@ export const checkAuth = async () => {
   
   return response.json();
 };
+
+*/
