@@ -173,6 +173,7 @@ export function Chat(){
         animate={{ width: isSidebarOpen ? 250 : 64 }}
         transition={{ duration: 0.3 }}
       >
+        {/*  //This is the code for the theoforge logo and name to show up on the chatapp sidebar
         <div className="flex items-center">
         <img src="/logo.png" alt="Theoforge Logo" className="mb-4 h-160 w-16" /> 
         {isSidebarOpen && (
@@ -184,6 +185,7 @@ export function Chat(){
           </Typography>
          )}
         </div>
+        */} 
 
         <Button
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
