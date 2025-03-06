@@ -2,12 +2,12 @@ import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, EnvelopeIcon, LockClosedIcon } from '@heroicons/react/24/outline';
 import { AuthContext } from '../App';
+import { InputWithIcon } from './InputWithIcon'; // Import our custom component
 import {
   Card,
   CardHeader,
   CardBody,
   CardFooter,
-  Input,
   Button,
   Typography,
   IconButton,
@@ -88,59 +88,26 @@ export function AuthForm({ type }: AuthFormProps) {
             )}
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-              {/* Email Field with Fixed Icon Positioning */}
-              <div>
-                <Typography variant="small" color="blue-gray" className="mb-2 font-medium">
-                  Email Address
-                </Typography>
-                <div className="relative flex items-center">
-                  <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-gray-300">
-                    <EnvelopeIcon className="h-5 w-5" />
-                  </div>
-                  <Input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10"
-                    placeholder="Enter your email"
-                    containerProps={{
-                      className: "w-full",
-                    }}
-                    labelProps={{
-                      className: "hidden", // Hide the default label since we're using a custom one
-                    }}
-                    label=""
-                    required
-                  />
-                </div>
-              </div>
+              {/* Using our reusable InputWithIcon component */}
+              <InputWithIcon
+                label="Email Address"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                icon={<EnvelopeIcon className="h-5 w-5" />}
+                placeholder="Enter your email"
+                required
+              />
 
-              {/* Password Field with Fixed Icon Positioning */}
-              <div>
-                <Typography variant="small" color="blue-gray" className="mb-2 font-medium">
-                  Password
-                </Typography>
-                <div className="relative flex items-center">
-                  <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-gray-300">
-                    <LockClosedIcon className="h-5 w-5" />
-                  </div>
-                  <Input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10"
-                    placeholder="Enter your password"
-                    containerProps={{
-                      className: "w-full",
-                    }}
-                    labelProps={{
-                      className: "hidden", // Hide the default label since we're using a custom one
-                    }}
-                    label=""
-                    required
-                  />
-                </div>
-              </div>
+              <InputWithIcon
+                label="Password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                icon={<LockClosedIcon className="h-5 w-5" />}
+                placeholder="Enter your password"
+                required
+              />
 
               <Button
                 type="submit"

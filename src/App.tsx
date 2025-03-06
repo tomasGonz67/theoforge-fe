@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { AdminView } from '/components/AdminView';
-import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, Navigate, useNavigate } from 'react-router-dom';
 import {
   BeakerIcon,
   Bars3Icon,
@@ -11,11 +10,13 @@ import {
   EnvelopeIcon,
   PhoneIcon,
   MapPinIcon,
-  GlobeAltIcon
+  GlobeAltIcon,
+  ArrowRightOnRectangleIcon
 } from '@heroicons/react/24/outline';
 import { ChatBox } from './components/ChatBox';
 import { AuthForm } from './components/AuthForm';
 import { Dashboard } from './components/Dashboard';
+import { LogoutPage } from './components/LogoutPage';
 import {
   Navbar,
   Typography,
@@ -67,6 +68,12 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 function LandingPage() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { isAuthenticated } = React.useContext(AuthContext);
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    navigate('/logout');
+  };
 
   const services = [
     {
@@ -145,7 +152,6 @@ function LandingPage() {
       <Navbar className="mx-auto max-w-screen-xl px-4 py-2">
         <div className="flex items-center justify-between text-blue-gray-900">
           <Link to="/" className="flex items-center">
-            {/* <BeakerIcon className="h-8 w-8 text-primary-600" /> */}
             <img src="/logo.png" alt="Theoforge Logo" className="h-16 w-16" />
             <Typography
               variant="h3"
@@ -156,12 +162,31 @@ function LandingPage() {
           </Link>
           <div className="hidden lg:block">
             <div className="flex items-center gap-4">
-              <Link to="/login">
-                <Button variant="text" color="blue-gray">Sign in</Button>
-              </Link>
-              <Link to="/register">
-                <Button variant="gradient" color="teal">Get Started</Button>
-              </Link>
+              {isAuthenticated ? (
+                <>
+                  <Link to="/dashboard">
+                    <Button variant="text" color="blue-gray">Dashboard</Button>
+                  </Link>
+                  <Button 
+                    variant="outlined" 
+                    color="red"
+                    onClick={handleLogout}
+                    className="flex items-center gap-2"
+                  >
+                    <ArrowRightOnRectangleIcon className="h-4 w-4" />
+                    Sign Out
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Link to="/login">
+                    <Button variant="text" color="blue-gray">Sign in</Button>
+                  </Link>
+                  <Link to="/register">
+                    <Button variant="gradient" color="teal">Get Started</Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
           <IconButton
@@ -173,6 +198,52 @@ function LandingPage() {
             {isMenuOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
           </IconButton>
         </div>
+        
+        {/* Mobile menu - appears when menu button is clicked */}
+        {isMenuOpen && (
+          <div className="lg:hidden absolute top-20 left-0 right-0 bg-white shadow-lg z-50 p-4">
+            <div className="flex flex-col gap-4">
+              {isAuthenticated ? (
+                <>
+                  <Link 
+                    to="/dashboard" 
+                    className="block py-2 px-4 text-blue-gray-900 hover:bg-gray-100 rounded"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Dashboard
+                  </Link>
+                  <button 
+                    className="flex items-center gap-2 w-full text-left py-2 px-4 text-red-500 hover:bg-red-50 rounded"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      handleLogout();
+                    }}
+                  >
+                    <ArrowRightOnRectangleIcon className="h-4 w-4" />
+                    Sign Out
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link 
+                    to="/login" 
+                    className="block py-2 px-4 text-blue-gray-900 hover:bg-gray-100 rounded"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Sign in
+                  </Link>
+                  <Link 
+                    to="/register" 
+                    className="block py-2 px-4 text-teal-500 hover:bg-teal-50 rounded"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Get Started
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </Navbar>
 
       <div className="flex-grow">
@@ -358,7 +429,6 @@ function LandingPage() {
           <div className="border-t border-gray-800 py-8">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
               <div className="flex items-center gap-2">
-                {/* <BeakerIcon className="h-8 w-8 text-primary-500" /> */}
                 <img src="/logo.png" alt="Theoforge Logo" className="h-16 w-16" />
                 <Typography variant="h5" className="text-white">
                   Theoforge
@@ -396,6 +466,7 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<AuthForm type="login" />} />
           <Route path="/register" element={<AuthForm type="register" />} />
+          <Route path="/logout" element={<LogoutPage />} />
           <Route
             path="/dashboard/*"
             element={

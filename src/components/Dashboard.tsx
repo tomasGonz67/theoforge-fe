@@ -19,6 +19,7 @@ import {
 import { UsersTable } from './UsersTable';
 import { GuestsTable } from './GuestsTable';
 import { AdminView } from './AdminView';
+import { AdminLogoutButton } from './AdminLogoutButton';
 import {
   Card,
   Typography,
@@ -109,8 +110,7 @@ export function Dashboard() {
   }, [viewAsRegularUser, location.pathname, navigate]);
 
   const handleLogout = () => {
-    logout();
-    navigate('/login');
+    navigate('/logout');
   };
 
   const handleNavigation = (path: string) => {
@@ -166,7 +166,12 @@ export function Dashboard() {
       "h-screen p-4 shadow-xl shadow-blue-gray-900/5",
       isSidebarCollapsed ? "w-20" : "w-full max-w-[20rem]"
     )}>
-      <div className="mb-2 p-4 flex justify-end">
+      <div className="mb-2 p-4 flex justify-between items-center">
+        {!isSidebarCollapsed && (
+          <Typography variant="h5" color="blue-gray">
+            Admin Panel
+          </Typography>
+        )}
         <IconButton variant="text" color="teal" onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}>
           {isSidebarCollapsed ? <ChevronRightIcon className="h-5 w-5" /> : <ChevronLeftIcon className="h-5 w-5" />}
         </IconButton>
@@ -194,6 +199,19 @@ export function Dashboard() {
             </ListItem>
           );
         })}
+        
+        {/* Spacer and Logout Button */}
+        <div className="my-4 border-t border-gray-200"></div>
+        
+        <ListItem
+          className="hover:bg-red-50/80 text-red-500"
+          onClick={handleLogout}
+        >
+          <ListItemPrefix>
+            <ArrowRightOnRectangleIcon className="h-5 w-5 text-red-500" />
+          </ListItemPrefix>
+          {!isSidebarCollapsed && "Logout"}
+        </ListItem>
       </List>
     </Card>
   );
@@ -242,33 +260,39 @@ export function Dashboard() {
               </Typography>
             </div>
           </div>
-          <Menu>
-            <MenuHandler>
-              <IconButton variant="text" color="teal">
-                <UserCircleIcon className="h-6 w-6" />
-              </IconButton>
-            </MenuHandler>
-            <MenuList className="p-1">
-              <MenuItem 
-                className="flex items-center gap-2 rounded hover:bg-teal-50/80"
-                onClick={() => setIsSettingsOpen(true)}
-              >
-                <Cog6ToothIcon className="h-4 w-4 text-teal-500" />
-                <Typography variant="small" className="font-normal">
-                  Account Settings
-                </Typography>
-              </MenuItem>
-              <MenuItem 
-                className="flex items-center gap-2 rounded hover:bg-red-50 text-red-500"
-                onClick={handleLogout}
-              >
-                <ArrowRightOnRectangleIcon className="h-4 w-4" />
-                <Typography variant="small" className="font-normal">
-                  Sign Out
-                </Typography>
-              </MenuItem>
-            </MenuList>
-          </Menu>
+          <div className="flex items-center gap-4">
+            {/* Admin Logout Button in navbar - visible on medium screens and above */}
+            <div className="hidden md:block">
+              <AdminLogoutButton variant="outlined" size="sm" />
+            </div>
+            <Menu>
+              <MenuHandler>
+                <IconButton variant="text" color="teal">
+                  <UserCircleIcon className="h-6 w-6" />
+                </IconButton>
+              </MenuHandler>
+              <MenuList className="p-1">
+                <MenuItem 
+                  className="flex items-center gap-2 rounded hover:bg-teal-50/80"
+                  onClick={() => setIsSettingsOpen(true)}
+                >
+                  <Cog6ToothIcon className="h-4 w-4 text-teal-500" />
+                  <Typography variant="small" className="font-normal">
+                    Account Settings
+                  </Typography>
+                </MenuItem>
+                <MenuItem 
+                  className="flex items-center gap-2 rounded hover:bg-red-50 text-red-500"
+                  onClick={handleLogout}
+                >
+                  <ArrowRightOnRectangleIcon className="h-4 w-4" />
+                  <Typography variant="small" className="font-normal">
+                    Sign Out
+                  </Typography>
+                </MenuItem>
+              </MenuList>
+            </Menu>
+          </div>
         </div>
       </Navbar>
 

@@ -16,6 +16,7 @@ import {
   DialogFooter,
 } from "@material-tailwind/react";
 import { cn } from '../lib/utils';
+import { SearchInput } from './SearchInput';
 
 interface User {
   id: number;
@@ -140,11 +141,10 @@ export function UsersTable() {
           </div>
           <div className="flex shrink-0 gap-2 sm:flex-row">
             <div className="w-full md:w-72">
-              <Input
-                label="Search"
-                icon={<MagnifyingGlassIcon className="h-5 w-5" />}
+              <SearchInput
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search users..."
               />
             </div>
           </div>
