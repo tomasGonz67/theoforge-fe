@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect, useCallback, FormEvent } from 'reac
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
-import { Send, Trash2, Loader2, PlusCircle, Paperclip, Menu, CornerUpLeft } from 'lucide-react';
+import { Send, Trash2, Loader2, PlusCircle, Paperclip, Menu, CornerUpLeft, MessageSquarePlus, PanelRightOpen, PanelRightClose } from 'lucide-react';
 import { Message, LLMResponse } from '../lib/types';
 import { getLLMResponse } from '../services/llm';
 import { formatMessageTimestamp } from '../utils/date';
@@ -13,7 +13,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { Link } from 'react-router-dom';
 import { Typography } from '@material-tailwind/react';
-import { PaperAirplaneIcon } from '@heroicons/react/24/outline';
+import { ChatBubbleBottomCenterIcon, PaperAirplaneIcon } from '@heroicons/react/24/outline';
 
 
 
@@ -169,7 +169,7 @@ export function Chat(){
 
       {/* Sidebar with toggle */}
       <motion.aside
-        className={`bg-gray-200 p-4 flex flex-col ${isSidebarOpen ? 'w-1/5 min-w-[250px] max-w-[250px]' : 'w-16 items-center'}`} 
+        className={`bg-teal-200/50 p-4 flex flex-col ${isSidebarOpen ? 'w-1/5 min-w-[250px] max-w-[250px]' : 'w-16 items-center'}`} 
         initial={{ width: isSidebarOpen ? 250 : 64 }}
         animate={{ width: isSidebarOpen ? 250 : 64 }}
         transition={{ duration: 0.3 }}
@@ -188,13 +188,23 @@ export function Chat(){
         </div>
         */} 
 
-        <Button
+        {/* <Button
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="mb-4 flex items-center justify-center p-2"
+          className="mb-20 flex items-center justify-center p-2"
         >
-          <Menu className="w-6 h-6" />
-          {isSidebarOpen && <span className="ml-2"></span>}
+          <PanelRightOpen className="w-6 h-6" />
+          {isSidebarOpen && <span className="ml-20"></span>}
+        </Button> good old sidebar code*/}
+
+        {!isSidebarOpen && (
+          <Button
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          className="mb-20 flex items-center justify-center p-2"
+        >
+          <PanelRightClose className="w-6 h-6" />
+          {isSidebarOpen && <span className="ml-20"></span>}
         </Button>
+        )}
 
         {/*<Button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="mb-4 flex items-center gap-2">
           <Menu />
@@ -202,9 +212,17 @@ export function Chat(){
 
         {isSidebarOpen && (
           <>
-        <h2 className="font-bold mb-2">ChatBox</h2>
+        <Button
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          className="mb-20 flex items-center justify-center p-2"
+        >
+          <PanelRightOpen className="w-6 h-6" />
+          {isSidebarOpen && <span className="ml-2"></span>}
+        </Button> 
+
+        {/* <h2 className="font-bold mb-2">ChatBox</h2> */} 
         <Button onClick={startNewChat} className="mb-4 flex items-center gap-2">
-          <PlusCircle /> New Chat
+          <MessageSquarePlus /> New Chat
         </Button>
         <h3 className="font-bold mb-2">Previous Chats</h3>
         <ul className="overflow-y-auto flex-grow">
@@ -213,7 +231,7 @@ export function Chat(){
             .map(chat => (
               <li
                 key={chat.id}
-                className="mb-2 p-2 bg-white rounded shadow cursor-pointer hover:bg-gray-300"
+                className="mb-2 p-2 bg-white rounded shadow cursor-pointer hover:bg-blue-300"
                 onClick={() => openChat(chat.id)}
               >
                 {chat.title || 'New Chat'}
@@ -224,12 +242,14 @@ export function Chat(){
           <Trash2 /> Clear History
         </Button>
 
+        {/* 
         <Link to="/Dashboard">
           <Button className="mt-4 flex items-center gap-2 bg-teal-400 hover:bg-teal-500 text-white ">
             <CornerUpLeft /> Back To Dashboard
           </Button>
         </Link>
-
+        */} 
+        
         </>
         )}
       </motion.aside>
