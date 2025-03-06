@@ -268,7 +268,7 @@ export function Chat(){
               
               <button
                 type="button"
-                className="absolute left-4 top-1/2 transform -translate-y-1/2"
+                className="absolute left-5 top-1/2 transform -translate-y-1/2"
                 onClick={() => fileInputRef.current?.click()}
               >
                 <Paperclip className="text-gray-500" />
@@ -281,9 +281,12 @@ export function Chat(){
                 placeholder="Type your message..."
                 disabled={isLoading || !activeChatId}
               />
-              <Button type="submit" disabled={isLoading || (!inputMessage.trim() && !selectedFile) || !activeChatId}>
+
+              <Button type="submit" disabled={isLoading || (!inputMessage.trim() && !selectedFile) || !activeChatId}
+              className="right-0 w-12 h-12 flex items-center justify-center rounded-full bg-teal-400 hover:bg-teal-500 disabled:opacity-50 transition-colors"
+              >
                 {isLoading ? <Loader2 className="animate-spin absolute right-0 w-12 h-8 flex items-center justify-center rounded-full bg-teal-400 hover:bg-teal-500 disabled:opacity-50 transition-colors" /> : 
-                <PaperAirplaneIcon className='absolute right-0 w-12 h-8 flex items-center justify-center rounded-full bg-teal-400 hover:bg-teal-500 disabled:opacity-50 transition-colors'/>}
+                 <PaperAirplaneIcon className= "h-7 h-8 text-white" />}
               </Button>
 
                 {/* <button
