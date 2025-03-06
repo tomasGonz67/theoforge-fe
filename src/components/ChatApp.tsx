@@ -13,6 +13,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { Link } from 'react-router-dom';
 import { Typography } from '@material-tailwind/react';
+import { PaperAirplaneIcon } from '@heroicons/react/24/outline';
 
 
 
@@ -224,7 +225,7 @@ export function Chat(){
         </Button>
 
         <Link to="/Dashboard">
-          <Button className="mt-4 flex items-center gap-2 bg-teal-300 hover:bg-teal-600 text-white ">
+          <Button className="mt-4 flex items-center gap-2 bg-teal-400 hover:bg-teal-500 text-white ">
             <CornerUpLeft /> Back To Dashboard
           </Button>
         </Link>
@@ -280,10 +281,25 @@ export function Chat(){
                 placeholder="Type your message..."
                 disabled={isLoading || !activeChatId}
               />
-
               <Button type="submit" disabled={isLoading || (!inputMessage.trim() && !selectedFile) || !activeChatId}>
-                {isLoading ? <Loader2 className="animate-spin" /> : <Send />}
+                {isLoading ? <Loader2 className="animate-spin absolute right-0 w-12 h-8 flex items-center justify-center rounded-full bg-teal-400 hover:bg-teal-500 disabled:opacity-50 transition-colors" /> : 
+                <PaperAirplaneIcon className='absolute right-0 w-12 h-8 flex items-center justify-center rounded-full bg-teal-400 hover:bg-teal-500 disabled:opacity-50 transition-colors'/>}
               </Button>
+
+                {/* <button
+                    onClick={handleSend}
+                    disabled={isLoading || !input.trim()}
+                    className="absolute right-0 w-12 h-12 flex items-center justify-center rounded-full bg-teal-400 hover:bg-teal-500 disabled:opacity-50 transition-colors"
+                  >
+                    <PaperAirplaneIcon className="h-7 w-8 text-white" />
+                  </button> */}
+
+             {/* <Button type="submit" 
+                disabled={isLoading || (!inputMessage.trim() && !selectedFile) || !activeChatId}
+                className=" absolute right-0 w-12 h-12 flex items-center justify-center rounded-full bg-teal-400 hover:bg-teal-500 disabled:opacity-50 transition-colors"
+              >
+                {isLoading ? <Loader2 className="animate-spin absolute right-0 w-12 h-12 flex items-center justify-center rounded-full bg-teal-400 hover:bg-teal-500 disabled:opacity-50 transition-colors" /> : <Send />}
+              </Button> */}
           </form>
 
       </Card>
