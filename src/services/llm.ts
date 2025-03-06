@@ -25,6 +25,14 @@ export async function getLLMResponse(userInput: string): Promise<LLMResponse> {
   const MODEL = process.env.VITE_OPENAI_MODEL || "gpt-4-turbo";
   const SYSTEM_PROMPT = process.env.VITE_SYSTEM_PROMPT || "You are a helpful AI assistant. Remember the conversation history.";
 
+  {/* 
+    // ✅ Calls OpenAI API and retains memory
+export async function getLLMResponse(userInput: string): Promise<LLMResponse> {
+  const API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
+  const MODEL = import.meta.env.VITE_OPENAI_MODEL || "gpt-4-turbo";
+  const SYSTEM_PROMPT = import.meta.env.VITE_SYSTEM_PROMPT || "You are a helpful AI assistant. Remember the conversation history.";
+ */}
+
   if (!API_KEY) {
     console.error("❌ ERROR: Missing OpenAI API key.");
     return { message: "Error: API key is missing.", error: "API key is missing in environment variables." };
