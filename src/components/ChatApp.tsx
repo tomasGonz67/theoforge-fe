@@ -197,13 +197,19 @@ export function Chat(){
         </Button> good old sidebar code*/}
 
         {!isSidebarOpen && (
+          <>
           <Button
-          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="mb-20 flex items-center justify-center p-2"
-        >
-          <PanelRightClose className="w-6 h-6" />
-          {isSidebarOpen && <span className="ml-20"></span>}
-        </Button>
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="mb-10 flex items-center justify-center p-2"
+          >
+            <PanelRightClose className="w-6 h-6" />
+            {isSidebarOpen && <span className="ml-20"></span>}
+          </Button>
+          
+          <Button onClick={startNewChat} className="mb-4 flex items-center gap-2 hover:bg-grey-200">
+              <MessageSquarePlus /> 
+            </Button></>
+
         )}
 
         {/*<Button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="mb-4 flex items-center gap-2">
@@ -221,7 +227,7 @@ export function Chat(){
         </Button> 
 
         {/* <h2 className="font-bold mb-2">ChatBox</h2> */} 
-        <Button onClick={startNewChat} className="mb-4 flex items-center gap-2">
+        <Button onClick={startNewChat} className="mb-4 flex items-center gap-2 hover:bg-grey-200">
           <MessageSquarePlus /> New Chat
         </Button>
         <h3 className="font-bold mb-2">Previous Chats</h3>
