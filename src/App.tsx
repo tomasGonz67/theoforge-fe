@@ -529,12 +529,9 @@ function LandingPage() {
                                   ))}
                                 </div>
                               </div>
-                              <div className="relative">
-                                <div className="absolute -left-7 top-0 text-6xl text-teal-200 opacity-50 font-serif">"</div>
-                                <Typography variant="paragraph" className="relative z-10">
-                                  {testimonial.quote}
-                                </Typography>
-                              </div>
+                              <Typography variant="paragraph">
+                                {testimonial.quote}
+                              </Typography>
                               {/* Display category tags */}
                               <div className="mt-3 flex flex-wrap gap-1">
                                 {testimonial.categories && testimonial.categories.map(category => (
@@ -605,7 +602,7 @@ function LandingPage() {
                             ))}
                           </div>
                           <Typography variant="paragraph" className="italic text-center">
-                            "{testimonial.quote}"
+                            {testimonial.quote}
                           </Typography>
                           {/* Add category tags for mobile view */}
                           <div className="mt-3 flex flex-wrap justify-center gap-1">
