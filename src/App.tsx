@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, FC, ReactNode } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
 import {
   BeakerIcon,
@@ -24,7 +24,6 @@ import {
   Typography,
   Button,
   IconButton,
-  Avatar,
   Collapse,
   Chip
 } from "@material-tailwind/react";
@@ -111,11 +110,43 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
 }
 
+const testimonials = [
+  {
+    quote: "Theoforge's ETL solutions transformed our data pipeline, reducing processing time by 75% and improving data quality significantly.",
+    name: "Sarah Johnson",
+    role: "CTO",
+    company: "TechNova Solutions",
+    categories: ["Data Solutions", "Enterprise"]
+  },
+  {
+    quote: "The knowledge graph implementation helped us discover critical relationships in our data that were previously invisible. Game-changing for our research team.",
+    name: "Dr. Michael Chen",
+    role: "Director of Research",
+    company: "HealthScan Inc.",
+    categories: ["Data Solutions", "Healthcare"]
+  },
+  {
+    quote: "Their custom LLM training created a model that actually understands our industry terminology. Customer service efficiency improved by 40%.",
+    name: "Alex Rivera",
+    role: "VP of Operations",
+    company: "Globex Financial",
+    categories: ["AI Integration", "Finance"]
+  },
+  {
+    quote: "Working with Theoforge was seamless. Their team understood our needs and delivered solutions that exceeded our expectations on every level.",
+    name: "Priya Patel",
+    role: "Head of Innovation",
+    company: "FutureTech Industries",
+    categories: ["Enterprise"]
+  }
+];
+
 function LandingPage() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeTestimonial, setActiveTestimonial] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
+  const [activeFilters, setActiveFilters] = useState<string[]>([]);
 
   useEffect(() => {
     setIsVisible(true);
@@ -126,6 +157,52 @@ function LandingPage() {
     
     return () => clearInterval(interval);
   }, []);
+
+  // Toggle filter function
+  const toggleFilter = (filter: string) => {
+    if (activeFilters.includes(filter)) {
+      setActiveFilters(activeFilters.filter(f => f !== filter));
+    } else {
+      setActiveFilters([...activeFilters, filter]);
+    }
+  };
+
+  // Custom ScrollLink component for smooth scrolling
+  type ScrollLinkProps = { to: string, children: ReactNode, className: string, onClick?: React.MouseEventHandler<HTMLButtonElement> | undefined }
+  const ScrollLink: FC<ScrollLinkProps> = ({ to, children, className, onClick }) => {
+    const handleClick = (e: React.MouseEvent) => {
+      e.preventDefault();
+      
+      // First call the onClick handler (if provided) to close the menu
+      if (onClick) {   
+        // Add a small delay to allow menu close animation to complete
+        setTimeout(() => {
+          const element = document.getElementById(to);
+          if (element) {
+            element.scrollIntoView({ 
+              behavior: 'smooth',
+              block: 'start'
+            });
+          }
+        }, 300); // 300ms delay to match typical transition duration
+      } else {
+        // If no onClick handler, scroll immediately
+        const element = document.getElementById(to);
+        if (element) {
+          element.scrollIntoView({ 
+            behavior: 'smooth',
+            block: 'start'
+          });
+        }
+      }
+    };
+
+    return (
+      <a href={`#${to}`} className={className} onClick={handleClick}>
+        {children}
+      </a>
+    );
+  };
 
   const services = [
     {
@@ -163,36 +240,12 @@ function LandingPage() {
     },
   ];
 
-  const testimonials = [
-    {
-      quote: "Theoforge's ETL solutions transformed our data pipeline, reducing processing time by 75% and improving data quality significantly.",
-      name: "Sarah Johnson",
-      role: "CTO",
-      company: "TechNova Solutions",
-      avatar: "/api/placeholder/80/80"
-    },
-    {
-      quote: "The knowledge graph implementation helped us discover critical relationships in our data that were previously invisible. Game-changing for our research team.",
-      name: "Dr. Michael Chen",
-      role: "Director of Research",
-      company: "HealthScan Inc.",
-      avatar: "/api/placeholder/80/80"
-    },
-    {
-      quote: "Their custom LLM training created a model that actually understands our industry terminology. Customer service efficiency improved by 40%.",
-      name: "Alex Rivera",
-      role: "VP of Operations",
-      company: "Globex Financial",
-      avatar: "/api/placeholder/80/80"
-    },
-    {
-      quote: "Working with Theoforge was seamless. Their team understood our needs and delivered solutions that exceeded our expectations on every level.",
-      name: "Priya Patel",
-      role: "Head of Innovation",
-      company: "FutureTech Industries",
-      avatar: "/api/placeholder/80/80"
-    }
-  ];
+  // Calculate filtered testimonials based on active filters
+  const filteredTestimonials = activeFilters.length === 0
+    ? testimonials
+    : testimonials.filter(testimonial =>
+        testimonial.categories.some(category => activeFilters.includes(category))
+      );
 
   const features = [
     'Advanced AI Integration',
@@ -246,15 +299,15 @@ function LandingPage() {
           </Link>
           <div className="hidden lg:block">
             <div className="flex items-center gap-6">
-              <Link to="#services" className="text-gray-700 hover:text-teal-500 transition-colors">
+              <ScrollLink to="services" className="text-gray-700 hover:text-teal-500 transition-colors">
                 Services
-              </Link>
-              <Link to="#testimonials" className="text-gray-700 hover:text-teal-500 transition-colors">
+              </ScrollLink>
+              <ScrollLink to="testimonials" className="text-gray-700 hover:text-teal-500 transition-colors">
                 Testimonials
-              </Link>
-              <Link to="#contact" className="text-gray-700 hover:text-teal-500 transition-colors">
+              </ScrollLink>
+              <ScrollLink to="contact" className="text-gray-700 hover:text-teal-500 transition-colors">
                 Contact
-              </Link>
+              </ScrollLink>
               <Link to="/login">
                 <Button variant="text" color="blue-gray">Sign in</Button>
               </Link>
@@ -273,15 +326,15 @@ function LandingPage() {
         </div>
         <Collapse open={isMenuOpen} className="lg:hidden">
           <div className="mt-4 mb-2 flex flex-col gap-4">
-            <Link to="#services" className="block py-2 text-gray-700 hover:text-teal-500 transition-colors" onClick={() => setIsMenuOpen(false)}>
+            <ScrollLink to="services" className="block py-2 text-gray-700 hover:text-teal-500 transition-colors" onClick={() => setIsMenuOpen(false)}>
               Services
-            </Link>
-            <Link to="#testimonials" className="block py-2 text-gray-700 hover:text-teal-500 transition-colors" onClick={() => setIsMenuOpen(false)}>
+            </ScrollLink>
+            <ScrollLink to="testimonials" className="block py-2 text-gray-700 hover:text-teal-500 transition-colors" onClick={() => setIsMenuOpen(false)}>
               Testimonials
-            </Link>
-            <Link to="#contact" className="block py-2 text-gray-700 hover:text-teal-500 transition-colors" onClick={() => setIsMenuOpen(false)}>
+            </ScrollLink>
+            <ScrollLink to="contact" className="block py-2 text-gray-700 hover:text-teal-500 transition-colors" onClick={() => setIsMenuOpen(false)}>
               Contact
-            </Link>
+            </ScrollLink>
             <div className="flex flex-col sm:flex-row gap-2">
               <Link to="/login" className="w-full" onClick={() => setIsMenuOpen(false)}>
                 <Button variant="text" color="blue-gray" fullWidth>Sign in</Button>
@@ -451,7 +504,7 @@ function LandingPage() {
                 </Typography>
               </div>
               
-              {/* Desktop Testimonials - Completely redesigned */}
+              {/* Desktop Testimonials - With filters */}
               <div className="hidden md:block">
                 <div className="grid grid-cols-12 gap-6">
                   <div className="col-span-5">
@@ -470,11 +523,16 @@ function LandingPage() {
                         Our clients achieve remarkable results
                       </Typography>
                       <div className="flex flex-wrap justify-center gap-2 mb-8">
-                        <Chip size="sm" value="Data Solutions" color="teal" variant="outlined" />
-                        <Chip size="sm" value="AI Integration" color="blue-gray" variant="outlined" />
-                        <Chip size="sm" value="Enterprise" color="teal" variant="outlined" />
-                        <Chip size="sm" value="Healthcare" color="blue-gray" variant="outlined" />
-                        <Chip size="sm" value="Finance" color="teal" variant="outlined" />
+                        {["Data Solutions", "AI Integration", "Enterprise", "Healthcare", "Finance"].map((category) => (
+                          <Button //Chip is missing onClick property which breaks tests
+                            key={category}
+                            size="sm" 
+                            color={activeFilters.includes(category) ? "teal" : "blue-gray"}
+                            variant={activeFilters.includes(category) ? "filled" : "outlined"}
+                            onClick={() => toggleFilter(category)}
+                            className="cursor-pointer"
+                          >{category}</Button>
+                        ))}
                       </div>
                       <Button 
                         color="teal" 
@@ -486,13 +544,10 @@ function LandingPage() {
                   </div>
                   
                   <div className="col-span-7 space-y-6">
-                    {testimonials.map((testimonial, index) => (
-                      <div key={index} className="group">
-                        <div className="bg-white rounded-xl p-6 shadow-md border border-gray-100 group-hover:shadow-lg group-hover:border-teal-100 transition-all duration-300">
-                          <div className="flex items-start gap-4">
-                            <div className="mt-1">
-                              <Avatar src={testimonial.avatar} alt={testimonial.name} size="lg" className="ring-4 ring-teal-50" />
-                            </div>
+                    {filteredTestimonials.length > 0 ? (
+                      filteredTestimonials.map((testimonial, index) => (
+                        <div key={index} className="group">
+                          <div className="bg-white rounded-xl p-6 shadow-md border border-gray-100 group-hover:shadow-lg group-hover:border-teal-100 transition-all duration-300">
                             <div className="flex-1">
                               <div className="flex items-center justify-between mb-4">
                                 <div>
@@ -507,17 +562,42 @@ function LandingPage() {
                                   ))}
                                 </div>
                               </div>
-                              <div className="relative">
-                                <div className="absolute -left-7 top-0 text-6xl text-teal-200 opacity-50 font-serif">"</div>
-                                <Typography variant="paragraph" className="relative z-10">
-                                  {testimonial.quote}
-                                </Typography>
+                              <Typography variant="paragraph">
+                                {testimonial.quote}
+                              </Typography>
+                              {/* Display category tags */}
+                              <div className="mt-3 flex flex-wrap gap-1">
+                                {testimonial.categories && testimonial.categories.map(category => (
+                                  <Chip 
+                                    key={category} 
+                                    size="sm" 
+                                    value={category}
+                                    color="teal"
+                                    variant="ghost"
+                                    className="text-xs"
+                                  />
+                                ))}
                               </div>
                             </div>
                           </div>
                         </div>
+                      ))
+                    ) : (
+                      <div className="bg-white rounded-xl p-6 shadow-md border border-gray-100 text-center">
+                        <Typography color="blue-gray">
+                          No testimonials match the selected filters. Please try different criteria.
+                        </Typography>
+                        <Button 
+                          color="teal" 
+                          variant="text" 
+                          size="sm" 
+                          className="mt-3"
+                          onClick={() => setActiveFilters([])}
+                        >
+                          Reset Filters
+                        </Button>
                       </div>
-                    ))}
+                    )}
                   </div>
                 </div>
               </div>
@@ -541,16 +621,8 @@ function LandingPage() {
                     style={{ transform: `translateX(-${activeTestimonial * 100}%)` }}
                   >
                     {testimonials.map((testimonial, index) => (
-                      <div key={index} className="w-full flex-shrink-0 p-6 pt-16">
+                      <div key={index} className="w-full flex-shrink-0 p-6 pt-10">
                         <div className="bg-white rounded-lg p-4 shadow-sm">
-                          <div className="flex justify-center -mt-12 mb-4">
-                            <Avatar 
-                              src={testimonial.avatar} 
-                              alt={testimonial.name} 
-                              size="xl" 
-                              className="ring-4 ring-white shadow-md" 
-                            />
-                          </div>
                           <div className="text-center mb-3">
                             <Typography variant="h6">{testimonial.name}</Typography>
                             <Typography variant="small" color="teal" className="font-medium">
@@ -563,8 +635,21 @@ function LandingPage() {
                             ))}
                           </div>
                           <Typography variant="paragraph" className="italic text-center">
-                            "{testimonial.quote}"
+                            {testimonial.quote}
                           </Typography>
+                          {/* Add category tags for mobile view */}
+                          <div className="mt-3 flex flex-wrap justify-center gap-1">
+                            {testimonial.categories && testimonial.categories.map(category => (
+                              <Chip 
+                                key={category} 
+                                size="sm" 
+                                value={category}
+                                color="teal"
+                                variant="ghost"
+                                className="text-xs"
+                              />
+                            ))}
+                          </div>
                         </div>
                       </div>
                     ))}
