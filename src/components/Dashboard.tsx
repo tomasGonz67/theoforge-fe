@@ -43,12 +43,6 @@ import {
 } from "@material-tailwind/react";
 import { cn } from '../lib/utils';
 
-const navigation = [
-  { name: 'Users', href: '/dashboard/users', icon: UsersIcon },
-  { name: 'Guests', href: '/dashboard/guests', icon: HomeIcon },
-  { name: 'Marketplace', href: '/dashboard/marketplace', icon: ShoppingBagIcon },
-];
-
 const TABS = [
   {
     label: "Personal Details",
@@ -68,7 +62,7 @@ const TABS = [
 ];
 
 export function Dashboard() {
-  const { logout } = useContext(AuthContext);
+  const { role, logout } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -76,6 +70,14 @@ export function Dashboard() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("personal");
+  
+  const navigation = role === 'ADMIN' ? [
+    { name: 'Users', href: '/dashboard/users', icon: UsersIcon },
+    { name: 'Guests', href: '/dashboard/guests', icon: HomeIcon },
+    { name: 'Marketplace', href: '/dashboard/marketplace', icon: ShoppingBagIcon },
+  ] : [
+    { name: 'Marketplace', href: '/dashboard/marketplace', icon: ShoppingBagIcon },
+  ];
 
   const [userData, setUserData] = useState({
     firstName: "Test",

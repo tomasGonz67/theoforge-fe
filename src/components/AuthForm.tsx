@@ -4,7 +4,7 @@ import {
   ArrowLeftIcon, 
   EnvelopeIcon, 
   LockClosedIcon,
-  SparklesIcon
+  PencilIcon
 } from '@heroicons/react/24/outline';
 import { AuthContext } from '../App';
 import {
@@ -19,6 +19,9 @@ interface AuthFormProps {
 
 export function AuthForm({ type }: AuthFormProps) {
   const [email, setEmail] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [nickname, setNickname] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isVisible, setIsVisible] = useState(false);
@@ -31,27 +34,24 @@ export function AuthForm({ type }: AuthFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if(!email || !password) {
+    if(!email || !password || (type === 'register' && (!firstName || !lastName || !nickname))) {
       setError('Please fill out all fields');
       return;
     }
-    let pattern = /^[\w\-.]+@([\w-]+\.)+[\w-]{2,}$/;
-    if(!pattern.test(email)) {
-      setError('Invalid email');
-      return;
-    }
-    if(password.length < 8) {
-      setError('Password must be at least 8 characters');
-      return;
-    }
-    pattern = /[A-Z]/;
-    if(!pattern.test(password)){
-      setError('Password must contain at least 1 uppercase character');
-      return;
-    }
-    pattern = /[`!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?~]/
-    if(!pattern.test(password)){
-      setError('Password must contain at least 1 special character');
+    let errorMessage = '';
+    if(!/^[\w-.]{1,64}@([\w-]{1,63}\.)+[\w-]{2,63}$/.test(email)) errorMessage = 'Invalid email';
+    else if(type === 'register' && nickname.length < 3) errorMessage = 'Nickname must be at least 3 characters';
+    else if(type === 'register' && !/^[a-zA-Z0-9]+$/.test(nickname)) errorMessage = 'Nickname may not include special characters';
+    else if(password.length < 8) errorMessage = 'Password must be at least 8 characters';
+    else if(!/[A-Z]/.test(password)) errorMessage = 'Password must contain at least 1 uppercase character';
+    else if(!/[`!@#$%^&*()_+\-=[\]{};':|,.<>/?~]/.test(password)) errorMessage = 'Password must contain at least 1 special character';
+    else if (firstName.length > 100) errorMessage = 'First name must not be more than 100 characters';
+    else if (lastName.length > 100) errorMessage = 'Last name must not be more than 100 characters';
+    else if (nickname.length > 50) errorMessage = 'Nickname must not be more than 50 characters';
+    // Prevent sql injection by invalidating " and \
+    else if (/["\\]/.test(email.concat(firstName, lastName, nickname, password))) errorMessage = 'Invalid character " or \\ used';
+    if (errorMessage !== ''){
+      setError(errorMessage);
       return;
     }
 
@@ -63,21 +63,16 @@ export function AuthForm({ type }: AuthFormProps) {
         setError('Invalid credentials');
       }
     } else {
-      const response = await register(email, password);
+      const response = await register(email, firstName, lastName, nickname, password);
       if (response === 200) {
         navigate('/dashboard');
       } else if (response === 400) {
         setError('Email already taken');
+      } else if (response === 500) {
+        setError('Nickname already taken');
       } else {
         setError('Failed to contact server. Please try again later.')
       }
-    }
-  };
-
-  const handleGuestLogin = async () => {
-    const success = await login('guest', 'guest');
-    if (success) {
-      navigate('/dashboard');
     }
   };
 
@@ -159,6 +154,61 @@ export function AuthForm({ type }: AuthFormProps) {
                 </div>
               </div>
 
+              {type === 'register' && (
+              <div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">First Name</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <PencilIcon className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="John"
+                      className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-200 outline-none"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">Last Name</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <PencilIcon className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Doe"
+                      className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-200 outline-none"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">Nickname</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <PencilIcon className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="johndoe"
+                      className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-200 outline-none"
+                      value={nickname}
+                      onChange={(e) => setNickname(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+              )}
+
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">Password</label>
                 <div className="relative">
@@ -209,20 +259,6 @@ export function AuthForm({ type }: AuthFormProps) {
               </div>
             )}
 
-            {/* Test account button */}
-            {type === 'login' && (
-              <Button
-                variant="outlined"
-                color="teal"
-                size="lg"
-                onClick={handleGuestLogin}
-                className="w-full flex items-center justify-center gap-2 shadow-sm hover:bg-teal-50 transition-all duration-200"
-                fullWidth
-              >
-                <SparklesIcon className="h-5 w-5" />
-                Guest Account
-              </Button>
-            )}
 
             {/* Toggle between login and register */}
             <div className="text-center mt-8">
