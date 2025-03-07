@@ -24,22 +24,32 @@ function renderUserDashboard() {
 describe('When rendering the dashboard as an admin', () => {
     it('displays appropriate text', () => {
         renderAdminDashboard();
-        expect(screen.getByText('Theoforge')).toBeInTheDocument();
-        expect(screen.getByText('Welcome to Dashboard')).toBeInTheDocument();
-        expect(screen.getByText('Select a section from the sidebar to get started.')).toBeInTheDocument();
+        // Theoforge text for collapsed sidebar, expanded sidebar, small screen size
+        expect(screen.getAllByText('Theoforge')).toHaveLength(3);
+        expect(screen.getByText(/Welcome back, .+/)).toBeInTheDocument();
+        expect(screen.getByText("Here's what's happening with your projects today.")).toBeInTheDocument();
     });
-    it('displays the theoforge logo', () => {
+    it('displays the appropriate images', () => {
         renderAdminDashboard();
-        const logo = screen.queryByRole('img');
-        expect(logo).toHaveAttribute('src', '/logo.png')
+        const images = screen.queryAllByRole('img');
+        expect(images).toHaveLength(4);
+        // Theoforge logo for collapsed sidebar, expanded sidebar, and small screen size
+        expect(images[0]).toHaveAttribute('src', '/logo.png')
+        expect(images[2]).toHaveAttribute('src', '/logo.png')
+        expect(images[3]).toHaveAttribute('src', '/logo.png')
+        // User profile pic
+        expect(images[1]).toHaveAttribute('src', '/api/placeholder/40/40')
     });
     it('contains a users list button', () => {
         renderAdminDashboard();
-        const usersButton = screen.queryAllByRole('button', {name: 'Users'});
-        expect(usersButton).not.toBeNull();
+        const usersButtonText = screen.queryAllByText('Users');
+        // A users button for collapsed and uncollapsed sidebar
+        expect(usersButtonText).toHaveLength(2);
+        const usersButton = screen.getAllByRole('button').find(div => div.innerHTML.includes('Users'));
         expect(screen.queryByText('Users list')).toBeNull();
         // Clicking should render a table of users
-        fireEvent.click(usersButton[0]);
+        if(usersButton) fireEvent.click(usersButton);
+        else fail('No users button found');
         expect(screen.queryByText('Users list')).not.toBeNull();
         expect(screen.queryByText('See information about all users')).not.toBeNull();
         const searchForm = screen.getByText('Search');
@@ -61,11 +71,14 @@ describe('When rendering the dashboard as an admin', () => {
     });
     it('contains a guests list button', () => {
         renderAdminDashboard();
-        const guestsButton = screen.queryAllByRole('button', {name: 'Guests'});
-        expect(guestsButton).not.toBeNull();
+        const guestsButtonText = screen.queryAllByText('Guests');
+        // A guests button for collapsed and uncollapsed sidebar
+        expect(guestsButtonText).toHaveLength(2);
+        const guestsButton = screen.getAllByRole('button').find(div => div.innerHTML.includes('Guests'));
         expect(screen.queryByText('Guests list')).toBeNull();
         // Clicking should render a table of guests
-        fireEvent.click(guestsButton[0]);
+        if(guestsButton) fireEvent.click(guestsButton);
+        else fail('No guests button found');
         expect(screen.queryByText('Guests list')).not.toBeNull();
         expect(screen.queryByText('See information about all guests')).not.toBeNull();
         const searchForm = screen.getByText('Search');
@@ -87,40 +100,58 @@ describe('When rendering the dashboard as an admin', () => {
     });
     it('contains a marketplace button', () => {
         renderAdminDashboard();
-        const marketplaceButton = screen.queryAllByRole('button', {name: 'Marketplace'});
-        expect(marketplaceButton).not.toBeNull();
-        // There are 2 buttons: one for the collapsed and uncollapsed sidebar
-        expect(screen.queryAllByText('Marketplace')).toHaveLength(2);
+        const marketplaceButtonText = screen.queryAllByText('Marketplace');
+        // A marketplace button for collapsed and uncollapsed sidebar
+        expect(marketplaceButtonText).toHaveLength(2);
+        const marketplaceButton = screen.getAllByRole('button').find(div => div.innerHTML.includes('Marketplace'));
+        expect(screen.queryByText('Marketplace Coming Soon')).toBeNull();
         // Clicking should render the marketplace
-        fireEvent.click(marketplaceButton[0]);
-        expect(screen.queryAllByText('Marketplace')).toHaveLength(3);
+        if(marketplaceButton) fireEvent.click(marketplaceButton);
+        else fail('No guests button found');
+        expect(screen.queryByText('Marketplace Coming Soon')).not.toBeNull();
     });
 });
 
 describe('When rendering the dashboard as a user', () => {
     it('displays appropriate text', () => {
         renderUserDashboard();
-        expect(screen.getByText('Theoforge')).toBeInTheDocument();
-        expect(screen.getByText('Welcome to Dashboard')).toBeInTheDocument();
-        expect(screen.getByText('Select a section from the sidebar to get started.')).toBeInTheDocument();
+        // Theoforge text for collapsed sidebar, expanded sidebar, small screen size
+        expect(screen.getAllByText('Theoforge')).toHaveLength(3);
+        expect(screen.getByText(/Welcome back, .+/)).toBeInTheDocument();
+        expect(screen.getByText("Here's what's happening with your projects today.")).toBeInTheDocument();
     });
-    it('displays the theoforge logo', () => {
+    it('displays the appropriate images', () => {
         renderUserDashboard();
-        const logo = screen.queryByRole('img');
-        expect(logo).toHaveAttribute('src', '/logo.png')
+        const images = screen.queryAllByRole('img');
+        expect(images).toHaveLength(4);
+        // Theoforge logo for collapsed sidebar, expanded sidebar, and small screen size
+        expect(images[0]).toHaveAttribute('src', '/logo.png')
+        expect(images[2]).toHaveAttribute('src', '/logo.png')
+        expect(images[3]).toHaveAttribute('src', '/logo.png')
+        // User profile pic
+        expect(images[1]).toHaveAttribute('src', '/api/placeholder/40/40')
     });
     it('does not contains a users list or guest button', () => {
-        expect(screen.queryByRole('button', {name: 'Users'})).toBeNull();
-        expect(screen.queryByRole('button', {name: 'Guests'})).toBeNull();
+        renderUserDashboard();
+        const usersButtonText = screen.queryAllByText('Users');
+        expect(usersButtonText).toHaveLength(0);
+        const usersButton = screen.getAllByRole('button').find(div => div.innerHTML.includes('Users'));
+        expect(usersButton).toBeUndefined();
+        const guestsButtonText = screen.queryAllByText('Guests');
+        expect(guestsButtonText).toHaveLength(0);
+        const guestsButton = screen.getAllByRole('button').find(div => div.innerHTML.includes('Guests'));
+        expect(guestsButton).toBeUndefined();
     });
     it('contains a marketplace button', () => {
         renderUserDashboard();
-        const marketplaceButton = screen.queryAllByRole('button', {name: 'Marketplace'});
-        expect(marketplaceButton).not.toBeNull();
-        // There are 2 buttons: one for the collapsed and uncollapsed sidebar
-        expect(screen.queryAllByText('Marketplace')).toHaveLength(2);
+        const marketplaceButtonText = screen.queryAllByText('Marketplace');
+        // A marketplace button for collapsed and uncollapsed sidebar
+        expect(marketplaceButtonText).toHaveLength(2);
+        const marketplaceButton = screen.getAllByRole('button').find(div => div.innerHTML.includes('Marketplace'));
+        expect(screen.queryByText('Marketplace Coming Soon')).toBeNull();
         // Clicking should render the marketplace
-        fireEvent.click(marketplaceButton[0]);
-        expect(screen.queryAllByText('Marketplace')).toHaveLength(3);
+        if(marketplaceButton) fireEvent.click(marketplaceButton);
+        else fail('No guests button found');
+        expect(screen.queryByText('Marketplace Coming Soon')).not.toBeNull();
     });
 });
