@@ -29,16 +29,18 @@ import {
   Chip
 } from "@material-tailwind/react";
 import axios from 'axios';
-type Role = 'none' | 'guest' | 'user' | 'admin';
+type Role = 'USER' | 'ADMIN';
+
+// eslint-disable-next-line react-refresh/only-export-components
 export const AuthContext = React.createContext<{
   isAuthenticated: boolean;
   role: Role;
   login: (email: string, password: string) => Promise<boolean>;
-  register: (email: string, passsword: string) => Promise<number>;
+  register: (email: string, firstName: string, lastName: string, nickname: string, passsword: string) => Promise<number>;
   logout: () => void;
 }>({
   isAuthenticated: false,
-  role: 'none',
+  role: 'USER',
   login: async () => false,
   register: async () => 500,
   logout: () => {},
@@ -46,79 +48,36 @@ export const AuthContext = React.createContext<{
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [role, setRole] = useState('none' as Role);
+  const [role, setRole] = useState('USER' as Role);
 
   const login = async (email: string, password: string) => {
-    if (email === 'guest' && password === 'guest') {
-      try {
-        await axios.post('http://localhost:8000/guests', {
-          // Params will be updated once backend team finishes
-          "additional_notes": "Looking for a long-term partnership",
-          "budget": "$10,000 - $20,000",
-          "company": "Tech Solutions",
-          "contact_info": "john.doe@example.com",
-          "current_tech": [
-            "React",
-            "Node.js"
-          ],
-          "industry": "Software",
-          "interaction_events": [
-            "clicked_contact_form"
-          ],
-          "interaction_history": [
-            {
-              "event": "filled_contact_form",
-              "timestamp": "2025-03-01T15:30:00Z"
-            }
-          ],
-          "name": "John Doe",
-          "page_views": [
-            "/home",
-            "/contact"
-          ],
-          "pain_points": [
-            "Scalability issues",
-            "Need for automation"
-          ],
-          "project_type": [
-            "Web Development"
-          ],
-          "session_id": "session_test123",
-          "status": "NEW",
-          "timeline": "Q2 2025"
-        });
-        setRole('guest');
-        setIsAuthenticated(true);
-        return true;
-      } catch {
-        return false;
-      }
-    }
-    else {
-      try {
-        const params = new URLSearchParams();
-        params.append('username', email);
-        params.append('password', password);
-        await axios.post('http://localhost:8000/auth/login', params);
-        setRole('user');
-        setIsAuthenticated(true);
-        return true;
-      } catch {
-        return false;
-      }
+    try {
+      const params = new URLSearchParams();
+      params.append('username', email);
+      params.append('password', password);
+      const res = await axios.post('http://localhost:8000/auth/login', params);
+      // Decode jwt token into json
+      const json = JSON.parse(decodeURIComponent(window.atob(res.data.access_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join('')));
+      setRole(json.role);
+      setIsAuthenticated(true);
+      return true;
+    } catch {
+      return false;
     }
   };
 
-  const register = async (email: string, password: string) => {
+  const register = async (email: string, firstName: string, lastName: string, nickname: string, password: string) => {
     let response = 500;
     await axios.post('http://localhost:8000/auth/register', {
       "email": email,
-      "first_name": 'John',
-      "last_name": 'Doe',
-      "nickname": 'johndoe2',
+      "first_name": firstName,
+      "last_name": lastName,
+      "nickname": nickname,
       "password": password,
-    }).then(() => {
-      setRole('user');
+    }).then(res => {
+      setRole(res.data.role);
       setIsAuthenticated(true);
       response = 200;
     }).catch(err => {
@@ -126,18 +85,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         response = 400;
       } else if (err.response.data.detail === 'Not Found') {
         response = 404;
-      } else {
+      } else if (/Key \(nickname\)=\([a-zA-Z0-9]+\) already exists/.test(err.response.data.detail)) {
         response = 500;
+      } else {
+        response = 0;
       }
     })
     return response;
   };
 
   const logout = () => {
-    // TODO: if role is guest, remove the guest by session id(currently session id is not unique)
     setIsAuthenticated(false);
-    setRole('none');
-    console.log("logout");
+    setRole('USER');
   };
 
   return (

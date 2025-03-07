@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { MagnifyingGlassIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { AuthContext } from '../App';
-import { useNavigate } from 'react-router-dom';
 //import axios from 'axios';
 import {
   Card,
@@ -40,17 +39,11 @@ export function GuestsTable() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editFormData, setEditFormData] = useState<Guest | null>(null);
   const itemsPerPage = 10;
-  const { role, logout } = useContext(AuthContext);
-  const navigate = useNavigate();
+  const { role } = useContext(AuthContext);
 
   useEffect(() => {
     fetchGuests();
   }, []);
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
 
   const fetchGuests = async () => {
     setLoading(true);
@@ -153,7 +146,7 @@ export function GuestsTable() {
 
   const TABLE_HEAD = ["Name", "Company", "Industry", "Project Type", "Contact", "Status", "Last Interaction", "Actions"];
 
-  if (role !== 'guest') return (
+  if (role === 'ADMIN') return (
     <Card className="h-full w-full">
       <CardHeader floated={false} shadow={false} className="rounded-none">
         <div className="flex items-center justify-between gap-8 mb-8">
@@ -377,14 +370,5 @@ export function GuestsTable() {
       </Dialog>
     </Card>
   );
-  else return (
-    <Typography variant='h6'>
-      You are a guest. Please&ensp;
-      <a
-        onClick={handleLogout}
-        className="opacity-100 text-teal-500">sign in
-      </a>
-      &ensp;as a user to view the table.
-    </Typography>
-  );
+  else return;
 }

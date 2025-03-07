@@ -9,51 +9,32 @@ jest.mock('react-router-dom', () => ({
     useNavigate: () => mockUseNavigate,
 }));
 
-function renderDashboard() {
-    render(<Router future={{v7_relativeSplatPath: true, v7_startTransition: true}}><Dashboard></Dashboard></Router>);
+function renderAdminDashboard() {
+    render(<AuthContext.Provider value={{isAuthenticated: false, role: 'ADMIN', login: jest.fn(), register: jest.fn(), logout: jest.fn()}}>
+    <Router future={{v7_relativeSplatPath: true, v7_startTransition: true}}><Dashboard></Dashboard></Router>
+</AuthContext.Provider>);
 }
 
-function renderGuestDashboard() {
-    render(<AuthContext.Provider value={{isAuthenticated: false, role: 'guest', login: jest.fn(), register: jest.fn(), logout: jest.fn()}}>
+function renderUserDashboard() {
+    render(<AuthContext.Provider value={{isAuthenticated: false, role: 'USER', login: jest.fn(), register: jest.fn(), logout: jest.fn()}}>
         <Router future={{v7_relativeSplatPath: true, v7_startTransition: true}}><Dashboard></Dashboard></Router>
     </AuthContext.Provider>);
 }
 
-function testDisabledTable(table: string) {
-    renderGuestDashboard();
-    const tableButton = screen.queryAllByRole('button', {name: table});
-    expect(tableButton).not.toBeNull();
-    expect(screen.queryByText(/You are a guest. Please/)).toBeNull();
-    let signInButton = screen.queryByText('sign in');
-    expect(signInButton).toBeNull();
-    expect(screen.queryByText(/as a user to view the table./)).toBeNull();
-    // Clicking should render a table of users
-    fireEvent.click(tableButton[0]);
-    signInButton = screen.queryByText('sign in');
-    expect(screen.queryByText(/You are a guest. Please/)).not.toBeNull();
-    expect(signInButton).not.toBeNull()
-    expect(screen.queryByText(/as a user to view the table./)).not.toBeNull();
-    jest.clearAllMocks();
-    if (signInButton) {
-        fireEvent.click(signInButton);
-        expect(mockUseNavigate).toHaveBeenCalledWith('/login');
-    } else fail('Invalid authentication form type');
-}
-
-describe('When rendering the dashboard', () => {
+describe('When rendering the dashboard as an admin', () => {
     it('displays appropriate text', () => {
-        renderDashboard();
+        renderAdminDashboard();
         expect(screen.getByText('Theoforge')).toBeInTheDocument();
         expect(screen.getByText('Welcome to Dashboard')).toBeInTheDocument();
         expect(screen.getByText('Select a section from the sidebar to get started.')).toBeInTheDocument();
     });
     it('displays the theoforge logo', () => {
-        renderDashboard();
+        renderAdminDashboard();
         const logo = screen.queryByRole('img');
         expect(logo).toHaveAttribute('src', '/logo.png')
     });
     it('contains a users list button', () => {
-        renderDashboard();
+        renderAdminDashboard();
         const usersButton = screen.queryAllByRole('button', {name: 'Users'});
         expect(usersButton).not.toBeNull();
         expect(screen.queryByText('Users list')).toBeNull();
@@ -79,7 +60,7 @@ describe('When rendering the dashboard', () => {
         expect(nextPageButton).not.toBeNull();
     });
     it('contains a guests list button', () => {
-        renderDashboard();
+        renderAdminDashboard();
         const guestsButton = screen.queryAllByRole('button', {name: 'Guests'});
         expect(guestsButton).not.toBeNull();
         expect(screen.queryByText('Guests list')).toBeNull();
@@ -105,9 +86,10 @@ describe('When rendering the dashboard', () => {
         expect(nextPageButton).not.toBeNull();
     });
     it('contains a marketplace button', () => {
-        renderDashboard();
+        renderAdminDashboard();
         const marketplaceButton = screen.queryAllByRole('button', {name: 'Marketplace'});
         expect(marketplaceButton).not.toBeNull();
+        // There are 2 buttons: one for the collapsed and uncollapsed sidebar
         expect(screen.queryAllByText('Marketplace')).toHaveLength(2);
         // Clicking should render the marketplace
         fireEvent.click(marketplaceButton[0]);
@@ -115,30 +97,27 @@ describe('When rendering the dashboard', () => {
     });
 });
 
-describe('When rendering the dashboard as a guest', () => {
+describe('When rendering the dashboard as a user', () => {
     it('displays appropriate text', () => {
-        renderGuestDashboard();
+        renderUserDashboard();
         expect(screen.getByText('Theoforge')).toBeInTheDocument();
         expect(screen.getByText('Welcome to Dashboard')).toBeInTheDocument();
         expect(screen.getByText('Select a section from the sidebar to get started.')).toBeInTheDocument();
     });
     it('displays the theoforge logo', () => {
-        renderGuestDashboard();
+        renderUserDashboard();
         const logo = screen.queryByRole('img');
         expect(logo).toHaveAttribute('src', '/logo.png')
     });
-    it('contains a users list button', () => {
-        // the table should be disabled for guests
-        testDisabledTable('Users');
-    });
-    it('contains a guests list button', () => {
-        // the table should be disabled for guests
-       testDisabledTable('Guests');
+    it('does not contains a users list or guest button', () => {
+        expect(screen.queryByRole('button', {name: 'Users'})).toBeNull();
+        expect(screen.queryByRole('button', {name: 'Guests'})).toBeNull();
     });
     it('contains a marketplace button', () => {
-        renderDashboard();
+        renderUserDashboard();
         const marketplaceButton = screen.queryAllByRole('button', {name: 'Marketplace'});
         expect(marketplaceButton).not.toBeNull();
+        // There are 2 buttons: one for the collapsed and uncollapsed sidebar
         expect(screen.queryAllByText('Marketplace')).toHaveLength(2);
         // Clicking should render the marketplace
         fireEvent.click(marketplaceButton[0]);
