@@ -169,7 +169,7 @@ export function Chat(){
 
       {/* Sidebar with toggle */}
       <motion.aside
-        className={`bg-teal-200/50 p-4 flex flex-col ${isSidebarOpen ? 'w-1/5 min-w-[250px] max-w-[250px]' : 'w-16 items-center'}`} 
+        className={`bg-teal-100/15 p-4 flex flex-col ${isSidebarOpen ? 'w-1/5 min-w-[250px] max-w-[250px]' : 'w-16 items-center'}`} 
         initial={{ width: isSidebarOpen ? 250 : 64 }}
         animate={{ width: isSidebarOpen ? 250 : 64 }}
         transition={{ duration: 0.3 }}
@@ -200,13 +200,13 @@ export function Chat(){
           <>
           <Button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="mb-10 flex items-center justify-center p-2"
+            className="mb-10 flex items-center justify-center p-2 hover:bg-teal-200/30"
           >
             <PanelRightClose className="w-6 h-6" />
             {isSidebarOpen && <span className="ml-20"></span>}
           </Button>
           
-          <Button onClick={startNewChat} className="mb-4 flex items-center gap-2 hover:bg-grey-200">
+          <Button onClick={startNewChat} className="mb-4 flex items-center gap-2 hover:bg-teal-200/30">
               <MessageSquarePlus /> 
             </Button></>
 
@@ -220,14 +220,14 @@ export function Chat(){
           <>
         <Button
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="mb-20 flex items-center justify-center p-2"
+          className="mb-10 flex items-center justify-center p-2 hover:bg-teal-200/30"
         >
           <PanelRightOpen className="w-6 h-6" />
           {isSidebarOpen && <span className="ml-2"></span>}
         </Button> 
 
         {/* <h2 className="font-bold mb-2">ChatBox</h2> */} 
-        <Button onClick={startNewChat} className="mb-4 flex items-center gap-2 hover:bg-grey-200">
+        <Button onClick={startNewChat} className="mb-4 flex items-center gap-2 hover:bg-teal-200/30">
           <MessageSquarePlus /> New Chat
         </Button>
         <h3 className="font-bold mb-2">Previous Chats</h3>
@@ -237,7 +237,7 @@ export function Chat(){
             .map(chat => (
               <li
                 key={chat.id}
-                className="mb-2 p-2 bg-white rounded shadow cursor-pointer hover:bg-blue-300"
+                className="mb-2 p-2 bg-white rounded shadow cursor-pointer hover:bg-teal-200/30"
                 onClick={() => openChat(chat.id)}
               >
                 {chat.title || 'New Chat'}
