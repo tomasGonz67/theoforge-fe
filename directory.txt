@@ -9,6 +9,7 @@ THEOFORGE-FE/
 │   │   ├── Dashboard.tsx
 │   │   ├── GuestsTable.tsx
 │   │   ├── UsersTable.tsx
+│   │   ├── ProfileDemo.tsx
 │   ├── lib/
 │   │   ├── utils.ts
 │   ├── App.tsx
