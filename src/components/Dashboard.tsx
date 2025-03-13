@@ -53,6 +53,7 @@ import {
   Chip
 } from "@material-tailwind/react";
 import { cn } from '../lib/utils';
+import { Chat } from './ChatApp';
 
 const navigation = [
   { 
@@ -79,6 +80,12 @@ const navigation = [
     icon: ShoppingBagIcon,
     description: 'Browse available services'
   },
+  {
+    name: 'Visualization', 
+    href: '/dashboard/Chat', 
+    icon:UsersIcon
+  },
+
 ];
 
 const TABS = [
@@ -571,7 +578,7 @@ export function Dashboard() {
           <div className={cn(
             "transition-all duration-700",
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-          )}>
+           )}>
             {currentPage === 'dashboard' && (
               <div className="space-y-6">
                 {/* Welcome Header */}
@@ -768,6 +775,7 @@ export function Dashboard() {
                 </div>
               </div>
             )}
+           {currentPage == 'Chat' && <Chat/>} 
           </div>
         </div>
       </div>

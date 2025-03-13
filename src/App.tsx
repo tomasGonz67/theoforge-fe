@@ -34,6 +34,7 @@ import {
   Chip
 } from "@material-tailwind/react";
 import { cn } from './lib/utils';
+import { Chat } from './components/ChatApp';
 
 export const AuthContext = React.createContext<{
   isAuthenticated: boolean;
@@ -820,6 +821,7 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<AuthForm type="login" />} />
           <Route path="/register" element={<AuthForm type="register" />} />
+          <Route path="/chat" element={<Chat />} />
           <Route
             path="/dashboard/*"
             element={
