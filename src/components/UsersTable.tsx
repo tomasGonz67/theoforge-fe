@@ -41,6 +41,20 @@ export function UsersTable() {
     fetchUsers();
   }, []);
 
+  
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get('http://localhost:8000/api/users'); // Need to Update the URL as per backend configuration
+      setUsers(response.data); // Assuming the API returns a list of users
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+    setLoading(false);
+  };
+  
+  
+  {/* 
   const fetchUsers = async () => {
     setLoading(true);
     try {
@@ -62,6 +76,7 @@ export function UsersTable() {
     }
     setLoading(false);
   };
+*/}
 
   const handleEdit = (user: User) => {
     setSelectedUser(user);
