@@ -45,7 +45,7 @@ export function UsersTable() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:8000/api/users'); // Need to Update the URL as per backend configuration
+      const response = await axios.get('http://localhost:8000/auth/users'); // Need to Update the URL as per backend configuration
       setUsers(response.data); // Assuming the API returns a list of users
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -139,6 +139,7 @@ export function UsersTable() {
 
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
 
+  //This I think should be changed to the api call key's such as email, nickname, etc..
   const TABLE_HEAD = ["Name", "Email", "Role", "Status", "Last Login", "Actions"];
 
   return (
