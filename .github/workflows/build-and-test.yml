@@ -2,9 +2,9 @@ name: Theoforge CI
 on: # Controls when the action will run.
   # Triggers the workflow on push or pull request events but only for the master branch. If you want to trigger the action on other branches, add here
   push:
-    branches: [ main ]
+    branches: [ main, dev ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, dev ]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -21,9 +21,5 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '18'
-      - name: Build and test Theoforge frontend
-        #env: # Pass the Twilio secrets into environmental variables for the backend tests to use
-        run: cd townService; npm install && npm run prestart && npm run lint && npm test
-
       - name: Build and test frontend components
         run: npm ci && npm run build --if-present && npm run lint && npm test

@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MagnifyingGlassIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
-import { AuthContext } from '../App';
-//import axios from 'axios';
+import axios from 'axios';
 import {
   Card,
   CardHeader,
@@ -16,7 +15,6 @@ import {
   DialogBody,
   DialogFooter,
 } from "@material-tailwind/react";
-//import { cn } from '../lib/utils';
 
 interface Guest {
   id: number;
@@ -39,7 +37,6 @@ export function GuestsTable() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editFormData, setEditFormData] = useState<Guest | null>(null);
   const itemsPerPage = 10;
-  const { role } = useContext(AuthContext);
 
   useEffect(() => {
     fetchGuests();
@@ -85,7 +82,7 @@ export function GuestsTable() {
 
     try {
       // In a real application, this would be an API call
-      //await axios.put(`/api/guests/${editFormData.id}`, editFormData);
+      await axios.put(`/api/guests/${editFormData.id}`, editFormData);
       
       // Update the local state
       setGuests(guests.map(guest => 
@@ -105,7 +102,7 @@ export function GuestsTable() {
 
     try {
       // In a real application, this would be an API call
-      //await axios.delete(`/api/guests/${selectedGuest.id}`);
+      await axios.delete(`/api/guests/${selectedGuest.id}`);
       
       // Update the local state
       setGuests(guests.filter(guest => guest.id !== selectedGuest.id));
@@ -146,7 +143,7 @@ export function GuestsTable() {
 
   const TABLE_HEAD = ["Name", "Company", "Industry", "Project Type", "Contact", "Status", "Last Interaction", "Actions"];
 
-  if (role === 'ADMIN') return (
+  return (
     <Card className="h-full w-full">
       <CardHeader floated={false} shadow={false} className="rounded-none">
         <div className="flex items-center justify-between gap-8 mb-8">
@@ -164,7 +161,9 @@ export function GuestsTable() {
                 label="Search"
                 icon={<MagnifyingGlassIcon className="h-5 w-5" />}
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)} crossOrigin={undefined}              />
+                onChange={(e) => setSearchTerm(e.target.value)}
+                crossOrigin={undefined}
+              />
             </div>
           </div>
         </div>
@@ -272,22 +271,22 @@ export function GuestsTable() {
           Page {currentPage} of {totalPages}
         </Typography>
         <div className="flex gap-2">
-          <Button
+          <IconButton
             variant="outlined"
             size="sm"
             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
             disabled={currentPage === 1}
           >
             Previous
-          </Button>
-          <Button
+          </IconButton>
+          <IconButton
             variant="outlined"
             size="sm"
             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
             disabled={currentPage === totalPages}
           >
             Next
-          </Button>
+          </IconButton>
         </div>
       </div>
 
@@ -299,29 +298,39 @@ export function GuestsTable() {
       >
         <DialogHeader>Edit Guest</DialogHeader>
         <DialogBody>
-          <div></div>
+          <div>{/*Fix jest detecting no children in DialogBody error*/}</div>
           {editFormData && (
             <div className="grid gap-6">
               <Input
                 label="Name"
                 value={editFormData.name}
-                onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })} crossOrigin={undefined}              />
+                onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                crossOrigin={undefined}
+              />
               <Input
                 label="Company"
                 value={editFormData.company}
-                onChange={(e) => setEditFormData({ ...editFormData, company: e.target.value })} crossOrigin={undefined}              />
+                onChange={(e) => setEditFormData({ ...editFormData, company: e.target.value })}
+                crossOrigin={undefined}
+              />
               <Input
                 label="Industry"
                 value={editFormData.industry}
-                onChange={(e) => setEditFormData({ ...editFormData, industry: e.target.value })} crossOrigin={undefined}              />
+                onChange={(e) => setEditFormData({ ...editFormData, industry: e.target.value })}
+                crossOrigin={undefined}
+              />
               <Input
                 label="Contact Info"
                 value={editFormData.contactInfo}
-                onChange={(e) => setEditFormData({ ...editFormData, contactInfo: e.target.value })} crossOrigin={undefined}              />
+                onChange={(e) => setEditFormData({ ...editFormData, contactInfo: e.target.value })}
+                crossOrigin={undefined}
+              />
               <Input
                 label="Project Type"
                 value={editFormData.projectType}
-                onChange={(e) => setEditFormData({ ...editFormData, projectType: e.target.value })} crossOrigin={undefined}              />
+                onChange={(e) => setEditFormData({ ...editFormData, projectType: e.target.value })}
+                crossOrigin={undefined}
+              />
               <div>
                 <Typography variant="small" color="blue-gray" className="mb-2">
                   Status
@@ -370,5 +379,4 @@ export function GuestsTable() {
       </Dialog>
     </Card>
   );
-  else return;
 }
