@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MagnifyingGlassIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
-import { AuthContext } from '../App';
 import axios from 'axios';
 import {
   Card,
@@ -16,7 +15,6 @@ import {
   DialogBody,
   DialogFooter,
 } from "@material-tailwind/react";
-//import { cn } from '../lib/utils';
 
 interface User {
   id: number;
@@ -37,7 +35,6 @@ export function UsersTable() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editFormData, setEditFormData] = useState<User | null>(null);
   const itemsPerPage = 10;
-  const { role } = useContext(AuthContext);
 
   useEffect(() => {
     fetchUsers();
@@ -128,7 +125,7 @@ export function UsersTable() {
 
   const TABLE_HEAD = ["Name", "Email", "Role", "Status", "Last Login", "Actions"];
 
-  if (role === 'ADMIN') return (
+  return (
     <Card className="h-full w-full">
       <CardHeader floated={false} shadow={false} className="rounded-none">
         <div className="flex items-center justify-between gap-8 mb-8">
@@ -146,7 +143,9 @@ export function UsersTable() {
                 label="Search"
                 icon={<MagnifyingGlassIcon className="h-5 w-5" />}
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)} crossOrigin={undefined}              />
+                onChange={(e) => setSearchTerm(e.target.value)}
+                crossOrigin={undefined}
+              />
             </div>
           </div>
         </div>
@@ -244,22 +243,22 @@ export function UsersTable() {
           Page {currentPage} of {totalPages}
         </Typography>
         <div className="flex gap-2">
-          <Button
+          <IconButton
             variant="outlined"
             size="sm"
             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
             disabled={currentPage === 1}
           >
             Previous
-          </Button>
-          <Button
+          </IconButton>
+          <IconButton
             variant="outlined"
             size="sm"
             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
             disabled={currentPage === totalPages}
           >
             Next
-          </Button>
+          </IconButton>
         </div>
       </div>
 
@@ -271,21 +270,27 @@ export function UsersTable() {
       >
         <DialogHeader>Edit User</DialogHeader>
         <DialogBody>
-          <div></div>
+          <div>{/*Fix jest detecting no children in DialogBody error*/}</div>
           {editFormData && (
             <div className="grid gap-6">
               <Input
                 label="Name"
                 value={editFormData.name}
-                onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })} crossOrigin={undefined}              />
+                onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                crossOrigin={undefined}
+              />
               <Input
                 label="Email"
                 value={editFormData.email}
-                onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })} crossOrigin={undefined}              />
+                onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                crossOrigin={undefined}
+              />
               <Input
                 label="Role"
                 value={editFormData.role}
-                onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value })} crossOrigin={undefined}              />
+                onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value })}
+                crossOrigin={undefined}
+              />
               <div>
                 <Typography variant="small" color="blue-gray" className="mb-2">
                   Status
@@ -333,5 +338,4 @@ export function UsersTable() {
       </Dialog>
     </Card>
   );
-  else return;
 }

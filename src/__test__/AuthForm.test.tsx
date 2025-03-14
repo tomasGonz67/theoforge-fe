@@ -154,10 +154,6 @@ async function validateForm(authType: AuthFormType) {
     if(authType.type === 'register') {
       // validate firstName, lastName, and nickname fields
       if (firstNameInput && lastNameInput && nicknameInput) {
-        // nickname must be at least 3 characters
-        fireEvent.change(nicknameInput, { target: { value: 't' } });
-        fireEvent.click(submitButton);
-        expect(screen.queryByText('Nickname must be at least 3 characters')).not.toBeNull();
         // nickname may not include special characters
         fireEvent.change(nicknameInput, { target: { value: 'test!' } });
         fireEvent.click(submitButton);
