@@ -4,7 +4,8 @@ import {
   ArrowLeftIcon, 
   EnvelopeIcon, 
   LockClosedIcon,
-  PencilIcon
+  PencilIcon,
+  SparklesIcon
 } from '@heroicons/react/24/outline';
 import { AuthContext } from '../App';
 import {
@@ -55,11 +56,15 @@ export function AuthForm({ type }: AuthFormProps) {
     }
 
     if (type === 'login') {
-      const success = await login(email, password);
-      if (success) {
+      const response = await login(email, password);
+      if ( response === 200) {
         navigate('/dashboard');
+      } else if (response === 500) {
+        setError('Invalid credentials')
+      } else if (response === 0) {
+        setError('Failed to contact server. Please try again later.');
       } else {
-        setError('Invalid credentials');
+        setError('An unknown error encountered. Please try again later.')
       }
     } else {
       const response = await register(email, firstName, lastName, nickname, password);
@@ -67,11 +72,22 @@ export function AuthForm({ type }: AuthFormProps) {
         navigate('/dashboard');
       } else if (response === 400) {
         setError('Email already taken');
+      } else if (response === 404) {
+        setError('The server has encountered an error. Please try again later.');//Invalid API endpoint
       } else if (response === 500) {
         setError('Nickname already taken');
+      } else if (response === 0) {
+        setError('Failed to contact server. Please try again later.');
       } else {
-        setError('Failed to contact server. Please try again later.')
+        setError('An unknown error encountered. Please try again later.');
       }
+    }
+  };
+
+  const handleTestLogin = async () => {
+    const success = await login('test@test.com', 'test123');
+    if (success) {
+      navigate('/dashboard');
     }
   };
 
@@ -255,6 +271,20 @@ export function AuthForm({ type }: AuthFormProps) {
               </div>
             )}
 
+            {/* Test account button */}
+            {type === 'login' && (
+              <Button
+                variant="outlined"
+                color="teal"
+                size="lg"
+                onClick={handleTestLogin}
+                className="w-full flex items-center justify-center gap-2 shadow-sm hover:bg-teal-50 transition-all duration-200"
+                fullWidth
+              >
+                <SparklesIcon className="h-5 w-5" />
+                Test Account
+              </Button>
+            )}
 
             {/* Toggle between login and register */}
             <div className="text-center mt-8">

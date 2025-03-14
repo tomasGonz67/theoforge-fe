@@ -34,14 +34,14 @@ type Role = 'USER' | 'ADMIN';
 export const AuthContext = React.createContext<{
   isAuthenticated: boolean;
   role: Role;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<number>;
   register: (email: string, firstName: string, lastName: string, nickname: string, passsword: string) => Promise<number>;
   logout: () => void;
 }>({
   isAuthenticated: false,
   role: 'USER',
-  login: async () => false,
-  register: async () => 500,
+  login: async () => -1,
+  register: async () => -1,
   logout: () => {},
 });
 
@@ -50,25 +50,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [role, setRole] = useState('USER' as Role);
 
   const login = async (email: string, password: string) => {
-    try {
-      const params = new URLSearchParams();
-      params.append('username', email);
-      params.append('password', password);
-      const res = await axios.post('http://localhost:8000/auth/login', params);
+    // Remove once backend API is released
+    let response = -1;
+    if (email === 'test@test.com' && password === 'test123') {
+      setRole("ADMIN");
+      setIsAuthenticated(true);
+      return 200;
+    }
+    const params = new URLSearchParams();
+    params.append('username', email);
+    params.append('password', password);
+    await axios.post('http://localhost:8000/auth/login', params).then(res => {
       // Decode jwt token into json
       const json = JSON.parse(decodeURIComponent(window.atob(res.data.access_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')).split('').map(function(c) {
         return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
       }).join('')));
       setRole(json.role);
       setIsAuthenticated(true);
-      return true;
-    } catch {
-      return false;
-    }
+      response = 200;
+    }).catch (err => {
+      if (err.response && err.response.data && err.response.data.detail) {
+        if(err.response.data.detail === '400: Invalid username/password') {
+          response = 500;
+        } else {
+          response = -1;
+        }
+      } else {
+        response = 0;
+      }
+    });
+    return response;
   };
 
   const register = async (email: string, firstName: string, lastName: string, nickname: string, password: string) => {
-    let response = 500;
+    let response = -1;
     await axios.post('http://localhost:8000/auth/register', {
       "email": email,
       "first_name": firstName,
@@ -80,16 +95,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsAuthenticated(true);
       response = 200;
     }).catch(err => {
-      if (err.response.data.detail === '400: Email already exists') {
-        response = 400;
-      } else if (err.response.data.detail === 'Not Found') {
-        response = 404;
-      } else if (/Key \(nickname\)=\([a-zA-Z0-9]+\) already exists/.test(err.response.data.detail)) {
-        response = 500;
+      if (err.response && err.response.data && err.response.data.detail) {
+        if (err.response.data.detail === '400: Email already exists') {
+          response = 400;
+        } else if (err.response.data.detail === 'Not Found') {
+          response = 404;
+        } else if (/Key \(nickname\)=\([a-zA-Z0-9]+\) already exists/.test(err.response.data.detail)) {
+          response = 500;
+        } else {
+          response = -1;
+        }
       } else {
         response = 0;
       }
-    })
+    });
     return response;
   };
 
