@@ -24,6 +24,26 @@ interface User {
   role: string;
   status: 'active' | 'inactive';
   lastLogin: string;
+  nickname: string;
+  hashed_password: string;
+  first_name: string;
+  last_name: string; 
+  email_verified: boolean;
+  verification_token: string; 
+  created_at: string;
+  updated_at: string;
+  failed_login_attempts: string;
+  is_locked: string;
+  phone_number: string;
+  address: string;
+  city: string;
+  state: string;
+  zip_code: string; 
+  card_number: string;
+  ccv: string;
+  security_code: string;
+  subscription_plan: string;
+
 }
 
 export function UsersTable() {
