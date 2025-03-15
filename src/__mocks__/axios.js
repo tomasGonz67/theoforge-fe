@@ -7,17 +7,17 @@ module.exports = {
         }
     }),
     post: jest.fn((url) => {
-        if (url === 'http://localhost:8000/guests') {
+        if (url === '/guests') {
             return Promise.resolve({
                 data: 'data'
             });
         }
-        if (url === 'http://localhost:8000/auth/login') {
+        if (url === '/auth/login') {
             return Promise.resolve({
                 data: { access_token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0QHRlc3QuY29tIiwicm9sZSI6IkFETUlOIiwiZXhwIjoxNzQxMzI5NDA0fQ.ZhzyaDb0kMajVxsf8zGSO8tgvh2lKAMRSOTcG4GbqbM'}
             });
         }
-        if (url === 'http://localhost:8000/auth/register') {
+        if (url === '/auth/register') {
             return Promise.resolve({
                 data: 'data3'
             });

@@ -27,7 +27,7 @@ describe('When rendering the dashboard as an admin', () => {
         // Theoforge text for collapsed sidebar, expanded sidebar, small screen size
         expect(screen.getAllByText('Theoforge')).toHaveLength(3);
         expect(screen.getByText(/Welcome back, .+/)).toBeInTheDocument();
-        expect(screen.getByText("Here's what's happening with your projects today.")).toBeInTheDocument();
+        expect(screen.getByText("Here's what's happening across your organization today.")).toBeInTheDocument();
     });
     it('displays the appropriate images', () => {
         renderAdminDashboard();
@@ -118,7 +118,7 @@ describe('When rendering the dashboard as a user', () => {
         // Theoforge text for collapsed sidebar, expanded sidebar, small screen size
         expect(screen.getAllByText('Theoforge')).toHaveLength(3);
         expect(screen.getByText(/Welcome back, .+/)).toBeInTheDocument();
-        expect(screen.getByText("Here's what's happening with your projects today.")).toBeInTheDocument();
+        expect(screen.getByText("Here's a summary of your recent activity and account status.")).toBeInTheDocument();
     });
     it('displays the appropriate images', () => {
         renderUserDashboard();
@@ -145,8 +145,8 @@ describe('When rendering the dashboard as a user', () => {
     it('contains a marketplace button', () => {
         renderUserDashboard();
         const marketplaceButtonText = screen.queryAllByText('Marketplace');
-        // A marketplace button for collapsed and uncollapsed sidebar
-        expect(marketplaceButtonText).toHaveLength(2);
+        // A marketplace button for collapsed and uncollapsed sidebar and resources card
+        expect(marketplaceButtonText).toHaveLength(3);
         const marketplaceButton = screen.getAllByRole('button').find(div => div.innerHTML.includes('Marketplace'));
         expect(screen.queryByText('Marketplace Coming Soon')).toBeNull();
         // Clicking should render the marketplace

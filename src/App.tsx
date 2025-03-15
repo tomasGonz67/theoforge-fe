@@ -60,7 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const params = new URLSearchParams();
     params.append('username', email);
     params.append('password', password);
-    await axios.post('http://localhost:8000/auth/login', params).then(res => {
+    await axios.post('/auth/login', params).then(res => {
       // Decode jwt token into json
       const json = JSON.parse(decodeURIComponent(window.atob(res.data.access_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')).split('').map(function(c) {
         return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
@@ -84,7 +84,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const register = async (email: string, firstName: string, lastName: string, nickname: string, password: string) => {
     let response = -1;
-    await axios.post('http://localhost:8000/auth/register', {
+    await axios.post('/auth/register', {
       "email": email,
       "first_name": firstName,
       "last_name": lastName,
