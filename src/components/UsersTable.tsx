@@ -19,30 +19,30 @@ import { cn } from '../lib/utils';
 
 interface User {
   id: number;
-  name: string;
+  name: string | null;
   email: string;
-  role: string;
+  role: "ADMIN" | "USER";
   status: 'active' | 'inactive';
   lastLogin: string;
   nickname: string;
-  hashed_password: string;
-  first_name: string;
-  last_name: string; 
+  //hashed_password: string;
+  first_name: string | null;
+  last_name: string | null;
   email_verified: boolean;
-  verification_token: string; 
+  verification_token: string | null; 
   created_at: string;
   updated_at: string;
-  failed_login_attempts: string;
-  is_locked: string;
-  phone_number: string;
-  address: string;
-  city: string;
-  state: string;
-  zip_code: string; 
-  card_number: string;
-  ccv: string;
-  security_code: string;
-  subscription_plan: string;
+  failed_login_attempts: number;
+  is_locked: boolean;
+  phone_number: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  zip_code: string | null; 
+  card_number: string | null;
+  ccv: string | null;
+  security_code: string | null;
+  subscription_plan: "PREMIUM" | "FREE";
 
 }
 
@@ -66,6 +66,7 @@ export function UsersTable() {
     setLoading(true);
     try {
       const response = await axios.get('http://localhost:8000/auth/users'); // Need to Update the URL as per backend configuration
+      console.log(response.data)
       setUsers(response.data); // Assuming the API returns a list of users
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -148,8 +149,8 @@ export function UsersTable() {
   };
 
   const filteredUsers = users.filter(user =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
+    (user.name ? user.name.toLowerCase().includes(searchTerm.toLowerCase()) : false) ||
+    (user.email ? user.email.toLowerCase().includes(searchTerm.toLowerCase()) : false)
   );
 
   const paginatedUsers = filteredUsers.slice(
@@ -213,25 +214,25 @@ export function UsersTable() {
                 </td>
               </tr>
             ) : (
-              paginatedUsers.map(({ id, name, email, role, status, lastLogin }, index) => {
+              paginatedUsers.map((user, index) => {
                 const isLast = index === paginatedUsers.length - 1;
                 const classes = isLast ? "p-4" : "p-4 border-b border-blue-gray-50";
 
                 return (
-                  <tr key={id}>
+                  <tr key={user.id}>
                     <td className={classes}>
                       <Typography variant="small" color="blue-gray" className="font-normal">
-                        {name}
+                        {user.name}
                       </Typography>
                     </td>
                     <td className={classes}>
                       <Typography variant="small" color="blue-gray" className="font-normal">
-                        {email}
+                        {user.email}
                       </Typography>
                     </td>
                     <td className={classes}>
                       <Typography variant="small" color="blue-gray" className="font-normal">
-                        {role}
+                        {user.role}
                       </Typography>
                     </td>
                     <td className={classes}>
@@ -246,7 +247,7 @@ export function UsersTable() {
                     </td>
                     <td className={classes}>
                       <Typography variant="small" color="blue-gray" className="font-normal">
-                        {new Date(lastLogin).toLocaleDateString()}
+                        {new Date(user.lastLogin).toLocaleDateString()}
                       </Typography>
                     </td>
                     <td className={classes}>
@@ -254,14 +255,14 @@ export function UsersTable() {
                         <IconButton
                           variant="text"
                           color="teal"
-                          onClick={() => handleEdit({ id, name, email, role, status, lastLogin })}
+                          onClick={() => handleEdit( user )}
                         >
                           <PencilIcon className="h-4 w-4" />
                         </IconButton>
                         <IconButton
                           variant="text"
                           color="red"
-                          onClick={() => handleDelete({ id, name, email, role, status, lastLogin })}
+                          onClick={() => handleDelete(user)}
                         >
                           <TrashIcon className="h-4 w-4" />
                         </IconButton>
@@ -310,7 +311,7 @@ export function UsersTable() {
             <div className="grid gap-6">
               <Input
                 label="Name"
-                value={editFormData.name}
+                value={editFormData.name ? editFormData.name : undefined}
                 onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
               />
               <Input
@@ -321,7 +322,7 @@ export function UsersTable() {
               <Input
                 label="Role"
                 value={editFormData.role}
-                onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value })}
+                onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value as "ADMIN" | "USER" })}
               />
               <div>
                 <Typography variant="small" color="blue-gray" className="mb-2">
