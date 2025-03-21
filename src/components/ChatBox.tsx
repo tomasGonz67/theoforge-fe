@@ -1,5 +1,6 @@
 // Check if a response indicates uncertainty
-const isUncertainResponse = (input: string): boolean => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const isUncertainResponse = (input: string): boolean => { // unused duplicate function...
   const lowerInput = input.toLowerCase().trim();
   const uncertaintyPatterns = [
     /^(idk|i don't know|don't know|dunno|not sure|unsure|uncertain)$/i,
@@ -12,7 +13,8 @@ const isUncertainResponse = (input: string): boolean => {
   ];
   
   return uncertaintyPatterns.some(pattern => pattern.test(lowerInput));
-};import React, { useState, useEffect, useRef } from 'react';
+};
+import React, { useState, useEffect, useRef } from 'react';
 import { 
 PaperAirplaneIcon, 
 XMarkIcon, 
@@ -23,14 +25,12 @@ ChatBubbleLeftRightIcon,
 SparklesIcon
 } from '@heroicons/react/24/outline';
 import {
-Card,
-CardHeader,
-CardBody,
-CardFooter,
-Typography,
-Input,
-IconButton,
-Button
+  Card,
+  CardHeader,
+  CardBody,
+  CardFooter,
+  Typography,
+  IconButton
 } from "@material-tailwind/react";
 
 interface Message {
@@ -84,27 +84,28 @@ COMPLETED
 }
 
 export function ChatBox({ isOpen, onClose }: ChatBoxProps) {
-// Original state
-const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
-const [userInfo, setUserInfo] = useState<UserInfo>({
-  firstContactTimestamp: new Date().toISOString(),
-  conversationHistory: []
-});
-const [input, setInput] = useState('');
-const [isLoading, setIsLoading] = useState(false);
-const [currentStage, setCurrentStage] = useState<PromptStage>(PromptStage.NAME);
-const [attemptCount, setAttemptCount] = useState<Record<PromptStage, number>>({} as Record<PromptStage, number>);
-const chatContainerRef = useRef<HTMLDivElement>(null);
-
-// UI state
-const [isMinimized, setIsMinimized] = useState(false);
-const [chatSize, setChatSize] = useState({ width: 380, height: 520 });
-const [isResizing, setIsResizing] = useState(false);
-const [isTyping, setIsTyping] = useState(false);
-const resizeRef = useRef<HTMLDivElement>(null);
-const startPosRef = useRef({ x: 0, y: 0 });
-const startSizeRef = useRef({ width: 0, height: 0 });
-const messageEndRef = useRef<HTMLDivElement>(null);
+  // Original state
+  const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
+  const [userInfo, setUserInfo] = useState<UserInfo>({
+    firstContactTimestamp: new Date().toISOString(),
+    conversationHistory: []
+  });
+  const [input, setInput] = useState('');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [isLoading, setIsLoading] = useState(false);
+  const [currentStage, setCurrentStage] = useState<PromptStage>(PromptStage.NAME);
+  const [attemptCount, setAttemptCount] = useState<Record<PromptStage, number>>({} as Record<PromptStage, number>);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+  
+  // UI state
+  const [isMinimized, setIsMinimized] = useState(false);
+  const [chatSize, setChatSize] = useState({ width: 380, height: 520 });
+  const [isResizing, setIsResizing] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const resizeRef = useRef<HTMLDivElement>(null);
+  const startPosRef = useRef({ x: 0, y: 0 });
+  const startSizeRef = useRef({ width: 0, height: 0 });
+  const messageEndRef = useRef<HTMLDivElement>(null);
 
 // Scroll to bottom when messages change
 useEffect(() => {
@@ -114,6 +115,7 @@ useEffect(() => {
 useEffect(() => {
   // Load chat history from localStorage when component mounts
   loadChatHistory();
+// eslint-disable-next-line react-hooks/exhaustive-deps
 }, []);
 
 // Save chat history to localStorage whenever messages change
@@ -242,8 +244,8 @@ const getCurrentPrompt = (): string => {
       return "What is your name?";
     case PromptStage.COMPANY:
       // Make sure we're not using "Hello" as the name if it was stored
-      const displayName = userInfo.name && !isGenericGreeting(userInfo.name) ? userInfo.name : '';
-      return `Nice to meet you${displayName ? ', ' + displayName : ''}! What's your company name?`;
+      { const displayName = userInfo.name && !isGenericGreeting(userInfo.name) ? userInfo.name : '';
+      return `Nice to meet you${displayName ? ', ' + displayName : ''}! What's your company name?`; }
     case PromptStage.INDUSTRY:
       return "What industry are you in?";
     case PromptStage.PROJECT_TYPE:
@@ -447,54 +449,54 @@ const getUncertaintyResponse = (stage: PromptStage, attempts: number): string =>
   return fallbackResponse;
 };
 
-const isValidInput = (input: string, stage: PromptStage): boolean => {
-  const trimmed = input.trim();
-
-  // Handle clear command separately
-  if (trimmed.toLowerCase() === "clear") return true;
+  const isValidInput = (input: string, stage: PromptStage): boolean => {
+    const trimmed = input.trim();
   
-  // Handle uncertainty responses
-  if (isUncertaintyResponse(trimmed)) return true;
-  
-  // Reject empty input
-  if (!trimmed) return false;
-
-  // For NAME stage, reject generic greetings
-  if (stage === PromptStage.NAME && isGenericGreeting(trimmed)) {
-    return false;
-  }
-
-  // If it's just a greeting at a stage other than NAME, it's not a valid response
-  if (isGenericGreeting(trimmed) && stage !== PromptStage.NAME) return false;
-
-  // Reject single characters or non-alphanumeric input for most fields
-  // but allow them if we've already tried multiple times
-  const attemptForStage = attemptCount[stage] || 0;
-  if (attemptForStage < 2 && (trimmed.length === 1 || /^[^a-zA-Z0-9]+$/.test(trimmed))) return false;
-
-  // After a few attempts, accept almost anything that's not empty
-  if (attemptForStage >= 3) return true;
-  
-  // Stage-specific validations (less strict now)
-  switch (stage) {
-    case PromptStage.NAME:
-      // Names should generally have letters, but we'll be flexible
-      return trimmed.length >= 2; // Increase min length to 2
+    // Handle clear command separately
+    if (trimmed.toLowerCase() === "clear") return true;
     
-    case PromptStage.CONTACT_INFO:
-      // Be more forgiving with contact info format after first attempt
-      if (attemptForStage >= 1) return trimmed.length >= 3;
+    // Handle uncertainty responses
+    if (isUncertaintyResponse(trimmed)) return true;
+    
+    // Reject empty input
+    if (!trimmed) return false;
+  
+    // For NAME stage, reject generic greetings
+    if (stage === PromptStage.NAME && isGenericGreeting(trimmed)) {
+      return false;
+    }
+  
+    // If it's just a greeting at a stage other than NAME, it's not a valid response
+    if (isGenericGreeting(trimmed) && stage !== PromptStage.NAME) return false;
+  
+    // Reject single characters or non-alphanumeric input for most fields
+    // but allow them if we've already tried multiple times
+    const attemptForStage = attemptCount[stage] || 0;
+    if (attemptForStage < 2 && (trimmed.length === 1 || /^[^a-zA-Z0-9]+$/.test(trimmed))) return false;
+  
+    // After a few attempts, accept almost anything that's not empty
+    if (attemptForStage >= 3) return true;
+    
+    // Stage-specific validations (less strict now)
+    switch (stage) {
+      case PromptStage.NAME:
+        // Names should generally have letters, but we'll be flexible
+        return trimmed.length >= 2; // Increase min length to 2
       
-      // Basic email or phone validation
-      const isEmail = /\S+@\S+\.\S+/.test(trimmed);
-      const isPhone = /[\d\s\(\)\-\+]{7,}/.test(trimmed);
-      return isEmail || isPhone;
-    
-    default:
-      // For other fields, just ensure there's some content
-      return trimmed.length >= 1;
-  }
-};
+      case PromptStage.CONTACT_INFO:
+        // Be more forgiving with contact info format after first attempt
+        { if (attemptForStage >= 1) return trimmed.length >= 3;
+        
+        // Basic email or phone validation
+        const isEmail = /\S+@\S+\.\S+/.test(trimmed);
+        const isPhone = /[\d\s()\-+]{7,}/.test(trimmed);
+        return isEmail || isPhone; }
+      
+      default:
+        // For other fields, just ensure there's some content
+        return trimmed.length >= 1;
+    }
+  };
 
 const getResponseForInvalidInput = (stage: PromptStage, attempts: number): string => {
   // After multiple attempts, be more forgiving and flexible
@@ -667,7 +669,7 @@ const handleSend = async () => {
   }
 
   // Add user message to chat
-  const newMessages = [...messages, { 
+  const newMessages: Message[] = [...messages, { 
     role: 'user', 
     content: userMessage,
     timestamp: new Date().toISOString()
@@ -730,7 +732,7 @@ const handleSend = async () => {
     // Add both the uncertainty response and the next prompt
     const responseMessage = `${uncertaintyResponse} ${nextPrompt}`;
     const botResponse = await simulateTypingEffect(responseMessage);
-    const updatedMessages = [...newMessages, { 
+    const updatedMessages: Message[] = [...newMessages, { 
       role: 'assistant', 
       content: botResponse,
       timestamp: new Date().toISOString()
@@ -760,7 +762,7 @@ const handleSend = async () => {
   
   // Add assistant response
   const botResponse = await simulateTypingEffect(nextPrompt);
-  const updatedMessages = [...newMessages, { 
+  const updatedMessages: Message[] = [...newMessages, { 
     role: 'assistant', 
     content: botResponse,
     timestamp: new Date().toISOString()

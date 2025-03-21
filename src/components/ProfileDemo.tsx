@@ -7,7 +7,7 @@ import {
   BuildingLibraryIcon,
   CalendarIcon,
   CheckCircleIcon
-} from 'lucide-react';
+} from '@heroicons/react/24/outline';
 
 const ProfileDemo = () => {
   const [activeTab, setActiveTab] = useState('personal');
@@ -28,7 +28,7 @@ const ProfileDemo = () => {
   };
   
   // Format date for better readability
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
       year: 'numeric',

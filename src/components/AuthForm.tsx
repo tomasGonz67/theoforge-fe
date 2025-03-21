@@ -4,15 +4,13 @@ import {
   ArrowLeftIcon, 
   EnvelopeIcon, 
   LockClosedIcon,
+  PencilIcon,
   SparklesIcon
 } from '@heroicons/react/24/outline';
 import { AuthContext } from '../App';
 import {
-  Card,
-  CardBody,
   Button,
   Typography,
-  IconButton,
   Alert
 } from "@material-tailwind/react";
 
@@ -22,11 +20,14 @@ interface AuthFormProps {
 
 export function AuthForm({ type }: AuthFormProps) {
   const [email, setEmail] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [nickname, setNickname] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isVisible, setIsVisible] = useState(false);
   const navigate = useNavigate();
-  const { login } = useContext(AuthContext);
+  const { login, register } = useContext(AuthContext);
 
   useEffect(() => {
     setIsVisible(true);
@@ -34,22 +35,57 @@ export function AuthForm({ type }: AuthFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    if(!email || !password) {
+      setError('Please fill out all fields');
+      return;
+    }
+    let errorMessage = '';
+    if(!/^[\w-.]{1,64}@([\w-]{1,63}\.)+[\w-]{2,63}$/.test(email)) errorMessage = 'Invalid email';
+    else if(type === 'register' && !/^[a-zA-Z0-9]*$/.test(nickname)) errorMessage = 'Nickname may not include special characters';
+    else if(password.length < 8) errorMessage = 'Password must be at least 8 characters';
+    else if(!/[A-Z]/.test(password)) errorMessage = 'Password must contain at least 1 uppercase character';
+    else if(!/[`!@#$%^&*()_+\-=[\]{};':|,.<>/?~]/.test(password)) errorMessage = 'Password must contain at least 1 special character';
+    else if (firstName.length > 100) errorMessage = 'First name must not be more than 100 characters';
+    else if (lastName.length > 100) errorMessage = 'Last name must not be more than 100 characters';
+    else if (nickname.length > 50) errorMessage = 'Nickname must not be more than 50 characters';
+    // Prevent sql injection by invalidating " and \
+    else if (/["\\]/.test(email.concat(firstName, lastName, nickname, password))) errorMessage = 'Invalid character " or \\ used';
+    if (errorMessage !== ''){
+      setError(errorMessage);
+      return;
+    }
 
     if (type === 'login') {
-      const success = login(email, password);
-      if (success) {
+      const response = await login(email, password);
+      if ( response === 200) {
         navigate('/dashboard');
+      } else if (response === 500) {
+        setError('Invalid credentials')
+      } else if (response === 0) {
+        setError('Failed to contact server. Please try again later.');
       } else {
-        setError('Invalid credentials');
+        setError('An unknown error encountered. Please try again later.')
       }
     } else {
-      setError('Registration is currently disabled. Please use test@test.com / test123');
+      const response = await register(email, firstName, lastName, nickname, password);
+      if (response === 200) {
+        navigate('/dashboard');
+      } else if (response === 400) {
+        setError('Email already taken');
+      } else if (response === 404) {
+        setError('The server has encountered an error. Please try again later.');//Invalid API endpoint
+      } else if (response === 500) {
+        setError('Nickname already taken');
+      } else if (response === 0) {
+        setError('Failed to contact server. Please try again later.');
+      } else {
+        setError('An unknown error encountered. Please try again later.');
+      }
     }
   };
 
-  const handleTestLogin = () => {
-    const success = login('test@test.com', 'test123');
+  const handleTestLogin = async () => {
+    const success = await login('test@test.com', 'test123');
     if (success) {
       navigate('/dashboard');
     }
@@ -133,6 +169,58 @@ export function AuthForm({ type }: AuthFormProps) {
                 </div>
               </div>
 
+              {type === 'register' && (
+              <div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">First Name</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <PencilIcon className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="John"
+                      className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-200 outline-none"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">Last Name</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <PencilIcon className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Doe"
+                      className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-200 outline-none"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">Nickname</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <PencilIcon className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="johndoe"
+                      className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-200 outline-none"
+                      value={nickname}
+                      onChange={(e) => setNickname(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+              )}
+
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">Password</label>
                 <div className="relative">
@@ -165,7 +253,7 @@ export function AuthForm({ type }: AuthFormProps) {
                 className="w-full py-3 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 active:scale-98 mt-4"
                 fullWidth
               >
-                {type === 'login' ? 'Sign In' : 'Create Account'}
+                {type === 'login' ? 'Login' : 'Register'}
               </Button>
             </form>
 

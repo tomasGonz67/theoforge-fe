@@ -7,13 +7,12 @@ import {
   ShoppingBagIcon,
   UserCircleIcon,
   Cog6ToothIcon,
-  ArrowRightOnRectangleIcon,
+  ArrowRightStartOnRectangleIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   Bars3Icon as MenuIcon,
   CreditCardIcon,
   BuildingLibraryIcon,
-  BeakerIcon,
   ChartBarIcon,
   BellIcon,
   CheckCircleIcon,
@@ -21,7 +20,8 @@ import {
   ArrowPathIcon,
   ClipboardDocumentCheckIcon,
   ChatBubbleLeftRightIcon,
-  CalendarIcon
+  CalendarIcon,
+  BeakerIcon
 } from '@heroicons/react/24/outline';
 import { UsersTable } from './UsersTable';
 import { GuestsTable } from './GuestsTable';
@@ -42,45 +42,12 @@ import {
   Dialog,
   DialogHeader,
   DialogBody,
-  Tabs,
-  TabsHeader,
-  TabsBody,
-  Tab,
-  TabPanel,
-  Input,
   Button,
   Progress,
   Avatar,
   Chip
 } from "@material-tailwind/react";
 import { cn } from '../lib/utils';
-
-const navigation = [
-  { 
-    name: 'Dashboard', 
-    href: '/dashboard', 
-    icon: ChartBarIcon,
-    description: 'Overview of your activity'
-  },
-  { 
-    name: 'Users', 
-    href: '/dashboard/users', 
-    icon: UsersIcon,
-    description: 'Manage system users'
-  },
-  { 
-    name: 'Guests', 
-    href: '/dashboard/guests', 
-    icon: HomeIcon,
-    description: 'View guest accounts'
-  },
-  { 
-    name: 'Marketplace', 
-    href: '/dashboard/marketplace', 
-    icon: ShoppingBagIcon,
-    description: 'Browse available services'
-  },
-];
 
 const TABS = [
   {
@@ -118,7 +85,7 @@ const recentActivity = [
 ];
 
 export function Dashboard() {
-  const { logout } = useContext(AuthContext);
+  const { role, logout } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -128,6 +95,46 @@ export function Dashboard() {
   const [activeTab, setActiveTab] = useState("personal");
   const [viewMode, setViewMode] = useState('view');
   const [isVisible, setIsVisible] = useState(false);
+
+  const navigation = role === 'ADMIN' ? [
+    { 
+      name: 'Dashboard', 
+      href: '/dashboard', 
+      icon: ChartBarIcon,
+      description: 'Overview of your activity'
+    },
+    { 
+      name: 'Users', 
+      href: '/dashboard/users', 
+      icon: UsersIcon,
+      description: 'Manage system users'
+    },
+    { 
+      name: 'Guests', 
+      href: '/dashboard/guests', 
+      icon: HomeIcon,
+      description: 'View guest accounts'
+    },
+    { 
+      name: 'Marketplace', 
+      href: '/dashboard/marketplace', 
+      icon: ShoppingBagIcon,
+      description: 'Browse available services'
+    },
+  ] : [
+    { 
+      name: 'Dashboard', 
+      href: '/dashboard', 
+      icon: ChartBarIcon,
+      description: 'Overview of your activity'
+    },
+    { 
+      name: 'Marketplace', 
+      href: '/dashboard/marketplace', 
+      icon: ShoppingBagIcon,
+      description: 'Browse available services'
+    },
+  ];
 
   useEffect(() => {
     setIsVisible(true);
@@ -148,7 +155,7 @@ export function Dashboard() {
     lastName: "Doe",
     email: "testuser@example.com",
     nickname: "testuser",
-    role: "ADMIN",
+    role: role,
     id: "9696cd13-30cd-445c-a7fa-916dd856f964",
     email_verified: true,
     created_at: "2025-03-11T17:24:23.496031Z",
@@ -167,7 +174,7 @@ export function Dashboard() {
     navigate('/login');
   };
 
-  const handleNavigation = (path) => {
+  const handleNavigation = (path: string) => {
     const page = path.split('/').pop() || 'dashboard';
     setCurrentPage(page);
     navigate(path);
@@ -175,7 +182,7 @@ export function Dashboard() {
   };
 
   // Format date for better readability
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string | number | Date) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
@@ -187,7 +194,7 @@ export function Dashboard() {
   };
 
   // Handle profile form changes
-  const handleProfileChange = (field, value) => {
+  const handleProfileChange = (field: string, value: string) => {
     setProfile({
       ...profile,
       [field]: value
@@ -766,12 +773,12 @@ export function Dashboard() {
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <Typography variant="small" color="gray" className="mb-1">Total Revenue</Typography>
                   <Typography variant="h5">$24,568.12</Typography>
-                  <Typography variant="small" color="green-500">+15.3% vs last month</Typography>
+                  <Typography variant="small" className="text-green-500">+15.3% vs last month</Typography>
                 </div>
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <Typography variant="small" color="gray" className="mb-1">Active Subscriptions</Typography>
                   <Typography variant="h5">843</Typography>
-                  <Typography variant="small" color="green-500">+5.2% vs last month</Typography>
+                  <Typography variant="small" className="text-green-500">+5.2% vs last month</Typography>
                 </div>
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <Typography variant="small" color="gray" className="mb-1">Avg. Transaction</Typography>
@@ -915,8 +922,9 @@ export function Dashboard() {
               <ListItem
                 key={item.name}
                 className={cn(
+                  isSidebarCollapsed ? "w-10" : "", //icon hover highlight should also change size on collapse
                   "mb-2 hover:bg-teal-50/80 transition-all duration-200",
-                  isActive && "bg-teal-50/80 text-teal-500 font-medium"
+                  isActive ? "bg-teal-50/80 text-teal-500 font-medium" : ""
                 )}
                 onClick={() => handleNavigation(item.href)}
               >
@@ -1031,7 +1039,7 @@ export function Dashboard() {
                   className="flex items-center gap-2 rounded hover:bg-red-50 text-red-500"
                   onClick={handleLogout}
                 >
-                  <ArrowRightOnRectangleIcon className="h-4 w-4" />
+                  <ArrowRightStartOnRectangleIcon className="h-4 w-4" />
                   <Typography variant="small" className="font-normal">
                     Sign Out
                   </Typography>
@@ -1106,13 +1114,13 @@ export function Dashboard() {
                 name: path.charAt(0).toUpperCase() + path.slice(1),
                 href: '/' + array.slice(0, index + 1).join('/'),
                 current: index === array.length - 1,
-              })).map((breadcrumb, index) => (
+              })).map((breadcrumb) => (
                 <a
                   key={breadcrumb.href}
                   href={breadcrumb.href}
                   className={cn(
                     "opacity-60",
-                    breadcrumb.current && "opacity-100 text-teal-500 font-medium"
+                    breadcrumb.current ? "opacity-100 text-teal-500 font-medium" : ""
                   )}
                 >
                   <span>{breadcrumb.name}</span>
@@ -1453,8 +1461,92 @@ export function Dashboard() {
               </>
             )}
 
-            {/* Other pages content remains the same */}
-            {/* ... */}
+            {/* Users Table Section */}
+            {currentPage === 'users' && (
+              <Card className="border border-gray-100 overflow-hidden">
+                <div className="px-6 py-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
+                  <div>
+                    <Typography variant="h5" color="blue-gray">
+                      Users Management
+                    </Typography>
+                    <Typography variant="small" color="gray">
+                      Manage your system users and their permissions
+                    </Typography>
+                  </div>
+                  <Button 
+                    color="teal" 
+                    size="sm" 
+                    className="flex items-center gap-1"
+                  >
+                    <UsersIcon className="h-4 w-4" /> Add User
+                  </Button>
+                </div>
+                <UsersTable />
+              </Card>
+            )}
+            
+            {/* Guests Table Section */}
+            {currentPage === 'guests' && (
+              <Card className="border border-gray-100 overflow-hidden">
+                <div className="px-6 py-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
+                  <div>
+                    <Typography variant="h5" color="blue-gray">
+                      Guest Management
+                    </Typography>
+                    <Typography variant="small" color="gray">
+                      View and manage guest accounts in your system
+                    </Typography>
+                  </div>
+                  <Button 
+                    color="teal" 
+                    size="sm" 
+                    className="flex items-center gap-1"
+                  >
+                    <HomeIcon className="h-4 w-4" /> Add Guest
+                  </Button>
+                </div>
+                <GuestsTable />
+              </Card>
+            )}
+            
+            {/* Marketplace Section */}
+            {currentPage === 'marketplace' && (
+              <div className="space-y-6">
+                <Card className="p-6 border border-gray-100 bg-gradient-to-r from-teal-600 to-blue-500 text-white">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div>
+                      <Typography variant="h3" className="mb-2">
+                        AI Solution Marketplace
+                      </Typography>
+                      <Typography className="opacity-90 max-w-2xl">
+                        Browse and purchase AI solutions to enhance your business capabilities. Integrate seamlessly with your existing systems.
+                      </Typography>
+                    </div>
+                    <Button 
+                      color="white" 
+                      className="flex items-center gap-2 text-teal-800"
+                      size="lg"
+                    >
+                      <ShoppingBagIcon className="h-4 w-4" /> 
+                      Browse Solutions
+                    </Button>
+                  </div>
+                </Card>
+                
+                <div className="text-center py-12">
+                  <SparklesIcon className="h-12 w-12 text-teal-500 mx-auto mb-4" />
+                  <Typography variant="h4" color="blue-gray" className="mb-2">
+                    Marketplace Coming Soon
+                  </Typography>
+                  <Typography color="gray" className="max-w-md mx-auto">
+                    We're working hard to bring you a comprehensive marketplace of AI solutions. Check back soon for updates!
+                  </Typography>
+                  <Button color="teal" className="mt-6">
+                    Get Notified
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

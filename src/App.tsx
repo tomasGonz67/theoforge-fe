@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, FC, ReactNode } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
 import {
   BeakerIcon,
@@ -24,44 +24,101 @@ import {
   Typography,
   Button,
   IconButton,
-  Card,
-  CardBody,
-  CardHeader,
-  CardFooter,
-  Avatar,
-  Carousel,
   Collapse,
   Chip
 } from "@material-tailwind/react";
-import { cn } from './lib/utils';
+import axios from 'axios';
+type Role = 'USER' | 'ADMIN';
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const AuthContext = React.createContext<{
   isAuthenticated: boolean;
-  login: (email: string, password: string) => boolean;
+  role: Role;
+  login: (email: string, password: string) => Promise<number>;
+  register: (email: string, firstName: string, lastName: string, nickname: string, passsword: string) => Promise<number>;
   logout: () => void;
 }>({
   isAuthenticated: false,
-  login: () => false,
+  role: 'USER',
+  login: async () => -1,
+  register: async () => -1,
   logout: () => {},
 });
 
-function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [role, setRole] = useState('USER' as Role);
 
-  const login = (email: string, password: string) => {
+  const login = async (email: string, password: string) => {
+    // Remove once backend API is released
+    let response = -1;
     if (email === 'test@test.com' && password === 'test123') {
+      setRole("ADMIN");
       setIsAuthenticated(true);
-      return true;
+      return 200;
     }
-    return false;
+    const params = new URLSearchParams();
+    params.append('username', email);
+    params.append('password', password);
+    await axios.post('/auth/login', params).then(res => {
+      // Decode jwt token into json
+      const json = JSON.parse(decodeURIComponent(window.atob(res.data.access_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join('')));
+      setRole(json.role);
+      setIsAuthenticated(true);
+      response = 200;
+    }).catch (err => {
+      if (err.response && err.response.data && err.response.data.detail) {
+        if(err.response.data.detail === '400: Invalid username/password') {
+          response = 500;
+        } else {
+          response = -1;
+        }
+      } else {
+        response = 0;
+      }
+    });
+    return response;
+  };
+
+  const register = async (email: string, firstName: string, lastName: string, nickname: string, password: string) => {
+    let response = -1;
+    await axios.post('/auth/register', {
+      "email": email,
+      "first_name": firstName,
+      "last_name": lastName,
+      "nickname": nickname,
+      "password": password,
+    }).then(res => {
+      setRole(res.data.role);
+      setIsAuthenticated(true);
+      response = 200;
+    }).catch(err => {
+      if (err.response && err.response.data && err.response.data.detail) {
+        if (err.response.data.detail === '400: Email already exists') {
+          response = 400;
+        } else if (err.response.data.detail === 'Not Found') {
+          response = 404;
+        } else if (/Key \(nickname\)=\([a-zA-Z0-9]+\) already exists/.test(err.response.data.detail)) {
+          response = 500;
+        } else {
+          response = -1;
+        }
+      } else {
+        response = 0;
+      }
+    });
+    return response;
   };
 
   const logout = () => {
     setIsAuthenticated(false);
+    setRole('USER');
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, role, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
@@ -72,12 +129,43 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
 }
 
+const testimonials = [
+  {
+    quote: "Theoforge's ETL solutions transformed our data pipeline, reducing processing time by 75% and improving data quality significantly.",
+    name: "Sarah Johnson",
+    role: "CTO",
+    company: "TechNova Solutions",
+    categories: ["Data Solutions", "Enterprise"]
+  },
+  {
+    quote: "The knowledge graph implementation helped us discover critical relationships in our data that were previously invisible. Game-changing for our research team.",
+    name: "Dr. Michael Chen",
+    role: "Director of Research",
+    company: "HealthScan Inc.",
+    categories: ["Data Solutions", "Healthcare"]
+  },
+  {
+    quote: "Their custom LLM training created a model that actually understands our industry terminology. Customer service efficiency improved by 40%.",
+    name: "Alex Rivera",
+    role: "VP of Operations",
+    company: "Globex Financial",
+    categories: ["AI Integration", "Finance"]
+  },
+  {
+    quote: "Working with Theoforge was seamless. Their team understood our needs and delivered solutions that exceeded our expectations on every level.",
+    name: "Priya Patel",
+    role: "Head of Innovation",
+    company: "FutureTech Industries",
+    categories: ["Enterprise"]
+  }
+];
+
 function LandingPage() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeTestimonial, setActiveTestimonial] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
-  const [activeFilters, setActiveFilters] = useState([]);
+  const [activeFilters, setActiveFilters] = useState<string[]>([]);
 
   useEffect(() => {
     setIsVisible(true);
@@ -90,7 +178,7 @@ function LandingPage() {
   }, []);
 
   // Toggle filter function
-  const toggleFilter = (filter) => {
+  const toggleFilter = (filter: string) => {
     if (activeFilters.includes(filter)) {
       setActiveFilters(activeFilters.filter(f => f !== filter));
     } else {
@@ -99,14 +187,13 @@ function LandingPage() {
   };
 
   // Custom ScrollLink component for smooth scrolling
-  const ScrollLink = ({ to, children, className, onClick }) => {
-    const handleClick = (e) => {
+  type ScrollLinkProps = { to: string, children: ReactNode, className: string, onClick?: React.MouseEventHandler<HTMLButtonElement> | undefined }
+  const ScrollLink: FC<ScrollLinkProps> = ({ to, children, className, onClick }) => {
+    const handleClick = (e: React.MouseEvent) => {
       e.preventDefault();
       
       // First call the onClick handler (if provided) to close the menu
-      if (onClick) {
-        onClick();
-        
+      if (onClick) {   
         // Add a small delay to allow menu close animation to complete
         setTimeout(() => {
           const element = document.getElementById(to);
@@ -170,37 +257,6 @@ function LandingPage() {
         'Continuous learning'
       ]
     },
-  ];
-
-  const testimonials = [
-    {
-      quote: "Theoforge's ETL solutions transformed our data pipeline, reducing processing time by 75% and improving data quality significantly.",
-      name: "Sarah Johnson",
-      role: "CTO",
-      company: "TechNova Solutions",
-      categories: ["Data Solutions", "Enterprise"]
-    },
-    {
-      quote: "The knowledge graph implementation helped us discover critical relationships in our data that were previously invisible. Game-changing for our research team.",
-      name: "Dr. Michael Chen",
-      role: "Director of Research",
-      company: "HealthScan Inc.",
-      categories: ["Data Solutions", "Healthcare"]
-    },
-    {
-      quote: "Their custom LLM training created a model that actually understands our industry terminology. Customer service efficiency improved by 40%.",
-      name: "Alex Rivera",
-      role: "VP of Operations",
-      company: "Globex Financial",
-      categories: ["AI Integration", "Finance"]
-    },
-    {
-      quote: "Working with Theoforge was seamless. Their team understood our needs and delivered solutions that exceeded our expectations on every level.",
-      name: "Priya Patel",
-      role: "Head of Innovation",
-      company: "FutureTech Industries",
-      categories: ["Enterprise"]
-    }
   ];
 
   // Calculate filtered testimonials based on active filters
@@ -283,8 +339,7 @@ function LandingPage() {
             variant="text"
             color="blue-gray"
             className="lg:hidden"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-          >
+            onClick={() => setIsMenuOpen(!isMenuOpen)}>
             {isMenuOpen ? <XMarkIcon className="h-6 w-6" /> : <Bars3Icon className="h-6 w-6" />}
           </IconButton>
         </div>
@@ -338,16 +393,14 @@ function LandingPage() {
                   size="lg"
                   className="flex items-center gap-3"
                   color="teal"
-                  onClick={() => setIsChatOpen(true)}
-                >
+                  onClick={() => setIsChatOpen(true)}>
                   <SparklesIcon className="h-5 w-5" /> Discuss Your Project
                 </Button>
                 <Button
                   size="lg"
                   variant="outlined"
                   color="teal"
-                  className="flex items-center gap-2"
-                >
+                  className="flex items-center gap-2">
                   Learn More <ArrowRightIcon className="h-4 w-4" />
                 </Button>
               </div>
@@ -490,15 +543,14 @@ function LandingPage() {
                       </Typography>
                       <div className="flex flex-wrap justify-center gap-2 mb-8">
                         {["Data Solutions", "AI Integration", "Enterprise", "Healthcare", "Finance"].map((category) => (
-                          <Chip 
+                          <Button //Chip is missing onClick property which breaks tests
                             key={category}
                             size="sm" 
-                            value={category} 
                             color={activeFilters.includes(category) ? "teal" : "blue-gray"}
                             variant={activeFilters.includes(category) ? "filled" : "outlined"}
                             onClick={() => toggleFilter(category)}
                             className="cursor-pointer"
-                          />
+                          >{category}</Button>
                         ))}
                       </div>
                       <Button 
