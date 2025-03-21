@@ -820,6 +820,7 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<AuthForm type="login" />} />
           <Route path="/register" element={<AuthForm type="register" />} />
+          <Route path="/learn-more" element={<LearnMore />} />
           <Route
             path="/dashboard/*"
             element={
@@ -831,6 +832,20 @@ function App() {
         </Routes>
       </Router>
     </AuthProvider>
+  );
+}
+
+function LearnMore() {
+  return (
+    <div className="container mx-auto px-4 py-10">
+      <h1 className="text-3xl font-bold mb-6">Learn More About Theoforge</h1>
+      <p className="mb-4">
+        This page would contain detailed information about Theoforge's services, company background, and more.
+      </p>
+      <Link to="/" className="text-teal-500 hover:text-teal-700">
+        Return to Home
+      </Link>
+    </div>
   );
 }
 
