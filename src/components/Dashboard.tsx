@@ -117,7 +117,7 @@ const userNavigation = [
   }
 ];
 
-// Admin navigation - full options (includes Analytics)
+// Admin navigation- full options (includes Analytics)
 const adminNavigation = [
   { 
     name: 'Dashboard', 

@@ -112,7 +112,7 @@ export const isAuthenticated = (): boolean => {
 };
 
 /**
- * Check if the user is an admin
+ * Checkif the user is an admin
  * @returns True if user is an admin
  */
 export const isAdmin = (): boolean => {

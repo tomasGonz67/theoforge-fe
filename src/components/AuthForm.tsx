@@ -31,7 +31,7 @@ export function AuthForm({ type }: AuthFormProps) {
   useEffect(() => {
     setIsVisible(true);
     
-    // If user is already authenticated, redirect to dashboard
+    // If useris already authenticated, redirect to dashboard
     if (isAuthenticated) {
       navigate('/dashboard');
     }

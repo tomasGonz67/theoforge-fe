@@ -1,7 +1,7 @@
 import axiosInstance from '../utils/axiosConfig';
 
 const neo4jService = {
-  // Get the hello world test message from Neo4j
+  // Getthe hello world test message from Neo4j
   getHelloWorld: async () => {
     try {
       const response = await axiosInstance.get('/neo4j/hello-world');

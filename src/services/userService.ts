@@ -16,7 +16,7 @@ const userService = {
     }
   },
 
-  // Update the current user's profile
+  // Updatethe current user's profile
   updateProfile: async (profileData: any) => {
     try {
       const response = await axiosInstance.put('/users/profile', profileData);

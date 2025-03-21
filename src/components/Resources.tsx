@@ -682,7 +682,7 @@ export function Resources() {
         </DialogFooter>
       </Dialog>
 
-      {/* Delete Confirmation Modal */}
+      {/* DeleteConfirmation Modal */}
       <Dialog
         open={isDeleteModalOpen}
         handler={() => setIsDeleteModalOpen(false)}

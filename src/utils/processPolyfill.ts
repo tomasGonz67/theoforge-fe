@@ -1,6 +1,6 @@
 // src/utils/processPolyfill.ts
 /**
- * This polyfill adds a process object to the window when it doesn't exist
+ * Thispolyfill adds a process object to the window when it doesn't exist
  * This prevents "Can't find variable: process" errors in browser environments
  */
 

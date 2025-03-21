@@ -1,7 +1,7 @@
 // src/utils/axiosConfig.ts
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8000'; // Update with your actual backend URL
+const API_URL = 'http://localhost:8000'; //Update with your actual backend URL
 
 // Create axios instance with base URL
 const axiosInstance = axios.create({

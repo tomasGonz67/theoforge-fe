@@ -35,7 +35,7 @@ export function KnowledgeGraphPage() {
   
   const handleExport = (format: string) => {
     console.log(`Exporting in ${format} format`);
-    // Implementation would go here
+    // Implementationwould go here
   };
 
   return (

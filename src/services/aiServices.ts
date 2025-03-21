@@ -107,7 +107,7 @@ export async function transcribeAudio(
   }
   
   try {
-    // Create a FormData object to send the audio file
+    // Create aFormData object to send the audio file
     const formData = new FormData();
     formData.append('file', audioBlob, 'recording.webm');
     formData.append('model', 'whisper-1');

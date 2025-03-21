@@ -35,7 +35,7 @@ import {
 } from "@material-tailwind/react";
 import { getGuestId, getStorageKeyForGuest } from '../lib/guestIdentifier';
 
-// Enhanced guest identification
+// Enhancedguest identification
 interface GuestInfo {
   id: string;
   name?: string;

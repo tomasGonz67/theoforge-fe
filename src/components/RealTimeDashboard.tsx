@@ -42,7 +42,7 @@ export function RealTimeDashboard() {
     responseTime: 120, // in ms
     uptime: 99.98,
     errorRate: 0.05,
-    requestRate: 125 // requests per minute
+    requestRate: 125 //requests per minute
   });
   
   // Sample time series data

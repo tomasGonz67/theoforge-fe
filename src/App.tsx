@@ -30,7 +30,7 @@ import {
 import axios from 'axios';
 type Role = 'USER' | 'ADMIN';
 
-// eslint-disable-next-line react-refresh/only-export-components
+// eslintdisable-next-line react-refresh/only-export-components
 export const AuthContext = React.createContext<{
   isAuthenticated: boolean;
   role: Role;

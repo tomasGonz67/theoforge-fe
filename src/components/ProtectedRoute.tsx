@@ -27,7 +27,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/dashboard" replace />;
   }
 
-  // Render the protected content
+  // Render the protectedcontent
   return <>{children}</>;
 };
 

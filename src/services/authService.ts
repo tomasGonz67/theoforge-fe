@@ -6,7 +6,7 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000'; // Upd
 export const authService = {
   login: async (email: string, password: string) => {
     try {
-      // Create request body for login endpoint using OAuth2 password grant format
+      // Createrequest body for login endpoint using OAuth2 password grant format
       const loginData = {
         grant_type: 'password',
         username: email,

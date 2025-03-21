@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-// Graph node types and their colors
+// Graph node typesand their colors
 const NODE_TYPES = {
   CONCEPT: { label: 'Concept', color: 'teal' },
   ENTITY: { label: 'Entity', color: 'blue' },

@@ -269,7 +269,7 @@ export function LearnMore() {
         </div>
       </div>
 
-      {/* Services Tabs Section */}
+      {/* ServicesTabs Section */}
       <div className="py-16 sm:py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <Typography variant="h2" className="mb-4">Our Specialized Solutions</Typography>

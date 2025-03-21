@@ -55,7 +55,7 @@ export function ProfileSettings() {
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Load user profile data on component mount
+  // Load user profile data oncomponent mount
   useEffect(() => {
     const loadUserProfile = async () => {
       setIsLoading(true);

@@ -31,7 +31,7 @@ export function LogoutModal({ isOpen, onClose }: LogoutModalProps) {
       open={isOpen}
       handler={onClose}
       size="xs"
-      className="z-[70]" // Set a higher z-index than the backdrop
+      className="z-[70]" // Seta higher z-index than the backdrop
     >
       <DialogHeader className="justify-center">
         <Typography variant="h5" color="blue-gray">
