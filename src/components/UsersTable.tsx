@@ -25,7 +25,7 @@ interface User {
   status: 'active' | 'inactive';
   lastLogin: string;
   nickname: string;
-  //hashed_password: string;
+  hashed_password: string;
   first_name: string | null;
   last_name: string | null;
   email_verified: boolean;
