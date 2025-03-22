@@ -15,7 +15,6 @@ import {
   DialogBody,
   DialogFooter,
 } from "@material-tailwind/react";
-import { cn } from '../lib/utils';
 
 const API_URL = 'http://localhost:8000';
 
@@ -41,7 +40,7 @@ interface Guest {
   project_type: string[] | null;
   session_id: string;
   status: 'NEW' | 'CONTACTED' | 'CONVERTED';
-  timeline: string;
+  timeline: string | null;
   updated_at: string;
 }
 
@@ -240,6 +239,7 @@ export function GuestsTable() {
                 icon={<MagnifyingGlassIcon className="h-5 w-5" />}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                crossOrigin={undefined}
               />
             </div>
           </div>
@@ -279,27 +279,27 @@ export function GuestsTable() {
                   <tr key={guest.id}>
                     <td className={classes}>
                       <Typography variant="small" color="blue-gray" className="font-normal overscroll-x-contain overflow-auto w-32">
-                        {guest.name}
+                        {guest.name ? guest.name : ''}
                       </Typography>
                     </td>
                     <td className={classes}>
                       <Typography variant="small" color="blue-gray" className="font-normal overscroll-x-contain overflow-auto w-32">
-                        {guest.company}
+                        {guest.company ? guest.company : ''}
                       </Typography>
                     </td>
                     <td className={classes}>
                       <Typography variant="small" color="blue-gray" className="font-normal overscroll-x-contain overflow-auto w-32">
-                        {guest.industry}
+                        {guest.industry ? guest.industry : ''}
                       </Typography>
                     </td>
                     <td className={classes}>
                       <Typography variant="small" color="blue-gray" className="font-normal overscroll-x-contain overflow-auto w-32">
-                        {guest.budget}
+                        {guest.budget ? guest.budget : ''}
                       </Typography>
                     </td>
                     <td className={classes}>
                       <Typography variant="small" color="blue-gray" className="font-normal overscroll-x-contain overflow-auto w-32">
-                        {guest.contact_info}
+                        {guest.contact_info ? guest.contact_info : ''}
                       </Typography>
                     </td>
                     <td className={classes}>
@@ -354,22 +354,22 @@ export function GuestsTable() {
           Page {currentPage} of {totalPages}
         </Typography>
         <div className="flex gap-2">
-          <IconButton
+          <Button
             variant="outlined"
             size="sm"
             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
             disabled={currentPage === 1}
           >
             Previous
-          </IconButton>
-          <IconButton
+          </Button>
+          <Button
             variant="outlined"
             size="sm"
             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
             disabled={currentPage === totalPages}
           >
             Next
-          </IconButton>
+          </Button>
         </div>
       </div>
 
@@ -381,43 +381,50 @@ export function GuestsTable() {
       >
         <DialogHeader>Create Guest</DialogHeader>
         <DialogBody>
+          <div>{/*Fix jest detecting no children in DialogBody error*/}</div>
           {createFormData && (
             <div className="grid gap-6 overscroll-y-contain overflow-auto h-96">
-              <div></div>
               <Input
                 label="Name"
                 value={createFormData.name ? createFormData.name : undefined}
                 onChange={(e) => setCreateFormData({ ...createFormData, name: e.target.value })}
+                crossOrigin={undefined}
               />
               <Input
                 label="Company"
                 value={createFormData.company ? createFormData.company : undefined}
                 onChange={(e) => setCreateFormData({ ...createFormData, company: e.target.value })}
+                crossOrigin={undefined}
               />
               <Input
                 label="Industry"
                 value={createFormData.industry ? createFormData.industry : undefined}
                 onChange={(e) => setCreateFormData({ ...createFormData, industry: e.target.value })}
+                crossOrigin={undefined}
               />
               <Input
                 label="Budget"
                 value={createFormData.budget ? createFormData.budget : undefined}
                 onChange={(e) => setCreateFormData({ ...createFormData, budget: e.target.value })}
+                crossOrigin={undefined}
               />
               <Input
                 label="Timeline"
                 value={createFormData.timeline ? createFormData.timeline : undefined}
                 onChange={(e) => setCreateFormData({ ...createFormData, timeline: e.target.value })}
+                crossOrigin={undefined}
               />
               <Input
                 label="Contact Info"
                 value={createFormData.contact_info ? createFormData.contact_info : undefined}
                 onChange={(e) => setCreateFormData({ ...createFormData, contact_info: e.target.value })}
+                crossOrigin={undefined}
               />
               <Input
                 label="Additional Notes"
                 value={createFormData.additional_notes ? createFormData.additional_notes : undefined}
                 onChange={(e) => setCreateFormData({ ...createFormData, additional_notes: e.target.value })}
+                crossOrigin={undefined}
               />
               {
                 // Create project type fields based on numProjectTypeFields
@@ -426,6 +433,7 @@ export function GuestsTable() {
                   label={"Project Type "+(num+1)}
                   value={createFormData.project_type ? createFormData.project_type[num] : undefined}
                   onChange={(e) => setCreateFormData({ ...createFormData, project_type: createFormData.project_type ? createFormData.project_type.map((value, i) => (i === num ? e.target.value : value)) : [e.target.value] })}
+                  crossOrigin={undefined}
                 />)
               }
               <div className="inline-flex flex-row gap-6">
@@ -461,6 +469,7 @@ export function GuestsTable() {
                   label={"Pain Point "+(num+1)}
                   value={createFormData.pain_points ? createFormData.pain_points[num] : undefined}
                   onChange={(e) => setCreateFormData({ ...createFormData, pain_points: createFormData.pain_points ? createFormData.pain_points.map((value, i) => (i === num ? e.target.value : value)) : [e.target.value] })}
+                  crossOrigin={undefined}
                 />)
               }
               <div className="inline-flex flex-row gap-6">
@@ -496,6 +505,7 @@ export function GuestsTable() {
                   label={"Current Tech "+(num+1)}
                   value={createFormData.current_tech? createFormData.current_tech[num] : undefined}
                   onChange={(e) => setCreateFormData({ ...createFormData, current_tech: createFormData.current_tech ? createFormData.current_tech.map((value, i) => (i === num ? e.target.value : value)) : [e.target.value] })}
+                  crossOrigin={undefined}
                 />)
               }
               <div className="inline-flex flex-row gap-6">
@@ -559,6 +569,7 @@ export function GuestsTable() {
       >
         <DialogHeader className="pb-0">View Guest</DialogHeader>
         <DialogBody>
+          <div>{/*Fix jest detecting no children in DialogBody error*/}</div>
           {selectedGuest && (
             <div className="grid grid-cols-3 grid-flow-row gap-2 overscroll-y-contain overflow-auto h-96 w-full">
               {viewField('Name:', selectedGuest.name)}
@@ -598,6 +609,7 @@ export function GuestsTable() {
       >
         <DialogHeader>Edit Guest</DialogHeader>
         <DialogBody>
+          <div>{/*Fix jest detecting no children in DialogBody error*/}</div>
           {editFormData && (
             <div className="grid gap-6 overscroll-y-contain overflow-auto h-96">
               <div></div>
@@ -605,36 +617,43 @@ export function GuestsTable() {
                 label="Name"
                 value={editFormData.name ? editFormData.name : undefined}
                 onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                crossOrigin={undefined}
               />
               <Input
                 label="Company"
                 value={editFormData.company ? editFormData.company : undefined}
                 onChange={(e) => setEditFormData({ ...editFormData, company: e.target.value })}
+                crossOrigin={undefined}
               />
               <Input
                 label="Industry"
                 value={editFormData.industry ? editFormData.industry : undefined}
                 onChange={(e) => setEditFormData({ ...editFormData, industry: e.target.value })}
+                crossOrigin={undefined}
               />
               <Input
                 label="Budget"
                 value={editFormData.budget ? editFormData.budget : undefined}
                 onChange={(e) => setEditFormData({ ...editFormData, budget: e.target.value })}
+                crossOrigin={undefined}
               />
               <Input
                 label="Timeline"
                 value={editFormData.timeline ? editFormData.timeline : undefined}
                 onChange={(e) => setEditFormData({ ...editFormData, timeline: e.target.value })}
+                crossOrigin={undefined}
               />
               <Input
                 label="Contact Info"
                 value={editFormData.contact_info ? editFormData.contact_info : undefined}
                 onChange={(e) => setEditFormData({ ...editFormData, contact_info: e.target.value })}
+                crossOrigin={undefined}
               />
               <Input
                 label="Additional Notes"
                 value={editFormData.additional_notes ? editFormData.additional_notes : undefined}
                 onChange={(e) => setEditFormData({ ...editFormData, additional_notes: e.target.value })}
+                crossOrigin={undefined}
               />
               {
                 // Create project type fields based on numProjectTypeFields
@@ -643,6 +662,7 @@ export function GuestsTable() {
                   label={"Project Type "+(num+1)}
                   value={editFormData.project_type ? editFormData.project_type[num] : undefined}
                   onChange={(e) => setEditFormData({ ...editFormData, project_type: editFormData.project_type ? editFormData.project_type.map((value, i) => (i === num ? e.target.value : value)) : [e.target.value] })}
+                  crossOrigin={undefined}
                 />)
               }
               <div className="inline-flex flex-row gap-6">
@@ -678,6 +698,7 @@ export function GuestsTable() {
                   label={"Pain Point "+(num+1)}
                   value={editFormData.pain_points ? editFormData.pain_points[num] : undefined}
                   onChange={(e) => setEditFormData({ ...editFormData, pain_points: editFormData.pain_points ? editFormData.pain_points.map((value, i) => (i === num ? e.target.value : value)) : [e.target.value] })}
+                  crossOrigin={undefined}
                 />)
               }
               <div className="inline-flex flex-row gap-6">
@@ -713,6 +734,7 @@ export function GuestsTable() {
                   label={"Current Tech "+(num+1)}
                   value={editFormData.current_tech? editFormData.current_tech[num] : undefined}
                   onChange={(e) => setEditFormData({ ...editFormData, current_tech: editFormData.current_tech ? editFormData.current_tech.map((value, i) => (i === num ? e.target.value : value)) : [e.target.value] })}
+                  crossOrigin={undefined}
                 />)
               }
               <div className="inline-flex flex-row gap-6">
@@ -768,7 +790,7 @@ export function GuestsTable() {
         </DialogFooter>
       </Dialog>
 
-      {/* Delete Confirmation Modal */}
+      {/* DeleteConfirmation Modal */}
       <Dialog
         size="xs"
         open={isDeleteModalOpen}

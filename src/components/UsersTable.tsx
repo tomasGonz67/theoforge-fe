@@ -15,7 +15,6 @@ import {
   DialogBody,
   DialogFooter,
 } from "@material-tailwind/react";
-import { cn } from '../lib/utils';
 
 interface User {
   id: number;
@@ -44,7 +43,7 @@ export function UsersTable() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      // In a real application, this would be an API call
+      // In a realapplication, this would be an API call
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       const dummyUsers: User[] = Array.from({ length: 50 }, (_, i) => ({
@@ -145,6 +144,7 @@ export function UsersTable() {
                 icon={<MagnifyingGlassIcon className="h-5 w-5" />}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                crossOrigin={undefined}
               />
             </div>
           </div>
@@ -243,22 +243,22 @@ export function UsersTable() {
           Page {currentPage} of {totalPages}
         </Typography>
         <div className="flex gap-2">
-          <IconButton
+          <Button
             variant="outlined"
             size="sm"
             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
             disabled={currentPage === 1}
           >
             Previous
-          </IconButton>
-          <IconButton
+          </Button>
+          <Button
             variant="outlined"
             size="sm"
             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
             disabled={currentPage === totalPages}
           >
             Next
-          </IconButton>
+          </Button>
         </div>
       </div>
 
@@ -270,22 +270,26 @@ export function UsersTable() {
       >
         <DialogHeader>Edit User</DialogHeader>
         <DialogBody>
+          <div>{/*Fix jest detecting no children in DialogBody error*/}</div>
           {editFormData && (
             <div className="grid gap-6">
               <Input
                 label="Name"
                 value={editFormData.name}
                 onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                crossOrigin={undefined}
               />
               <Input
                 label="Email"
                 value={editFormData.email}
                 onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                crossOrigin={undefined}
               />
               <Input
                 label="Role"
                 value={editFormData.role}
                 onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value })}
+                crossOrigin={undefined}
               />
               <div>
                 <Typography variant="small" color="blue-gray" className="mb-2">
