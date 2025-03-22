@@ -181,7 +181,7 @@ async function validateForm(authType: AuthFormType) {
         config: {},
         request: {},
         response: {
-          data: {detail: '400: Email already exists'},
+          data: {detail: 'User with email test@test.com already exists'},
           status: 500,
         } as AxiosResponse
       } as AxiosError;

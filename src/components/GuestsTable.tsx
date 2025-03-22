@@ -16,7 +16,8 @@ import {
   DialogFooter,
 } from "@material-tailwind/react";
 
-const API_URL = 'http://localhost:8000';
+let API_URL = window.location.origin;
+API_URL = API_URL.replace(/800./, "8000") // Map port 800x to 8000 for localhost testing
 
 interface Interaction {
   event: string,
