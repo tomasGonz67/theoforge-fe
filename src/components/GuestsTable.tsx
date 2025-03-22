@@ -358,7 +358,7 @@ export function GuestsTable() {
         </DialogFooter>
       </Dialog>
 
-      {/* Delete Confirmation Modal */}
+      {/* DeleteConfirmation Modal */}
       <Dialog
         size="xs"
         open={isDeleteModalOpen}

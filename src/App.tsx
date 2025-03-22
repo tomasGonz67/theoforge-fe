@@ -33,12 +33,14 @@ type Role = 'USER' | 'ADMIN';
 // eslint-disable-next-line react-refresh/only-export-components
 export const AuthContext = React.createContext<{
   isAuthenticated: boolean;
+  accessToken: string | null;
   role: Role;
   login: (email: string, password: string) => Promise<number>;
   register: (email: string, firstName: string, lastName: string, nickname: string, passsword: string) => Promise<number>;
   logout: () => void;
 }>({
   isAuthenticated: false,
+  accessToken: null,
   role: 'USER',
   login: async () => -1,
   register: async () => -1,
@@ -47,6 +49,7 @@ export const AuthContext = React.createContext<{
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [accessToken, setAccessToken] = useState(null);
   const [role, setRole] = useState('USER' as Role);
 
   const login = async (email: string, password: string) => {
@@ -65,6 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const json = JSON.parse(decodeURIComponent(window.atob(res.data.access_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')).split('').map(function(c) {
         return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
       }).join('')));
+      setAccessToken(res.data.access_token);
       setRole(json.role);
       setIsAuthenticated(true);
       response = 200;
@@ -118,7 +122,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, role, login, register, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, accessToken, role, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
@@ -872,6 +876,7 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<AuthForm type="login" />} />
           <Route path="/register" element={<AuthForm type="register" />} />
+          <Route path="/learn-more" element={<LearnMore />} />
           <Route
             path="/dashboard/*"
             element={
@@ -883,6 +888,20 @@ function App() {
         </Routes>
       </Router>
     </AuthProvider>
+  );
+}
+
+function LearnMore() {
+  return (
+    <div className="container mx-auto px-4 py-10">
+      <h1 className="text-3xl font-bold mb-6">Learn More About Theoforge</h1>
+      <p className="mb-4">
+        This page would contain detailed information about Theoforge's services, company background, and more.
+      </p>
+      <Link to="/" className="text-teal-500 hover:text-teal-700">
+        Return to Home
+      </Link>
+    </div>
   );
 }
 

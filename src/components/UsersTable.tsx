@@ -43,7 +43,7 @@ export function UsersTable() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      // In a real application, this would be an API call
+      // In a realapplication, this would be an API call
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       const dummyUsers: User[] = Array.from({ length: 50 }, (_, i) => ({

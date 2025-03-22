@@ -10,13 +10,13 @@ jest.mock('react-router-dom', () => ({
 }));
 
 function renderAdminDashboard() {
-    render(<AuthContext.Provider value={{isAuthenticated: false, role: 'ADMIN', login: jest.fn(), register: jest.fn(), logout: jest.fn()}}>
+    render(<AuthContext.Provider value={{isAuthenticated: false, accessToken: null, role: 'ADMIN', login: jest.fn(), register: jest.fn(), logout: jest.fn()}}>
     <Router future={{v7_relativeSplatPath: true, v7_startTransition: true}}><Dashboard></Dashboard></Router>
 </AuthContext.Provider>);
 }
 
 function renderUserDashboard() {
-    render(<AuthContext.Provider value={{isAuthenticated: false, role: 'USER', login: jest.fn(), register: jest.fn(), logout: jest.fn()}}>
+    render(<AuthContext.Provider value={{isAuthenticated: false, accessToken: null, role: 'USER', login: jest.fn(), register: jest.fn(), logout: jest.fn()}}>
         <Router future={{v7_relativeSplatPath: true, v7_startTransition: true}}><Dashboard></Dashboard></Router>
     </AuthContext.Provider>);
 }
@@ -27,7 +27,7 @@ describe('When rendering the dashboard as an admin', () => {
         // Theoforge text for collapsed sidebar, expanded sidebar, small screen size
         expect(screen.getAllByText('Theoforge')).toHaveLength(3);
         expect(screen.getByText(/Welcome back, .+/)).toBeInTheDocument();
-        expect(screen.getByText("Here's what's happening across your organization today.")).toBeInTheDocument();
+        expect(screen.getByText("Here's what's happening with your projects today.")).toBeInTheDocument();
     });
     it('displays the appropriate images', () => {
         renderAdminDashboard();
@@ -101,14 +101,14 @@ describe('When rendering the dashboard as an admin', () => {
     it('contains a marketplace button', () => {
         renderAdminDashboard();
         const marketplaceButtonText = screen.queryAllByText('Marketplace');
-        // A marketplace button for collapsed and uncollapsed sidebar
-        expect(marketplaceButtonText).toHaveLength(2);
+        // A marketplace button for collapsed and uncollapsed sidebar and dashboard card
+        expect(marketplaceButtonText).toHaveLength(3);
         const marketplaceButton = screen.getAllByRole('button').find(div => div.innerHTML.includes('Marketplace'));
-        expect(screen.queryByText('Marketplace Coming Soon')).toBeNull();
+        expect(screen.queryByText('AI Solution Marketplace')).toBeNull();
         // Clicking should render the marketplace
         if(marketplaceButton) fireEvent.click(marketplaceButton);
         else fail('No guests button found');
-        expect(screen.queryByText('Marketplace Coming Soon')).not.toBeNull();
+        expect(screen.queryByText('AI Solution Marketplace')).not.toBeNull();
     });
 });
 
@@ -117,8 +117,8 @@ describe('When rendering the dashboard as a user', () => {
         renderUserDashboard();
         // Theoforge text for collapsed sidebar, expanded sidebar, small screen size
         expect(screen.getAllByText('Theoforge')).toHaveLength(3);
-        expect(screen.getByText(/Welcome back, .+/)).toBeInTheDocument();
-        expect(screen.getByText("Here's a summary of your recent activity and account status.")).toBeInTheDocument();
+        expect(screen.getByText('Welcome to Theoforge')).toBeInTheDocument();
+        expect(screen.getByText("Access your AI services and explore new capabilities for your business")).toBeInTheDocument();
     });
     it('displays the appropriate images', () => {
         renderUserDashboard();
@@ -145,13 +145,13 @@ describe('When rendering the dashboard as a user', () => {
     it('contains a marketplace button', () => {
         renderUserDashboard();
         const marketplaceButtonText = screen.queryAllByText('Marketplace');
-        // A marketplace button for collapsed and uncollapsed sidebar and resources card
-        expect(marketplaceButtonText).toHaveLength(3);
+        // A marketplace button for collapsed and uncollapsed sidebar
+        expect(marketplaceButtonText).toHaveLength(2);
         const marketplaceButton = screen.getAllByRole('button').find(div => div.innerHTML.includes('Marketplace'));
-        expect(screen.queryByText('Marketplace Coming Soon')).toBeNull();
+        expect(screen.queryByText('AI Solution Marketplace')).toBeNull();
         // Clicking should render the marketplace
         if(marketplaceButton) fireEvent.click(marketplaceButton);
         else fail('No guests button found');
-        expect(screen.queryByText('Marketplace Coming Soon')).not.toBeNull();
+        expect(screen.queryByText('AI Solution Marketplace')).not.toBeNull();
     });
 });

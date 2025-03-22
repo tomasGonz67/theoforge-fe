@@ -1,28 +1,18 @@
-// Check if a response indicates uncertainty
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const isUncertainResponse = (input: string): boolean => { // unused duplicate function...
-  const lowerInput = input.toLowerCase().trim();
-  const uncertaintyPatterns = [
-    /^(idk|i don't know|don't know|dunno|not sure|unsure|uncertain)$/i,
-    /^(no idea|haven't thought about it|haven't decided)$/i,
-    /^(i'm not sure)$/i,
-    /^(hmm|um|uh|eh|well)$/i,
-    /^(skip|pass|next|later)$/i,
-    /^i don't know$/i,
-    /^not sure$/i
-  ];
-  
-  return uncertaintyPatterns.some(pattern => pattern.test(lowerInput));
-};
-import React, { useState, useEffect, useRef } from 'react';
-import { 
-PaperAirplaneIcon, 
-XMarkIcon, 
-MinusIcon, 
-ArrowsPointingOutIcon,
-ArrowsPointingInIcon,
-ChatBubbleLeftRightIcon,
-SparklesIcon
+import React, { useState, useEffect, useRef, KeyboardEvent } from 'react';
+import {
+  PaperAirplaneIcon,
+  XMarkIcon,
+  MinusIcon,
+  ArrowsPointingOutIcon,
+  ArrowsPointingInIcon,
+  ChatBubbleLeftRightIcon,
+  SparklesIcon,
+  MicrophoneIcon,
+  StopIcon,
+  TrashIcon,
+  UserCircleIcon,
+  LockClosedIcon,
+  ChevronDoubleRightIcon
 } from '@heroicons/react/24/outline';
 import {
   Card,
@@ -30,915 +20,1095 @@ import {
   CardBody,
   CardFooter,
   Typography,
-  IconButton
+  IconButton,
+  Button,
+  Tooltip,
+  Spinner,
+  Chip,
+  Badge
 } from "@material-tailwind/react";
+import { getGuestId, getStorageKeyForGuest } from '../lib/guestIdentifier';
+import { colors } from '@material-tailwind/react/types/generic';
 
-interface Message {
-role: 'user' | 'assistant';
-content: string;
-timestamp?: string;
+// Enhancedguest identification
+interface GuestInfo {
+  id: string;
+  name?: string;
+  email?: string;
+  company?: string;
+  interests?: string[];
+  firstVisit: string;
+  lastVisit: string;
+  sessionCount: number;
+  questionsAnswered: string[];
 }
 
-interface UserInfo {
-name?: string;
-company?: string;
-industry?: string;
-projectType?: string[];
-budget?: string;
-timeline?: string;
-contactInfo?: string;
-painPoints?: string[];
-currentTech?: string[];
-additionalNotes?: string;
-firstContactTimestamp: string;
-conversationHistory: Message[];
+interface Message {
+  id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  timestamp: string;
+  isQuestion?: boolean;
+  questionId?: string;
 }
 
 interface ChatBoxProps {
-isOpen: boolean;
-onClose: () => void;
+  isOpen: boolean;
+  onClose: () => void;
+  initialPrompt?: string;
+  theme?: 'light' | 'dark';
+  onGuestIdentified?: (guestInfo: GuestInfo) => void;
+  companyName?: string;
+  logoUrl?: string;
+  accentColor?: string;
 }
 
-const STORAGE_KEY = 'chat_history';
+// Constants
+const AI_ENDPOINT = "https://api.openai.com/v1/chat/completions";
+const SYSTEM_PROMPT = "You are a helpful, friendly AI assistant for Theoforge, a company that specializes in ETL Solutions, Knowledge Graphs, and Custom LLM Training. Your goal is to be helpful, gather information about the guest to better assist them, and ultimately help convert them to customers. Ask questions one at a time to learn about their needs. Be concise but friendly.";
 
-const INITIAL_MESSAGES: Message[] = [
-{ 
-  role: 'assistant', 
-  content: "Hello! I'm here to help you with your project. What is your name?",
-  timestamp: new Date().toISOString()
-}
+// Questions to ask guests (in sequence)
+const GUEST_QUESTIONS = [
+  { id: 'name', question: "Before we continue, may I know your name?" },
+  { id: 'company', question: "Thanks! What company are you with?" },
+  { id: 'interests', question: "What specific data or AI challenges is your company facing that brought you here today?" },
+  { id: 'email', question: "Would you like to receive a detailed resource about how Theoforge can help with your challenges? If so, I'd be happy to have someone send it to your email." }
 ];
 
-enum PromptStage {
-NAME,
-COMPANY,
-INDUSTRY,
-PROJECT_TYPE,
-BUDGET,
-TIMELINE,
-CONTACT_INFO,
-PAIN_POINTS,
-CURRENT_TECH,
-ADDITIONAL_NOTES,
-COMPLETED
-}
-
-export function ChatBox({ isOpen, onClose }: ChatBoxProps) {
-  // Original state
-  const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
-  const [userInfo, setUserInfo] = useState<UserInfo>({
-    firstContactTimestamp: new Date().toISOString(),
-    conversationHistory: []
-  });
-  const [input, setInput] = useState('');
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [isLoading, setIsLoading] = useState(false);
-  const [currentStage, setCurrentStage] = useState<PromptStage>(PromptStage.NAME);
-  const [attemptCount, setAttemptCount] = useState<Record<PromptStage, number>>({} as Record<PromptStage, number>);
-  const chatContainerRef = useRef<HTMLDivElement>(null);
+export function ChatBox({ 
+  isOpen, 
+  onClose, 
+  initialPrompt, 
+  theme = 'light', 
+  onGuestIdentified,
+  companyName = "Theoforge",
+  logoUrl = "/logo.png",
+  accentColor = "teal"
+}: ChatBoxProps) {
+  // Guest identification
+  const guestId = useRef<string>(getGuestId());
+  const CHAT_STORAGE_KEY = useRef<string>(getStorageKeyForGuest('theoforge_chat', guestId.current));
+  const GUEST_INFO_KEY = useRef<string>(getStorageKeyForGuest('theoforge_guest_info', guestId.current));
   
-  // UI state
+  // Guest info state
+  const [guestInfo, setGuestInfo] = useState<GuestInfo>({
+    id: guestId.current,
+    firstVisit: new Date().toISOString(),
+    lastVisit: new Date().toISOString(),
+    sessionCount: 1,
+    questionsAnswered: []
+  });
+  
+  // Current question being asked
+  const [currentQuestion, setCurrentQuestion] = useState<string | null>(null);
+  
+  // Initial welcome message
+  const INITIAL_MESSAGES: Message[] = [
+    {
+      id: generateId(),
+      role: 'system',
+      content: SYSTEM_PROMPT,
+      timestamp: new Date().toISOString()
+    },
+    {
+      id: generateId(),
+      role: 'assistant',
+      content: `Hello! I'm your AI assistant from ${companyName}. How can I help you with your data and AI needs today?`,
+      timestamp: new Date().toISOString()
+    }
+  ];
+
+  // Generate a unique ID for messages
+  function generateId(): string {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+    return `id-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+  }
+
+  // Chat state management
+  const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
+  const [visibleMessages, setVisibleMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState(initialPrompt || '');
+  const [isThinking, setIsThinking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [typingEffect, setTypingEffect] = useState(false);
+  const [currentTypingMessage, setCurrentTypingMessage] = useState<string>('');
+  const [fullMessageContent, setFullMessageContent] = useState<string>('');
+  const [isAwaitingAnswer, setIsAwaitingAnswer] = useState(false);
+  const [showIntroduction, setShowIntroduction] = useState(true);
+
+  // Voice recording state
+  const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+
+  // UI state for resizing and minimization
   const [isMinimized, setIsMinimized] = useState(false);
-  const [chatSize, setChatSize] = useState({ width: 380, height: 520 });
+  const [chatSize, setChatSize] = useState({ width: 380, height: 580 });
   const [isResizing, setIsResizing] = useState(false);
-  const [isTyping, setIsTyping] = useState(false);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
   const resizeRef = useRef<HTMLDivElement>(null);
   const startPosRef = useRef({ x: 0, y: 0 });
   const startSizeRef = useRef({ width: 0, height: 0 });
   const messageEndRef = useRef<HTMLDivElement>(null);
-
-// Scroll to bottom when messages change
-useEffect(() => {
-  messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-}, [messages]);
-
-useEffect(() => {
-  // Load chat history from localStorage when component mounts
-  loadChatHistory();
-// eslint-disable-next-line react-hooks/exhaustive-deps
-}, []);
-
-// Save chat history to localStorage whenever messages change
-useEffect(() => {
-  // Don't save initial messages
-  if (messages !== INITIAL_MESSAGES) {
-    saveChatHistory(messages);
-  }
-}, [messages]);
-
-// Resize functionality
-const handleResizeStart = (e: React.MouseEvent) => {
-  e.preventDefault();
-  e.stopPropagation();
-  setIsResizing(true);
-  startPosRef.current = { x: e.clientX, y: e.clientY };
-  startSizeRef.current = { ...chatSize };
+  const inputRef = useRef<HTMLInputElement>(null);
   
-  // Add event listeners for drag and release
-  document.addEventListener('mousemove', handleResize);
-  document.addEventListener('mouseup', handleResizeEnd);
-};
+  // Typing effect interval
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const typingIntervalRef = useRef<any>(null);
 
-const handleResize = (e: MouseEvent) => {
-  if (!isResizing) return;
-  
-  const deltaWidth = e.clientX - startPosRef.current.x;
-  const deltaHeight = e.clientY - startPosRef.current.y;
-  
-  const newWidth = Math.max(320, startSizeRef.current.width + deltaWidth);
-  const newHeight = Math.max(400, startSizeRef.current.height + deltaHeight);
-  
-  setChatSize({ width: newWidth, height: newHeight });
-};
+  // Auto-scroll to the latest message
+  useEffect(() => {
+    messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [visibleMessages, typingEffect, currentTypingMessage]);
 
-const handleResizeEnd = () => {
-  setIsResizing(false);
-  document.removeEventListener('mousemove', handleResize);
-  document.removeEventListener('mouseup', handleResizeEnd);
-};
+  // Focus input when chat opens
+  useEffect(() => {
+    if (isOpen && !isMinimized && !isAwaitingAnswer) {
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 300);
+    }
+  }, [isOpen, isMinimized, isAwaitingAnswer]);
 
-// Toggle minimized state
-const toggleMinimize = () => {
-  setIsMinimized(!isMinimized);
-};
+  // Filter out system messages for display
+  useEffect(() => {
+    setVisibleMessages(messages.filter(msg => msg.role !== 'system'));
+  }, [messages]);
 
-// Format time for chat bubbles
-const formatTime = (timestamp?: string) => {
-  const date = timestamp ? new Date(timestamp) : new Date();
-  return date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-};
-
-// Simulated typing effect
-const simulateTypingEffect = async (message: string) => {
-  setIsTyping(true);
-  
-  // Add a small delay to simulate typing
-  await new Promise(resolve => setTimeout(resolve, 800));
-  
-  setIsTyping(false);
-  return message;
-};
-
-// New function to save chat history to localStorage
-const saveChatHistory = (data: Message[]) => {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  } catch (error) {
-    console.error("Error saving chat data to localStorage:", error);
-  }
-};
-
-// New function to load chat history from localStorage
-const loadChatHistory = () => {
-  try {
-    const storedData = localStorage.getItem(STORAGE_KEY);
-    if (storedData) {
-      const data = JSON.parse(storedData);
-      
-      // Only restore chat history if there's more than just the initial greeting
-      if (data.length > 1) {
-        setMessages(data);
-        
-        // Extract user name from conversation
-        let userName = null;
-        for (let i = 0; i < data.length; i++) {
-          if (data[i].role === 'assistant' && data[i].content && data[i].content.includes("Nice to meet you,")) {
-            const match = data[i].content.match(/Nice to meet you,\s*([^!]+)!/);
-            if (match && match[1]) {
-              userName = match[1].trim();
-              break;
+  // Load chat history and guest info on mount
+  useEffect(() => {
+    try {
+      // Load chat history
+      const stored = localStorage.getItem(CHAT_STORAGE_KEY.current);
+      if (stored) {
+        try {
+          const data = JSON.parse(stored);
+          if (Array.isArray(data) && data.length > 0) {
+            // Ensure we have a system prompt
+            if (!data.some(msg => msg.role === 'system')) {
+              data.unshift({
+                id: generateId(),
+                role: 'system',
+                content: SYSTEM_PROMPT,
+                timestamp: new Date().toISOString()
+              });
             }
+            setMessages(data);
+            setShowIntroduction(false);
+          }
+        } catch (error) {
+          console.error("Failed to parse chat history:", error);
+        }
+      }
+      
+      // Load guest info
+      const storedGuestInfo = localStorage.getItem(GUEST_INFO_KEY.current);
+      if (storedGuestInfo) {
+        try {
+          const data = JSON.parse(storedGuestInfo);
+          setGuestInfo({
+            ...data,
+            lastVisit: new Date().toISOString(),
+            sessionCount: (data.sessionCount || 0) + 1
+          });
+          
+          // Notify parent component about guest info
+          if (onGuestIdentified) {
+            onGuestIdentified({
+              ...data,
+              lastVisit: new Date().toISOString(),
+              sessionCount: (data.sessionCount || 0) + 1
+            });
+          }
+        } catch (error) {
+          console.error("Failed to parse guest info:", error);
+        }
+      }
+    } catch (e) {
+      console.warn("Could not access localStorage:", e);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Persist chat history on every update
+  useEffect(() => {
+    if (messages.length > 0) {
+      try {
+        localStorage.setItem(CHAT_STORAGE_KEY.current, JSON.stringify(messages));
+      } catch (e) {
+        console.warn("Could not save to localStorage:", e);
+      }
+    }
+  }, [messages]);
+  
+  // Persist guest info on every update
+  useEffect(() => {
+    if (guestInfo) {
+      try {
+        localStorage.setItem(GUEST_INFO_KEY.current, JSON.stringify(guestInfo));
+        
+        // Notify parent component about guest info
+        if (onGuestIdentified) {
+          onGuestIdentified(guestInfo);
+        }
+      } catch (e) {
+        console.warn("Could not save guest info:", e);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [guestInfo]);
+
+  // Initial prompt handling
+  useEffect(() => {
+    if (initialPrompt && messages.length === INITIAL_MESSAGES.length) {
+      handleSend(initialPrompt);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialPrompt]);
+  
+  // Decision maker for when to ask questions
+  useEffect(() => {
+    if (messages.length > 3 && !isThinking && !isAwaitingAnswer) {
+      const shouldAskQuestion = Math.random() > 0.5; // 50% chance to ask a question
+      
+      if (shouldAskQuestion && !currentQuestion) {
+        const nextQuestion = getNextQuestionToAsk();
+        if (nextQuestion) {
+          setTimeout(() => {
+            askGuestQuestion(nextQuestion);
+          }, 1000);
+        }
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages, isThinking]);
+  
+  // Typing effect for AI messages
+  useEffect(() => {
+    if (typingEffect && fullMessageContent) {
+      let currentIndex = 0;
+      
+      clearInterval(typingIntervalRef.current);
+      
+      typingIntervalRef.current = setInterval(() => {
+        if (currentIndex <= fullMessageContent.length) {
+          setCurrentTypingMessage(fullMessageContent.substring(0, currentIndex));
+          currentIndex++;
+        } else {
+          clearInterval(typingIntervalRef.current);
+          setTypingEffect(false);
+          
+          // If this was a question, set awaiting answer flag
+          if (currentQuestion) {
+            setIsAwaitingAnswer(true);
           }
         }
-        
-        // Update userInfo with detected name
-        const loadedUserInfo = determineUserInfoFromMessages(data);
-        if (userName) {
-          loadedUserInfo.name = userName;
+      }, 15); // Speed of typing
+      
+      return () => clearInterval(typingIntervalRef.current);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [typingEffect, fullMessageContent]);
+
+  // Get the next question to ask based on what's already been answered
+  const getNextQuestionToAsk = () => {
+    if (!guestInfo.questionsAnswered) return GUEST_QUESTIONS[0];
+    
+    for (const question of GUEST_QUESTIONS) {
+      if (!guestInfo.questionsAnswered.includes(question.id)) {
+        return question;
+      }
+    }
+    
+    return null; // All questions have been asked
+  };
+  
+  // Ask a specific question to the guest
+  const askGuestQuestion = (question: { id: string, question: string }) => {
+    setCurrentQuestion(question.id);
+    
+    const questionMessage: Message = {
+      id: generateId(),
+      role: 'assistant',
+      content: question.question,
+      timestamp: new Date().toISOString(),
+      isQuestion: true,
+      questionId: question.id
+    };
+    
+    // Use typing effect for the question
+    setFullMessageContent(question.question);
+    setCurrentTypingMessage('');
+    setTypingEffect(true);
+    
+    setMessages(prev => [...prev, questionMessage]);
+  };
+  
+  // Process the answer to a question
+  const processQuestionAnswer = (questionId: string, answer: string) => {
+    // Update guest info based on the question
+    const updatedInfo = { ...guestInfo };
+    
+    switch (questionId) {
+      case 'name':
+        updatedInfo.name = answer;
+        break;
+      case 'company':
+        updatedInfo.company = answer;
+        break;
+      case 'interests':
+        updatedInfo.interests = answer.split(/,\s*/).map(i => i.trim());
+        break;
+      case 'email':
+        // Only store email if it appears to be valid
+        if (answer.includes('@') && answer.includes('.')) {
+          updatedInfo.email = answer;
+        }
+        break;
+    }
+    
+    // Mark this question as answered
+    if (!updatedInfo.questionsAnswered.includes(questionId)) {
+      updatedInfo.questionsAnswered.push(questionId);
+    }
+    
+    setGuestInfo(updatedInfo);
+    setCurrentQuestion(null);
+    setIsAwaitingAnswer(false);
+    
+    // Return a contextual response based on the question
+    let response = "";
+    
+    switch (questionId) {
+      case 'name':
+        response = `Nice to meet you, ${answer}! I'll remember your name for future conversations.`;
+        break;
+      case 'company':
+        response = `Thanks for letting me know you're with ${answer}. That helps me provide more relevant information for your industry.`;
+        break;
+      case 'interests':
+        response = `I appreciate you sharing your data and AI challenges. ${companyName} has expertise in those areas and can definitely help address them.`;
+        break;
+      case 'email':
+        if (answer.includes('@') && answer.includes('.')) {
+          response = `Perfect! Someone from our team will send resources about our solutions to ${answer} shortly. In the meantime, is there anything specific you'd like to know more about?`;
+        } else {
+          response = `No problem. You can always request information later if you change your mind. Is there anything specific about our services you'd like to know more about?`;
+        }
+        break;
+      default:
+        response = "Thank you for sharing that information. How else can I assist you today?";
+    }
+    
+    return response;
+  };
+
+  // RESIZING HANDLERS
+  const handleResizeStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+    startPosRef.current = { x: e.clientX, y: e.clientY };
+    startSizeRef.current = { ...chatSize };
+    
+    // Add event listeners
+    const handleMouseMove = (e: MouseEvent) => handleResize(e);
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+    
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
+  const handleResize = (e: MouseEvent) => {
+    if (!isResizing) return;
+    const deltaW = e.clientX - startPosRef.current.x;
+    const deltaH = e.clientY - startPosRef.current.y;
+    setChatSize({
+      width: Math.max(320, startSizeRef.current.width + deltaW),
+      height: Math.max(400, startSizeRef.current.height + deltaH)
+    });
+  };
+
+  // Toggle minimization of the chatbox
+  const toggleMinimize = () => {
+    setIsMinimized(prev => !prev);
+  };
+
+  // Utility: Format timestamp
+  const formatTime = (timestamp: string) => {
+    const d = new Date(timestamp);
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  // Get AI response using sendMessage
+  const getAIResponse = async (context: Message[]): Promise<string> => {
+    setIsThinking(true);
+    setError(null);
+    
+    try {
+      // If this was in response to a question, process the answer
+      if (currentQuestion) {
+        const userMessage = context.find(m => m.role === 'user');
+        if (userMessage) {
+          const questionResponse = processQuestionAnswer(currentQuestion, userMessage.content);
+          return questionResponse;
+        }
+      }
+      
+      // Prepare messages for the API
+      const apiMessages = context.map(m => ({ 
+        role: m.role, 
+        content: m.content 
+      }));
+      
+      // Add guest info to system message if available
+      if (guestInfo.name || guestInfo.company || guestInfo.interests) {
+        let guestContext = "Current guest information:\n";
+        if (guestInfo.name) guestContext += `- Name: ${guestInfo.name}\n`;
+        if (guestInfo.company) guestContext += `- Company: ${guestInfo.company}\n`;
+        if (guestInfo.interests && guestInfo.interests.length > 0) {
+          guestContext += `- Interests: ${guestInfo.interests.join(', ')}\n`;
         }
         
-        setUserInfo(loadedUserInfo);
-        setCurrentStage(determineCurrentStage(loadedUserInfo));
-      }
-    }
-  } catch (error) {
-    console.error("Error loading chat history from localStorage:", error);
-  }
-};
-
-// Original functions (keeping core functionality intact)
-const resetSession = async () => {
-  setUserInfo({
-    firstContactTimestamp: new Date().toISOString(),
-    conversationHistory: []
-  });
-  setMessages(INITIAL_MESSAGES);
-  setCurrentStage(PromptStage.NAME);
-  setAttemptCount({} as Record<PromptStage, number>);
-  localStorage.removeItem(STORAGE_KEY); // Clear localStorage
-};
-
-const getCurrentPrompt = (): string => {
-  switch (currentStage) {
-    case PromptStage.NAME:
-      return "What is your name?";
-    case PromptStage.COMPANY:
-      // Make sure we're not using "Hello" as the name if it was stored
-      { const displayName = userInfo.name && !isGenericGreeting(userInfo.name) ? userInfo.name : '';
-      return `Nice to meet you${displayName ? ', ' + displayName : ''}! What's your company name?`; }
-    case PromptStage.INDUSTRY:
-      return "What industry are you in?";
-    case PromptStage.PROJECT_TYPE:
-      return "What type of project are you interested in?";
-    case PromptStage.BUDGET:
-      return "Do you have a specific budget range in mind?";
-    case PromptStage.TIMELINE:
-      return "What is your expected project timeline?";
-    case PromptStage.CONTACT_INFO:
-      return "How can we contact you? (Email or phone number)";
-    case PromptStage.PAIN_POINTS:
-      return "What are the biggest pain points you're facing?";
-    case PromptStage.CURRENT_TECH:
-      return "Are you using any current technologies for this project?";
-    case PromptStage.ADDITIONAL_NOTES:
-      return "Any additional notes you'd like to share?";
-    case PromptStage.COMPLETED:
-      return `Thanks for sharing all that information, ${userInfo.name}! I'll review your project details and get back to you soon. Is there anything else you'd like to add?`;
-    default:
-      return "Is there anything else you'd like to discuss?";
-  }
-};
-
-const determineUserInfoFromMessages = (messages: Message[]): UserInfo => {
-  // Initialize with default values
-  const userInfo: UserInfo = {
-    firstContactTimestamp: new Date().toISOString(),
-    conversationHistory: []
-  };
-  
-  // Extract user info from conversation
-  let currentField = PromptStage.NAME;
-  
-  for (let i = 0; i < messages.length; i++) {
-    const message = messages[i];
-    
-    // Skip assistant messages for extraction
-    if (message.role === 'user') {
-      const userInput = message.content.trim();
-      
-      // Skip clear commands, greetings, and uncertainty responses
-      if (userInput.toLowerCase() === 'clear' || 
-          isGenericGreeting(userInput) || 
-          isUncertaintyResponse(userInput)) {
-        continue;
+        // Add this context to the first system message
+        apiMessages[0].content = `${SYSTEM_PROMPT}\n\n${guestContext}`;
       }
       
-      // Store user input based on the current field we're expecting
-      switch (currentField) {
-        case PromptStage.NAME:
-          userInfo.name = userInput;
-          currentField = PromptStage.COMPANY;
-          break;
-        case PromptStage.COMPANY:
-          userInfo.company = userInput;
-          currentField = PromptStage.INDUSTRY;
-          break;
-        case PromptStage.INDUSTRY:
-          userInfo.industry = userInput;
-          currentField = PromptStage.PROJECT_TYPE;
-          break;
-        case PromptStage.PROJECT_TYPE:
-          userInfo.projectType = [userInput];
-          currentField = PromptStage.BUDGET;
-          break;
-        case PromptStage.BUDGET:
-          userInfo.budget = userInput;
-          currentField = PromptStage.TIMELINE;
-          break;
-        case PromptStage.TIMELINE:
-          userInfo.timeline = userInput;
-          currentField = PromptStage.CONTACT_INFO;
-          break;
-        case PromptStage.CONTACT_INFO:
-          userInfo.contactInfo = userInput;
-          currentField = PromptStage.PAIN_POINTS;
-          break;
-        case PromptStage.PAIN_POINTS:
-          userInfo.painPoints = [userInput];
-          currentField = PromptStage.CURRENT_TECH;
-          break;
-        case PromptStage.CURRENT_TECH:
-          userInfo.currentTech = [userInput];
-          currentField = PromptStage.ADDITIONAL_NOTES;
-          break;
-        case PromptStage.ADDITIONAL_NOTES:
-          userInfo.additionalNotes = userInput;
-          currentField = PromptStage.COMPLETED;
-          break;
-        default:
-          // Add to conversation history for completed stages
-          userInfo.conversationHistory.push({ role: 'user', content: userInput });
+      // Use environment variable for API key
+      const apiKey = process.env.VITE_OPENAI_API_KEY || '';
+      console.log("API: ", apiKey);
+      const response = await fetch(AI_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: "gpt-3.5-turbo",
+          messages: apiMessages,
+          max_tokens: 500,
+          temperature: 0.7
+        })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.error?.message || `API Error: ${response.statusText}`);
       }
-    }
-  }
-  
-  return userInfo;
-};
-
-const determineCurrentStage = (userInfo: UserInfo): PromptStage => {
-  if (!userInfo.name) return PromptStage.NAME;
-  if (!userInfo.company) return PromptStage.COMPANY;
-  if (!userInfo.industry) return PromptStage.INDUSTRY;
-  if (!userInfo.projectType?.length) return PromptStage.PROJECT_TYPE;
-  if (!userInfo.budget) return PromptStage.BUDGET;
-  if (!userInfo.timeline) return PromptStage.TIMELINE;
-  if (!userInfo.contactInfo) return PromptStage.CONTACT_INFO;
-  if (!userInfo.painPoints?.length) return PromptStage.PAIN_POINTS;
-  if (!userInfo.currentTech?.length) return PromptStage.CURRENT_TECH;
-  if (!userInfo.additionalNotes) return PromptStage.ADDITIONAL_NOTES;
-  return PromptStage.COMPLETED;
-};
-
-const incrementAttemptCount = (stage: PromptStage) => {
-  setAttemptCount(prev => ({
-    ...prev,
-    [stage]: (prev[stage] || 0) + 1
-  }));
-};
-
-const isUncertaintyResponse = (input: string): boolean => {
-  const lowerInput = input.toLowerCase().trim();
-  const uncertaintyPatterns = [
-    /^(idk|i don't know|don't know|dunno|not sure|unsure|uncertain)$/,
-    /^(no idea|haven't thought about it|haven't decided)$/,
-    /^(what do you (think|suggest|recommend))$/,
-    /^(can you (help|suggest|recommend))$/,
-    /^(i'm not sure)$/,
-    /^(hmm|um|uh|eh|well)$/,
-    /^(skip|pass|next|later)$/
-  ];
-  
-  return uncertaintyPatterns.some(pattern => pattern.test(lowerInput));
-};
-
-const isGenericGreeting = (input: string): boolean => {
-  const lowerInput = input.toLowerCase().trim();
-  return /^(hi|hey|hello|yo|sup|what's up|howdy)$/.test(lowerInput);
-};
-
-const getUncertaintyResponse = (stage: PromptStage, attempts: number): string => {
-  const fallbackResponse = "That's alright if you're not sure right now.";
-  
-  const suggestions: Record<PromptStage, string[]> = {
-    [PromptStage.NAME]: [
-      "No problem! You can just give me a nickname to call you.",
-      "That's okay. I'll just call you 'friend' for now. We can come back to this later if you'd like."
-    ],
-    [PromptStage.COMPANY]: [
-      "No worries! Are you an independent contractor or just exploring options? You can just say 'independent' or 'exploring'.",
-      "That's fine! We can mark this as 'undecided' for now."
-    ],
-    [PromptStage.INDUSTRY]: [
-      "That's okay! What general area are you working in? Tech, healthcare, education, etc.?",
-      "No problem. We can categorize this as 'general' for now."
-    ],
-    [PromptStage.PROJECT_TYPE]: [
-      "That's fine. Are you looking for website development, mobile app, or something else?",
-      "No worries! We can just mark this as 'exploratory' for now."
-    ],
-    [PromptStage.BUDGET]: [
-      "That's completely okay! Would you prefer we provide some budget options based on your project type?",
-      "No problem. We work with projects of all sizes. We can discuss budget details later."
-    ],
-    [PromptStage.TIMELINE]: [
-      "That's fine! Would you say it's urgent, within a few months, or longer term?",
-      "No rush. We can mark this as 'flexible' and discuss timeline options later."
-    ],
-    [PromptStage.CONTACT_INFO]: [
-      "No problem. We'll need contact information eventually, but we can proceed for now.",
-      "That's okay! When you're ready to share contact information, just let us know."
-    ],
-    [PromptStage.PAIN_POINTS]: [
-      "That's fine. Maybe think about what motivated you to look for a solution?",
-      "No problem. We can explore your specific needs in more detail later."
-    ],
-    [PromptStage.CURRENT_TECH]: [
-      "No worries. Are you currently using any software or platforms at all?",
-      "That's okay. We can discuss technical details later in the process."
-    ],
-    [PromptStage.ADDITIONAL_NOTES]: [
-      "That's fine! Feel free to share any additional thoughts later if they come to mind.",
-      "No problem! We've gathered the essential information for now."
-    ],
-    [PromptStage.COMPLETED]: [
-      "Thanks for chatting! Let me know if you have any questions.",
-      "Great! I'll be here if you need anything else."
-    ]
-  };
-  
-  // Get suggestions for current stage
-  const stageResponses = suggestions[stage] || [];
-  
-  // If we have suggestions for this stage, return based on attempt count
-  if (stageResponses.length > 0) {
-    // Use first suggestion on first attempt, second on second attempt, etc.
-    const responseIndex = Math.min(attempts - 1, stageResponses.length - 1);
-    return stageResponses[responseIndex];
-  }
-  
-  return fallbackResponse;
-};
-
-  const isValidInput = (input: string, stage: PromptStage): boolean => {
-    const trimmed = input.trim();
-  
-    // Handle clear command separately
-    if (trimmed.toLowerCase() === "clear") return true;
-    
-    // Handle uncertainty responses
-    if (isUncertaintyResponse(trimmed)) return true;
-    
-    // Reject empty input
-    if (!trimmed) return false;
-  
-    // For NAME stage, reject generic greetings
-    if (stage === PromptStage.NAME && isGenericGreeting(trimmed)) {
-      return false;
-    }
-  
-    // If it's just a greeting at a stage other than NAME, it's not a valid response
-    if (isGenericGreeting(trimmed) && stage !== PromptStage.NAME) return false;
-  
-    // Reject single characters or non-alphanumeric input for most fields
-    // but allow them if we've already tried multiple times
-    const attemptForStage = attemptCount[stage] || 0;
-    if (attemptForStage < 2 && (trimmed.length === 1 || /^[^a-zA-Z0-9]+$/.test(trimmed))) return false;
-  
-    // After a few attempts, accept almost anything that's not empty
-    if (attemptForStage >= 3) return true;
-    
-    // Stage-specific validations (less strict now)
-    switch (stage) {
-      case PromptStage.NAME:
-        // Names should generally have letters, but we'll be flexible
-        return trimmed.length >= 2; // Increase min length to 2
       
-      case PromptStage.CONTACT_INFO:
-        // Be more forgiving with contact info format after first attempt
-        { if (attemptForStage >= 1) return trimmed.length >= 3;
-        
-        // Basic email or phone validation
-        const isEmail = /\S+@\S+\.\S+/.test(trimmed);
-        const isPhone = /[\d\s()\-+]{7,}/.test(trimmed);
-        return isEmail || isPhone; }
-      
-      default:
-        // For other fields, just ensure there's some content
-        return trimmed.length >= 1;
+      const data = await response.json();
+      return data.choices[0].message.content;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      console.error("Error generating AI response:", error);
+      setError(error.message || "Failed to get response from AI service");
+      return "I'm sorry, I encountered an error while processing your request. Please try again later.";
+    } finally {
+      setIsThinking(false);
     }
   };
 
-const getResponseForInvalidInput = (stage: PromptStage, attempts: number): string => {
-  // After multiple attempts, be more forgiving and flexible
-  if (attempts >= 3) {
-    return "Let's move forward. " + getCurrentPrompt();
-  }
-  
-  // Generic responses for invalid inputs
-  const genericResponses = [
-    "I didn't quite understand that. Could you please try again?",
-    "Hmm, that doesn't seem like what I was expecting. Let's try again.",
-    "I need a bit more specific information for this question."
-  ];
-  
-  // Stage-specific responses
-  switch (stage) {
-    case PromptStage.NAME:
-      return "I'd like to know what to call you. Any name or nickname is fine.";
-    
-    case PromptStage.CONTACT_INFO:
-      return "I need a way to contact you later. An email or phone number would be great.";
-    
-    case PromptStage.BUDGET:
-      return "For budget, even a rough range would be helpful. Or you can say 'not sure' if you haven't decided.";
-    
-    default:
-      // Pick a response based on attempt count
-      return genericResponses[Math.min(attempts, genericResponses.length - 1)];
-  }
-};
-
-const handleConversationalInput = (input: string): { isRelevant: boolean, response: string, advanceStage: boolean } => {
-  // Convert to lowercase for easier comparison
-  const lowerInput = input.toLowerCase();
-  
-  if (currentStage === PromptStage.NAME && isGenericGreeting(input)) {
-    return { 
-      isRelevant: true, 
-      response: "Hi there! I'm looking for your name so I know what to call you. What's your name?", 
-      advanceStage: false 
-    };
-  }
-
-  if (isGenericGreeting(input) && currentStage !== PromptStage.NAME) {
-    return { 
-      isRelevant: true, 
-      response: `Hi there! We were talking about your project. ${getCurrentPrompt()}`, 
-      advanceStage: false 
-    };
-  }
-  
-  if (lowerInput.match(/^(how are you|how's it going)$/)) {
-    return { 
-      isRelevant: true, 
-      response: `I'm doing great, thanks for asking! Now, ${getCurrentPrompt()}`, 
-      advanceStage: false 
-    };
-  }
-  
-  if (lowerInput.match(/^(what is this|what's this about|what are you|who are you)$/)) {
-    return { 
-      isRelevant: true, 
-      response: "I'm here to gather information about your project so we can help you better. " + getCurrentPrompt(), 
-      advanceStage: false 
-    };
-  }
-  
-  // If no conversational pattern is matched, process as a direct answer
-  return { isRelevant: false, response: "", advanceStage: true };
-};
-
-const updateUserInfoBasedOnStage = (input: string, currentStage: PromptStage, userInfo: UserInfo): UserInfo => {
-  const updatedUserInfo = { ...userInfo };
-  
-  // If this is an uncertainty response, handle specially
-  if (isUncertaintyResponse(input)) {
-    switch (currentStage) {
-      case PromptStage.NAME:
-        updatedUserInfo.name = "Friend"; // Default name
-        break;
-      case PromptStage.COMPANY:
-        updatedUserInfo.company = "Undecided";
-        break;
-      case PromptStage.INDUSTRY:
-        updatedUserInfo.industry = "General";
-        break;
-      case PromptStage.PROJECT_TYPE:
-        updatedUserInfo.projectType = ["Exploratory"];
-        break;
-      case PromptStage.BUDGET:
-        updatedUserInfo.budget = "To be discussed";
-        break;
-      case PromptStage.TIMELINE:
-        updatedUserInfo.timeline = "Flexible";
-        break;
-      case PromptStage.CONTACT_INFO:
-        updatedUserInfo.contactInfo = "To be provided later";
-        break;
-      case PromptStage.PAIN_POINTS:
-        updatedUserInfo.painPoints = ["To be discussed"];
-        break;
-      case PromptStage.CURRENT_TECH:
-        updatedUserInfo.currentTech = ["To be discussed"];
-        break;
-      case PromptStage.ADDITIONAL_NOTES:
-        updatedUserInfo.additionalNotes = "None provided";
-        break;
-      default:
-        // Add to conversation history for completed stages
-        updatedUserInfo.conversationHistory = [
-          ...(updatedUserInfo.conversationHistory || []),
-          { role: 'user', content: input }
-        ];
+  // Clear the chat history
+  const clearChat = () => {
+    if (window.confirm("Are you sure you want to clear the chat history?")) {
+      setMessages(INITIAL_MESSAGES);
+      setCurrentQuestion(null);
+      setIsAwaitingAnswer(false);
+      setShowIntroduction(true);
+      try {
+        localStorage.removeItem(CHAT_STORAGE_KEY.current);
+      } catch (e) {
+        console.warn("Could not access localStorage:", e);
+      }
     }
-    return updatedUserInfo;
-  }
-  
-  // Normal input processing
-  switch (currentStage) {
-    case PromptStage.NAME:
-      updatedUserInfo.name = input;
-      break;
-    case PromptStage.COMPANY:
-      updatedUserInfo.company = input;
-      break;
-    case PromptStage.INDUSTRY:
-      updatedUserInfo.industry = input;
-      break;
-    case PromptStage.PROJECT_TYPE:
-      updatedUserInfo.projectType = [input];
-      break;
-    case PromptStage.BUDGET:
-      updatedUserInfo.budget = input;
-      break;
-    case PromptStage.TIMELINE:
-      updatedUserInfo.timeline = input;
-      break;
-    case PromptStage.CONTACT_INFO:
-      updatedUserInfo.contactInfo = input;
-      break;
-    case PromptStage.PAIN_POINTS:
-      updatedUserInfo.painPoints = [input];
-      break;
-    case PromptStage.CURRENT_TECH:
-      updatedUserInfo.currentTech = [input];
-      break;
-    case PromptStage.ADDITIONAL_NOTES:
-      updatedUserInfo.additionalNotes = input;
-      break;
-    default:
-      // Add to conversation history for completed stages
-      updatedUserInfo.conversationHistory = [
-        ...(updatedUserInfo.conversationHistory || []),
-        { role: 'user', content: input }
-      ];
-  }
-  
-  return updatedUserInfo;
-};
+  };
 
-const handleSend = async () => {
-  if (!input.trim()) return;
-
-  const userMessage = input.trim();
-  setInput('');
-
-  if (userMessage.toLowerCase() === "clear") {
-    await resetSession();
-    return;
-  }
-
-  // Add user message to chat
-  const newMessages: Message[] = [...messages, { 
-    role: 'user', 
-    content: userMessage,
-    timestamp: new Date().toISOString()
-  }];
-  setMessages(newMessages);
-
-  // Process conversational inputs that don't advance the stage
-  const conversationalResult = handleConversationalInput(userMessage);
-  if (conversationalResult.isRelevant) {
-    const botResponse = await simulateTypingEffect(conversationalResult.response);
-    setMessages([...newMessages, { 
-      role: 'assistant', 
-      content: botResponse,
-      timestamp: new Date().toISOString()
-    }]);
-    return;
-  }
-
-  // Get current attempt count for this stage
-  const currentAttempts = attemptCount[currentStage] || 0;
-
-  // Validate input based on current stage
-  if (!isValidInput(userMessage, currentStage)) {
-    incrementAttemptCount(currentStage);
-    const invalidResponse = getResponseForInvalidInput(currentStage, currentAttempts + 1);
-    const botResponse = await simulateTypingEffect(invalidResponse);
-    setMessages([...newMessages, { 
-      role: 'assistant', 
-      content: botResponse,
-      timestamp: new Date().toISOString()
-    }]);
-    return;
-  }
-
-  // Store the name properly before updating other userInfo
-  let updatedUserInfo = { ...userInfo };
-  if (currentStage === PromptStage.NAME) {
-    updatedUserInfo.name = userMessage;
-  }
-  
-  // Update the rest of userInfo based on stage
-  updatedUserInfo = updateUserInfoBasedOnStage(userMessage, currentStage, updatedUserInfo);
-  setUserInfo(updatedUserInfo);
-  
-  // Check for uncertainty response
-  const isUncertain = isUncertaintyResponse(userMessage);
-  if (isUncertain) {
-    incrementAttemptCount(currentStage);
-    const uncertaintyResponse = getUncertaintyResponse(currentStage, currentAttempts + 1);
+  // Handler for sending text messages
+  const handleSend = async (manualInput?: string) => {
+    const textToSend = manualInput || input.trim();
+    if (!textToSend) return;
     
-    // Advance to next stage
-    const nextStage = currentStage < PromptStage.COMPLETED ? currentStage + 1 : currentStage;
-    setCurrentStage(nextStage);
+    // Hide introduction once user starts chatting
+    if (showIntroduction) {
+      setShowIntroduction(false);
+    }
     
-    // Get next prompt
-    const nextPrompt = nextStage === currentStage 
-        ? "Is there anything else you'd like to tell me?"
-        : getCurrentPrompt();
+    setInput('');
     
-    // Add both the uncertainty response and the next prompt
-    const responseMessage = `${uncertaintyResponse} ${nextPrompt}`;
-    const botResponse = await simulateTypingEffect(responseMessage);
-    const updatedMessages: Message[] = [...newMessages, { 
-      role: 'assistant', 
-      content: botResponse,
+    // Create a new user message
+    const userMessage: Message = {
+      id: generateId(),
+      role: 'user',
+      content: textToSend,
       timestamp: new Date().toISOString()
-    }];
+    };
+    
+    // Update messages state with user message
+    const updatedMessages = [...messages, userMessage];
     setMessages(updatedMessages);
-    return;
-  }
-  
-  // Reset attempt count for this stage
-  setAttemptCount(prev => ({...prev, [currentStage]: 0}));
-  
-  // Advance to next stage
-  const nextStage = currentStage < PromptStage.COMPLETED ? currentStage + 1 : currentStage;
-  setCurrentStage(nextStage);
-  
-  // Get personalized prompt for next stage based on actual user input
-  let nextPrompt;
-  
-  if (currentStage === PromptStage.NAME) {
-    // Special handling for name transition to ensure it uses the name just provided
-    nextPrompt = `Nice to meet you, ${userMessage}! What's your company name?`;
-  } else {
-    nextPrompt = nextStage === currentStage 
-      ? "Thanks for that information! Is there anything else you'd like to tell me?"
-      : getCurrentPrompt();
-  }
-  
-  // Add assistant response
-  const botResponse = await simulateTypingEffect(nextPrompt);
-  const updatedMessages: Message[] = [...newMessages, { 
-    role: 'assistant', 
-    content: botResponse,
-    timestamp: new Date().toISOString()
-  }];
-  setMessages(updatedMessages);
-};
+    
+    // Context limitation - use last 15 messages for context (including system prompt)
+    const context = updatedMessages.slice(-15);
+    
+    // Ensure system prompt is included
+    if (!context.some(msg => msg.role === 'system')) {
+      context.unshift({
+        id: generateId(),
+        role: 'system',
+        content: SYSTEM_PROMPT,
+        timestamp: new Date().toISOString()
+      });
+    }
+    
+    // Get AI response
+    const aiReply = await getAIResponse(context);
+    
+    // Add AI response to messages
+    const aiMessage: Message = {
+      id: generateId(),
+      role: 'assistant',
+      content: aiReply,
+      timestamp: new Date().toISOString()
+    };
+    
+    // Use typing effect for AI response
+    setFullMessageContent(aiReply);
+    setCurrentTypingMessage('');
+    setTypingEffect(true);
+    
+    setMessages([...updatedMessages, aiMessage]);
+  };
 
-// Don't render if not open
-if (!isOpen) return null;
+  // Allow sending message with Enter key (without Shift)
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
 
-// Render minimized view
-if (isMinimized) {
-  return (
-    <div className="fixed bottom-4 right-4 z-50 transition-all duration-300">
-      <button 
-        onClick={toggleMinimize}
-        className="bg-teal-500 text-white p-4 rounded-full shadow-lg hover:shadow-xl hover:bg-teal-600 transform hover:scale-105 transition-all duration-300 flex items-center justify-center"
-      >
-        <ChatBubbleLeftRightIcon className="h-6 w-6" />
-      </button>
-    </div>
-  );
-}
-
-// Render full chat
-return (
-  <div 
-    ref={resizeRef}
-    className="fixed bottom-4 right-4 z-50 shadow-xl transition-all duration-300 rounded-xl overflow-hidden"
-    style={{ 
-      width: `${chatSize.width}px`,
-      height: `${chatSize.height}px`,
-    }}
-  >
-    <Card className="w-full h-full flex flex-col overflow-hidden border border-gray-200 rounded-xl">
-      {/* Header - now with position sticky */}
-      <CardHeader 
-        floated={false}
-        shadow={true}
-        className="rounded-none px-4 py-3 bg-gradient-to-r from-teal-500 to-teal-600 z-20 sticky top-0"
-      >
-        <div className="flex justify-between items-center">
-          <div className="flex items-center">
-            <SparklesIcon className="h-5 w-5 text-white mr-2" />
-            <Typography className="font-bold text-white">Theoforge Assistant</Typography>
-          </div>
-          <div className="flex items-center gap-1">
-            <IconButton 
-              variant="text" 
-              color="white" 
-              size="sm" 
-              className="h-8 w-8 rounded-full hover:bg-teal-700/50"
-              onClick={toggleMinimize}
-            >
-              <MinusIcon className="h-4 w-4" />
-            </IconButton>
-            {chatSize.width > 400 ? (
-              <IconButton 
-                variant="text" 
-                color="white" 
-                size="sm" 
-                className="h-8 w-8 rounded-full hover:bg-teal-700/50"
-                onClick={() => setChatSize({ width: 380, height: 520 })}
-              >
-                <ArrowsPointingInIcon className="h-4 w-4" />
-              </IconButton>
-            ) : (
-              <IconButton 
-                variant="text" 
-                color="white" 
-                size="sm" 
-                className="h-8 w-8 rounded-full hover:bg-teal-700/50"
-                onClick={() => setChatSize({ width: 480, height: 600 })}
-              >
-                <ArrowsPointingOutIcon className="h-4 w-4" />
-              </IconButton>
-            )}
-            <IconButton 
-              variant="text" 
-              color="white" 
-              size="sm" 
-              className="h-8 w-8 rounded-full hover:bg-teal-700/50"
-              onClick={onClose}
-            >
-              <XMarkIcon className="h-4 w-4" />
-            </IconButton>
-          </div>
-        </div>
-      </CardHeader>
+  // VOICE RECORDING FUNCTIONS
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioChunksRef.current = [];
+      const mediaRecorder = new MediaRecorder(stream);
       
-      {/* Message container - explicitly set to take remaining height with overflow */}
-      <CardBody className="flex-grow overflow-y-auto px-4 py-3 h-[calc(100%-110px)]" ref={chatContainerRef}>
-        <div className="space-y-4">
-          {messages.map((message, index) => (
-            <div 
-              key={index} 
-              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} animate-fadeIn`}
-            >
-              <div 
-                className={`max-w-[80%] px-4 py-3 rounded-xl shadow-sm ${
-                  message.role === 'user' 
-                    ? 'bg-teal-500 text-white' 
-                    : 'bg-gray-100 text-gray-800'
-                }`}
-              >
-                <Typography className="whitespace-pre-wrap text-sm">
-                  {message.content}
-                </Typography>
-                <Typography variant="small" className={`text-xs mt-1 ${message.role === 'user' ? 'text-teal-50/80' : 'text-gray-500'}`}>
-                  {formatTime(message.timestamp)}
-                </Typography>
-              </div>
-            </div>
-          ))}
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+      
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        await processAudioToText(audioBlob);
+        stream.getTracks().forEach(track => track.stop());
+      };
+      
+      mediaRecorderRef.current = mediaRecorder;
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (error) {
+      console.error("Error accessing microphone:", error);
+      setError("Could not access your microphone. Please check your permissions.");
+    }
+  };
 
-          {/* Typing indicator */}
-          {isTyping && (
-            <div className="flex justify-start">
-              <div className="max-w-[80%] px-4 py-3 rounded-xl shadow-sm bg-gray-100">
-                <div className="flex space-x-1">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100"></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200"></div>
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
+  // Voice-to-text processing (simulated)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const processAudioToText = async (_audioBlob: Blob) => {
+    setIsTranscribing(true);
+    try {
+      // Simulate a delay to mimic API call
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // If we're awaiting an answer to a specific question, provide a tailored response
+      if (isAwaitingAnswer && currentQuestion) {
+        switch (currentQuestion) {
+          case 'name':
+            setInput("John Smith");
+            break;
+          case 'company':
+            setInput("Acme Corp");
+            break;
+          case 'interests':
+            setInput("Knowledge graphs, data integration, AI model training");
+            break;
+          case 'email':
+            setInput("john.smith@acmecorp.com");
+            break;
+          default:
+            setInput(`Can you tell me more about ${companyName}'s Knowledge Graph solutions?`);
+        }
+      } else {
+        // Default speech transcription
+        setInput(`Can you tell me more about ${companyName}'s Knowledge Graph solutions?`);
+      }
+    } catch (error) {
+      console.error("Error transcribing audio:", error);
+      setError("Failed to transcribe your voice message.");
+    } finally {
+      setIsTranscribing(false);
+    }
+  };
+
+  // Quick replies/suggestions
+  const handleQuickReply = (text: string) => {
+    setInput(text);
+    setTimeout(() => handleSend(text), 100);
+  };
+
+  // Render the minimized chat button
+  if (!isOpen) return null;
+
+  if (isMinimized) {
+    return (
+      <div className="fixed bottom-4 right-4 z-50">
+        <button 
+          onClick={toggleMinimize}
+          className={`bg-${accentColor}-500 text-white p-4 rounded-full shadow-lg hover:bg-${accentColor}-600 transition transform hover:scale-105 flex items-center justify-center`}
+          aria-label="Open chat"
+        >
+          <Badge content={visibleMessages.length > 2 ? "1" : "0"} color="red">
+            <ChatBubbleLeftRightIcon className="h-6 w-6" />
+          </Badge>
+          <span className="sr-only">Open chat</span>
+        </button>
+      </div>
+    );
+  }
+
+  // Determine theme-based classes
+  const themeClasses = theme === 'dark' 
+    ? {
+        card: "bg-gray-900 border-gray-800",
+        header: `bg-gradient-to-r from-${accentColor}-800 to-${accentColor}-900`,
+        body: "bg-gray-900",
+        message: {
+          user: `bg-${accentColor}-600 text-white`,
+          assistant: "bg-gray-800 text-gray-100",
+          question: "bg-indigo-700 text-white border border-indigo-400",
+          timestamp: {
+            user: `text-${accentColor}-200`,
+            assistant: "text-gray-400",
+            question: "text-indigo-200"
+          }
+        },
+        input: "bg-gray-800 border-gray-700 text-white placeholder:text-gray-400",
+        buttons: "text-gray-300 hover:bg-gray-700",
+        quickReplies: "bg-gray-800 border-gray-700 text-white",
+        footer: "border-gray-800"
+      }
+    : {
+        card: "bg-white border-gray-200",
+        header: `bg-gradient-to-r from-${accentColor}-500 to-${accentColor}-600`,
+        body: "bg-white",
+        message: {
+          user: `bg-${accentColor}-500 text-white`,
+          assistant: "bg-gray-100 text-gray-800",
+          question: "bg-indigo-500 text-white border border-indigo-300",
+          timestamp: {
+            user: `text-${accentColor}-100`,
+            assistant: "text-gray-500",
+            question: "text-indigo-100"
+          }
+        },
+        input: "bg-gray-50 border-gray-200 text-gray-900 placeholder:text-gray-500",
+        buttons: "text-gray-700 hover:bg-gray-100",
+        quickReplies: "bg-gray-50 border-gray-200 text-gray-700",
+        footer: "border-gray-200"
+      };
+
+  // Quick reply suggestions based on context
+  const getSuggestions = () => {
+    if (visibleMessages.length <= 1) {
+      return [
+        `Tell me about ${companyName}`,
+        "What services do you offer?",
+        "How can I schedule a demo?"
+      ];
+    }
+    
+    if (guestInfo.interests?.length) {
+      return [
+        `How do you handle ${guestInfo.interests[0]}?`,
+        "What are your pricing options?",
+        "Can you share some case studies?"
+      ];
+    }
+    
+    return [
+      "Tell me about your Knowledge Graph solutions",
+      "What makes your ETL solutions unique?",
+      "Do you offer custom LLM training?"
+    ];
+  };
+
+  // Render minimized view
+  if (isMinimized) {
+    return (
+      <div
+        ref={resizeRef}
+        className="fixed bottom-4 right-4 z-50 shadow-xl rounded-xl overflow-hidden transition-all duration-300"
+        style={{ width: `${chatSize.width}px`, height: `${chatSize.height}px` }}
+      >
+        <Card className={`w-full h-full flex flex-col border rounded-xl ${themeClasses.card}`}>
+          {/* Header */}
+          <CardHeader 
+            floated={false}
+            className={`sticky top-0 z-20 px-6 py-4 m-0 rounded-b-none shadow-md ${themeClasses.header}`}
+          >
+            <div className="flex justify-between items-center">
+              <div className="flex items-center">
+                <div className="relative mr-3">
+                  {logoUrl ? (
+                    <img 
+                      src={logoUrl} 
+                      alt={`${companyName} Logo`} 
+                      className="h-9 w-9 rounded-full border-2 border-white shadow-sm" 
+                    />
+                  ) : (
+                    <SparklesIcon className="h-6 w-6 text-white" />
+                  )}
+                  {guestInfo.name && (
+                    <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white animate-pulse"></div>
+                  )}
+                </div>
+                <div>
+                  <Typography className="text-white text-lg font-bold flex items-center">
+                    {companyName} AI
+                    <Tooltip content="Powered by AI">
+                      <SparklesIcon className="h-4 w-4 ml-1.5 text-white opacity-75" />
+                    </Tooltip>
+                  </Typography>
+                  {guestInfo.name && (
+                    <Typography className="text-white text-xs opacity-90 flex items-center">
+                      <UserCircleIcon className="h-3 w-3 mr-1" />
+                      Speaking with {guestInfo.name}
+                    </Typography>
+                  )}
                 </div>
               </div>
-            </div>
-          )}
-
-          {/* Invisible element to scroll to */}
-          <div ref={messageEndRef}></div>
-        </div>
-      </CardBody>
-      
-      {/* Input area - custom styling to match design */}
-      <CardFooter className="px-4 py-3 border-t border-gray-200 bg-white sticky bottom-0 z-20">
-        <div className="flex items-center">
-          <div className="w-full relative">
-            <div className="flex items-center w-full">
-              <div className="relative w-full flex items-center border border-gray-300 rounded-full bg-white overflow-hidden">
-                <input
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-                  placeholder="Type your message..."
-                  className="w-full px-5 py-3 outline-none text-gray-700 placeholder-gray-400"
-                />
-                <button
-                  onClick={handleSend}
-                  disabled={isLoading || !input.trim()}
-                  className="absolute right-0 w-12 h-12 flex items-center justify-center rounded-full bg-teal-400 hover:bg-teal-500 disabled:opacity-50 transition-colors"
-                >
-                  <PaperAirplaneIcon className="h-7 w-8 text-white" />
-                </button>
+              <div className="flex gap-1">
+                <Tooltip content="Clear chat history">
+                  <IconButton
+                    onClick={clearChat}
+                    variant="text"
+                    color="white"
+                    className="h-8 w-8 rounded-full hover:bg-white/20 transition-all"
+                    size="sm"
+                  >
+                    <TrashIcon className="h-4 w-4" />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip content="Minimize">
+                  <IconButton
+                    onClick={toggleMinimize}
+                    variant="text"
+                    color="white"
+                    className="h-8 w-8 rounded-full hover:bg-white/20 transition-all" size="sm"
+                  >
+                    <MinusIcon className="h-4 w-4" />
+                  </IconButton>
+                  </Tooltip>
+                <Tooltip content={chatSize.width > 400 ? "Smaller size" : "Larger size"}>
+                  <IconButton
+                    onClick={() => setChatSize(
+                      chatSize.width > 400 
+                        ? { width: 380, height: 520 } 
+                        : { width: 480, height: 600 }
+                    )}
+                    variant="text"
+                    color="white"
+                    className="h-8 w-8 rounded-full hover:bg-white/20 transition-all"
+                    size="sm"
+                  >
+                    {chatSize.width > 400 ? (
+                      <ArrowsPointingInIcon className="h-4 w-4" />
+                    ) : (
+                      <ArrowsPointingOutIcon className="h-4 w-4" />
+                    )}
+                  </IconButton>
+                </Tooltip>
+                <Tooltip content="Close">
+                  <IconButton
+                    onClick={onClose}
+                    variant="text"
+                    color="white"
+                    className="h-8 w-8 rounded-full hover:bg-white/20 transition-all"
+                    size="sm"
+                  >
+                    <XMarkIcon className="h-4 w-4" />
+                  </IconButton>
+                </Tooltip>
               </div>
             </div>
-          </div>
-        </div>
-      </CardFooter>
-      
-      {/* Resize handle - improved positioning and clickable area */}
-      <div 
-        className="absolute bottom-0 right-0 w-6 h-6 cursor-nwse-resize flex items-center justify-center z-30"
-        onMouseDown={handleResizeStart}
-      >
-        <svg 
-          width="12" 
-          height="12" 
-          viewBox="0 0 12 12" 
-          fill="none" 
-          xmlns="http://www.w3.org/2000/svg"
+          </CardHeader>
+          
+          {/* Message Container */}
+          <CardBody 
+            ref={chatContainerRef} 
+            className={`flex-grow overflow-y-auto p-6 space-y-4 ${themeClasses.body}`}
+          >
+            {/* Introduction Panel - only shown at first */}
+            {showIntroduction && (
+              <div className={`mb-6 p-4 rounded-lg border border-${accentColor}-100 bg-${accentColor}-50 text-${accentColor}-900 dark:border-${accentColor}-800 dark:bg-${accentColor}-900/20 dark:text-${accentColor}-100`}>
+                <div className="flex items-center mb-3">
+                  <SparklesIcon className={`h-5 w-5 text-${accentColor}-500 mr-2`} />
+                  <Typography variant="h6" className="font-semibold">Welcome to {companyName} AI Assistant</Typography>
+                </div>
+                <Typography variant="small" className="mb-3">
+                  I'm here to help answer your questions about our services and solutions. Feel free to ask about:
+                </Typography>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
+                  <div className={`p-2 rounded border border-${accentColor}-200 bg-white/80 dark:bg-gray-800/80 flex items-center`}>
+                    <div className={`mr-2 p-1 rounded-full bg-${accentColor}-100 dark:bg-${accentColor}-900`}>
+                      <ChevronDoubleRightIcon className={`h-3 w-3 text-${accentColor}-500`} />
+                    </div>
+                    <Typography variant="small" className="font-medium">ETL Solutions</Typography>
+                  </div>
+                  <div className={`p-2 rounded border border-${accentColor}-200 bg-white/80 dark:bg-gray-800/80 flex items-center`}>
+                    <div className={`mr-2 p-1 rounded-full bg-${accentColor}-100 dark:bg-${accentColor}-900`}>
+                      <ChevronDoubleRightIcon className={`h-3 w-3 text-${accentColor}-500`} />
+                    </div>
+                    <Typography variant="small" className="font-medium">Knowledge Graphs</Typography>
+                  </div>
+                  <div className={`p-2 rounded border border-${accentColor}-200 bg-white/80 dark:bg-gray-800/80 flex items-center`}>
+                    <div className={`mr-2 p-1 rounded-full bg-${accentColor}-100 dark:bg-${accentColor}-900`}>
+                      <ChevronDoubleRightIcon className={`h-3 w-3 text-${accentColor}-500`} />
+                    </div>
+                    <Typography variant="small" className="font-medium">Custom LLM Training</Typography>
+                  </div>
+                  <div className={`p-2 rounded border border-${accentColor}-200 bg-white/80 dark:bg-gray-800/80 flex items-center`}>
+                    <div className={`mr-2 p-1 rounded-full bg-${accentColor}-100 dark:bg-${accentColor}-900`}>
+                      <ChevronDoubleRightIcon className={`h-3 w-3 text-${accentColor}-500`} />
+                    </div>
+                    <Typography variant="small" className="font-medium">Case Studies & Pricing</Typography>
+                  </div>
+                </div>
+                <div className="flex items-center mt-2">
+                  <LockClosedIcon className="h-3 w-3 mr-1 text-gray-400" />
+                  <Typography variant="small" className="text-xs text-gray-500">
+                    Your conversations are stored locally on your device only
+                  </Typography>
+                </div>
+              </div>
+            )}
+            
+            {/* Guest info chip - only show once info is collected */}
+            {guestInfo.name && guestInfo.company && (
+              <div className="flex justify-center mb-4">
+                <Chip
+                  value={
+                    <div className="flex items-center gap-2">
+                      <UserCircleIcon className="h-4 w-4" />
+                      <span>{guestInfo.name} from {guestInfo.company}</span>
+                    </div>
+                  }
+                  color={accentColor as colors}
+                  variant="ghost"
+                  className="px-3 py-1.5"
+                />
+              </div>
+            )}
+            
+            {visibleMessages.map((msg) => (
+              <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div 
+                  className={`max-w-[85%] p-4 rounded-xl shadow-md ${
+                    msg.role === 'user' 
+                      ? themeClasses.message.user 
+                      : msg.isQuestion
+                        ? themeClasses.message.question
+                        : themeClasses.message.assistant
+                  } ${msg === visibleMessages[visibleMessages.length - 1] && typingEffect ? 'animate-pulse' : ''}`}
+                >
+                  {msg === visibleMessages[visibleMessages.length - 1] && typingEffect 
+                    ? <Typography className="text-sm whitespace-pre-wrap">{currentTypingMessage}<span className="animate-pulse">▌</span></Typography>
+                    : <Typography className="text-sm whitespace-pre-wrap">{msg.content}</Typography>
+                  }
+                  <Typography 
+                    variant="small" 
+                    className={`mt-1 text-xs ${
+                      msg.role === 'user' 
+                        ? themeClasses.message.timestamp.user 
+                        : msg.isQuestion
+                          ? themeClasses.message.timestamp.question
+                          : themeClasses.message.timestamp.assistant
+                    }`}
+                  >
+                    {formatTime(msg.timestamp)}
+                  </Typography>
+                </div>
+              </div>
+            ))}
+            
+            {isThinking && (
+              <div className="flex justify-start">
+                <div className={`max-w-[80%] p-4 rounded-xl shadow ${themeClasses.message.assistant}`}>
+                  <div className="flex items-center gap-2">
+                    <Spinner className="h-4 w-4" color={accentColor as colors} />
+                    <Typography className="text-sm">Thinking...</Typography>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {isTranscribing && (
+              <div className="flex justify-start">
+                <div className={`max-w-[80%] p-4 rounded-xl shadow ${themeClasses.message.assistant}`}>
+                  <div className="flex items-center gap-2">
+                    <Spinner className="h-4 w-4" color={accentColor as colors} />
+                    <Typography className="text-sm">Transcribing audio...</Typography>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {error && (
+              <div className="flex justify-center">
+                <div className="max-w-[90%] p-3 rounded-lg bg-red-50 text-red-600 border border-red-200 dark:bg-red-900/20 dark:border-red-800 dark:text-red-300">
+                  <div className="flex items-start gap-2">
+                    <div className="flex-shrink-0 mt-0.5">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div>
+                      <Typography variant="small" className="font-medium">{error}</Typography>
+                      <Button 
+                        variant="text" 
+                        size="sm" 
+                        color="red" 
+                        className="p-0 mt-1" 
+                        onClick={() => setError(null)}
+                      >
+                        Dismiss
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Quick Replies */}
+            {visibleMessages.length > 0 && !isThinking && !isAwaitingAnswer && !typingEffect && (
+              <div className="pt-2 flex flex-wrap gap-2 justify-center">
+                {getSuggestions().map((suggestion, index) => (
+                  <Button
+                    key={index}
+                    variant="outlined"
+                    size="sm"
+                    color={accentColor as colors}
+                    className={`px-3 py-1.5 cursor-pointer hover:bg-${accentColor}-50 dark:hover:bg-${accentColor}-900/20 transition-colors`}
+                    onClick={() => handleQuickReply(suggestion)}
+                  >{suggestion}</Button>
+                ))}
+              </div>
+            )}
+            
+            <div ref={messageEndRef} />
+          </CardBody>
+          
+          {/* Footer / Input */}
+          <CardFooter className={`p-4 border-t ${themeClasses.footer}`}>
+            <div className="flex items-center gap-2">
+              <input
+                ref={inputRef}
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={isAwaitingAnswer ? `Please answer the question...` : "Type your message..."}
+                className={`flex-grow border rounded-lg p-3 pr-10 focus:outline-none focus:ring-2 focus:ring-${accentColor}-500 ${themeClasses.input} ${isAwaitingAnswer ? `border-indigo-300 animate-pulse` : ''}`}
+                disabled={isThinking || isTranscribing}
+              />
+              
+              <div className="absolute right-20 flex">
+                {isRecording ? (
+                  <IconButton
+                    onClick={stopRecording}
+                    variant="filled"
+                    color="red"
+                    className="h-9 w-9 rounded-full transition-all"
+                    size="sm"
+                  >
+                    <StopIcon className="h-4 w-4" />
+                  </IconButton>
+                ) : (
+                  <IconButton
+                    onClick={startRecording}
+                    variant="text"
+                    color={accentColor as colors}
+                    className="h-9 w-9 rounded-full transition-all"
+                    size="sm"
+                    disabled={isThinking || isTranscribing}
+                  >
+                    <MicrophoneIcon className="h-4 w-4" />
+                  </IconButton>
+                )}
+              </div>
+              
+              <Button 
+                onClick={() => handleSend()} 
+                color={accentColor as colors}
+                variant="gradient"
+                className="p-2 rounded-full shadow-md"
+                disabled={isThinking || isTranscribing || !input.trim()}
+              >
+                <PaperAirplaneIcon className="h-5 w-5" />
+              </Button>
+            </div>
+            
+            {visibleMessages.length > 1 && !isAwaitingAnswer && (
+              <div className="mt-2 text-center">
+                <Typography variant="small" className="text-gray-500 dark:text-gray-400 text-xs flex items-center justify-center gap-1">
+                  <LockClosedIcon className="h-3 w-3" />
+                  Messages are saved locally on this device
+                </Typography>
+              </div>
+            )}
+            
+            {isAwaitingAnswer && (
+              <div className="mt-2 text-center">
+                <Typography variant="small" className="text-indigo-500 dark:text-indigo-400 text-xs font-medium">
+                  Please answer the question above to continue
+                </Typography>
+              </div>
+            )}
+          </CardFooter>
+        </Card>
+        
+        {/* Resize Handle */}
+        <div
+          onMouseDown={handleResizeStart}
+          className="absolute bottom-0 right-0 w-8 h-8 cursor-se-resize bg-transparent flex items-center justify-center opacity-30 hover:opacity-100 transition-opacity"
+          aria-label="Resize chat window"
         >
-          <path d="M8 12H12V8H8V12ZM4 12H8V8H4V12ZM0 12H4V8H0V12ZM8 8H12V4H8V8Z" fill="#AAAAAA"/>
-        </svg>
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+            <rect x="0" y="8" width="2" height="2" />
+            <rect x="4" y="8" width="2" height="2" />
+            <rect x="8" y="8" width="2" height="2" />
+            <rect x="4" y="4" width="2" height="2" />
+            <rect x="8" y="4" width="2" height="2" />
+            <rect x="8" y="0" width="2" height="2" />
+          </svg>
+        </div>
       </div>
-    </Card>
-  </div>
-);
+    );
+  }
 }

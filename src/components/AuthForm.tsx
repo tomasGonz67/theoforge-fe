@@ -27,11 +27,16 @@ export function AuthForm({ type }: AuthFormProps) {
   const [error, setError] = useState('');
   const [isVisible, setIsVisible] = useState(false);
   const navigate = useNavigate();
-  const { login, register } = useContext(AuthContext);
+  const { login, isAuthenticated, register } = useContext(AuthContext);
 
   useEffect(() => {
     setIsVisible(true);
-  }, []);
+    
+    // If user is already authenticated, redirect to dashboard
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

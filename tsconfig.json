@@ -13,7 +13,7 @@
     "isolatedModules": true,
     "jsx": "react-jsx",
     "incremental": true,
-    "types": ["vitest/globals", "openai", "@types/wicg-file-system-access"],
+    "types": ["vitest/globals", "openai", "@types/wicg-file-system-access", "node"],
     "plugins": [
       {
         "name": "next"

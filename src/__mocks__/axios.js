@@ -1,4 +1,12 @@
 module.exports = {
+    interceptors: {
+        response: {
+            use: jest.fn()
+        },
+        request: {
+            use: jest.fn()
+        }
+    },
     get: jest.fn((url) => {
         if (url) {
             return Promise.resolve({
