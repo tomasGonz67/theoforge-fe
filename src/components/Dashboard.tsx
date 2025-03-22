@@ -2379,7 +2379,7 @@ export function Dashboard() {
                       content={unreadCount}
                       color="teal"
                       className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center p-0 text-[10px]"
-                    ></Badge>
+                    >{' '}</Badge>
                   )}
                 </div>
               </MenuHandler>
@@ -2786,26 +2786,7 @@ export function Dashboard() {
             
             {/* Guests Table Section - Only shown in Admin view */}
             {currentPage === 'guests' && isAdminView && (
-              <Card className="border border-gray-100 overflow-hidden">
-                <div className="px-6 py-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
-                  <div>
-                    <Typography variant="h5" color="blue-gray">
-                      Guest Management
-                    </Typography>
-                    <Typography variant="small" color="gray">
-                      View and manage guest accounts in your system
-                    </Typography>
-                  </div>
-                  <Button 
-                    color="teal" 
-                    size="sm" 
-                    className="flex items-center gap-1"
-                  >
-                    <HomeIcon className="h-4 w-4" />
-                  </Button>
-                </div>
-                <GuestsTable />
-              </Card>
+              <GuestsTable />
             )}
             
             {/* Resources Section - Available to both roles */}

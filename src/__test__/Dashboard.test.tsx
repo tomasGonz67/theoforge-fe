@@ -1,8 +1,10 @@
 import '@testing-library/jest-dom'
-import { fireEvent, render, screen } from "@testing-library/react"
+import { fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { Dashboard } from "../components/Dashboard"
 import { BrowserRouter as Router } from 'react-router-dom'
 import { AuthContext } from '../App';
+import axios from 'axios';
+jest.mock('axios');
 const mockUseNavigate = jest.fn();
 jest.mock('react-router-dom', () => ({
     ...jest.requireActual('react-router-dom'),
@@ -69,7 +71,7 @@ describe('When rendering the dashboard as an admin', () => {
         expect(prevPageButton).not.toBeNull();
         expect(nextPageButton).not.toBeNull();
     });
-    it('contains a guests list button', () => {
+    it('contains a guests list button', async () => {
         renderAdminDashboard();
         const guestsButtonText = screen.queryAllByText('Guests');
         // A guests button for collapsed and uncollapsed sidebar
@@ -79,24 +81,27 @@ describe('When rendering the dashboard as an admin', () => {
         // Clicking should render a table of guests
         if(guestsButton) fireEvent.click(guestsButton);
         else fail('No guests button found');
-        expect(screen.queryByText('Guests list')).not.toBeNull();
-        expect(screen.queryByText('See information about all guests')).not.toBeNull();
-        const searchForm = screen.getByText('Search');
-        expect(searchForm).toBeDefined();
-        const table = screen.queryByRole('table');
-        expect(table).not.toBeNull();
-        const tableColumns = screen.queryAllByRole('columnheader');
-        const expectedColumns = ['Name', 'Company', 'Industry', 'Project', 'Contact', 'Status', 'Last Interaction', 'Actions'];
-        expect(tableColumns).toHaveLength(8);
-        for(let i = 0; i < tableColumns.length;i ++) {
-            expect(tableColumns[i]).toHaveTextContent(expectedColumns[i]);
-        }
-        const pagination = screen.queryByText(/Page [0-9]+ of [0-9]+/);
-        expect(pagination).not.toBeNull();
-        const prevPageButton = screen.queryByRole('button', {name: 'Previous'});
-        const nextPageButton = screen.queryByRole('button', {name: 'Next'});
-        expect(prevPageButton).not.toBeNull();
-        expect(nextPageButton).not.toBeNull();
+        await waitFor(() => {
+            expect(axios.get).toHaveBeenCalledTimes(1);
+            expect(screen.queryByText('Guests list')).not.toBeNull();
+            expect(screen.queryByText('See information about all guests')).not.toBeNull();
+            const searchForm = screen.getByText('Search');
+            expect(searchForm).toBeDefined();
+            const table = screen.queryByRole('table');
+            expect(table).not.toBeNull();
+            const tableColumns = screen.queryAllByRole('columnheader');
+            const expectedColumns = ["Name", "Company", "Industry", "Budget", "Contact", "Status", "Last Interaction", "Actions"];
+            expect(tableColumns).toHaveLength(8);
+            for(let i = 0; i < tableColumns.length;i ++) {
+                expect(tableColumns[i]).toHaveTextContent(expectedColumns[i]);
+            }
+            const pagination = screen.queryByText(/Page [0-9]+ of [0-9]+/);
+            expect(pagination).not.toBeNull();
+            const prevPageButton = screen.queryByRole('button', {name: 'Previous'});
+            const nextPageButton = screen.queryByRole('button', {name: 'Next'});
+            expect(prevPageButton).not.toBeNull();
+            expect(nextPageButton).not.toBeNull();
+          });
     });
     it('contains a marketplace button', () => {
         renderAdminDashboard();

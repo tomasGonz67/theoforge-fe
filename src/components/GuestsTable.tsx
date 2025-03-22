@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MagnifyingGlassIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { EyeIcon, HomeIcon, MagnifyingGlassIcon, MinusIcon, PencilIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
 import axios from 'axios';
 import {
   Card,
@@ -16,15 +16,32 @@ import {
   DialogFooter,
 } from "@material-tailwind/react";
 
+const API_URL = 'http://localhost:8000';
+
+interface Interaction {
+  event: string,
+  timestamp: string,
+}
 interface Guest {
+  additional_notes: string | null;
+  budget: string | null;
+  company: string | null;
+  contact_info: string | null;
+  created_at: string;
+  current_tech: string[] | null;
+  first_visit_timestamp: string;
   id: number;
-  name: string;
-  company: string;
-  industry: string;
-  contactInfo: string;
-  projectType: string;
-  lastInteraction: string;
-  status: 'new' | 'contacted' | 'converted';
+  industry: string | null;
+  interaction_events: string[];
+  interaction_history: Interaction[];
+  name: string | null;
+  page_views: string[];
+  pain_points: string[] | null;
+  project_type: string[] | null;
+  session_id: string;
+  status: 'NEW' | 'CONTACTED' | 'CONVERTED';
+  timeline: string | null;
+  updated_at: string;
 }
 
 export function GuestsTable() {
@@ -33,8 +50,14 @@ export function GuestsTable() {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedGuest, setSelectedGuest] = useState<Guest | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [createFormData, setCreateFormData] = useState<Guest | null>(null);
+  const [numProjectTypeFields, setNumProjectTypeFields] = useState(1);
+  const [numPainPointFields, setNumPainPointFields] = useState(1);
+  const [numCurrentTechFields, setNumCurrentTechFields] = useState(1);
   const [editFormData, setEditFormData] = useState<Guest | null>(null);
   const itemsPerPage = 10;
 
@@ -45,29 +68,32 @@ export function GuestsTable() {
   const fetchGuests = async () => {
     setLoading(true);
     try {
-      // In a real application, this would be an API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const dummyGuests: Guest[] = Array.from({ length: 50 }, (_, i) => ({
-        id: i + 1,
-        name: `Guest ${i + 1}`,
-        company: `Company ${i + 1}`,
-        industry: ['Technology', 'Healthcare', 'Finance', 'Retail'][i % 4],
-        contactInfo: `guest${i + 1}@example.com`,
-        projectType: ['AI Training', 'ETL Solution', 'Knowledge Graph', 'Custom Development'][i % 4],
-        lastInteraction: new Date(Date.now() - Math.random() * 10000000000).toISOString(),
-        status: ['new', 'contacted', 'converted'][i % 3] as 'new' | 'contacted' | 'converted',
-      }));
-
-      setGuests(dummyGuests);
+      const res = await axios.get(`${API_URL}/guests`);
+      setGuests(res.data);
     } catch (error) {
       console.error('Error fetching guests:', error);
     }
     setLoading(false);
   };
 
+  const handleView = (guest: Guest) => {
+    setSelectedGuest(guest);
+    setIsViewModalOpen(true);
+  }
+
+  const handleCreate = () => {
+    setNumProjectTypeFields(1);
+    setNumPainPointFields(1);
+    setNumCurrentTechFields(1);
+    setCreateFormData(createFormData ? createFormData : {} as Guest);
+    setIsCreateModalOpen(true);
+  };
+
   const handleEdit = (guest: Guest) => {
     setSelectedGuest(guest);
+    setNumProjectTypeFields(guest.project_type ? guest.project_type.length : 0);
+    setNumPainPointFields(guest.pain_points ? guest.pain_points.length : 0);
+    setNumCurrentTechFields(guest.current_tech ? guest.current_tech.length: 0);
     setEditFormData(guest);
     setIsEditModalOpen(true);
   };
@@ -77,13 +103,30 @@ export function GuestsTable() {
     setIsDeleteModalOpen(true);
   };
 
+  const handleCreateSubmit = async () => {
+    if (!createFormData) return;
+
+    try {
+      createFormData.session_id = 'test';
+      const res = await axios.post(`${API_URL}/guests/`, createFormData);
+
+      // Update the local state
+      setGuests(guests.concat(res.data as Guest));
+      
+      setIsCreateModalOpen(false);
+      setCreateFormData(null);
+    } catch (error) {
+      console.error('Error updating guest:', error);
+      // Handle error (show error message to user)
+    }
+  };
+
   const handleEditSubmit = async () => {
     if (!editFormData) return;
 
     try {
-      // In a real application, this would be an API call
-      await axios.put(`/api/guests/${editFormData.id}`, editFormData);
-      
+      await axios.put(`${API_URL}/guests/${editFormData.id}`, editFormData);
+
       // Update the local state
       setGuests(guests.map(guest => 
         guest.id === editFormData.id ? editFormData : guest
@@ -101,8 +144,7 @@ export function GuestsTable() {
     if (!selectedGuest) return;
 
     try {
-      // In a real application, this would be an API call
-      await axios.delete(`/api/guests/${selectedGuest.id}`);
+      await axios.delete(`${API_URL}/guests/${selectedGuest.id}`);
       
       // Update the local state
       setGuests(guests.filter(guest => guest.id !== selectedGuest.id));
@@ -117,11 +159,11 @@ export function GuestsTable() {
 
   const getStatusColor = (status: Guest['status']) => {
     switch (status) {
-      case 'new':
+      case 'NEW':
         return 'blue';
-      case 'contacted':
+      case 'CONTACTED':
         return 'amber';
-      case 'converted':
+      case 'CONVERTED':
         return 'green';
       default:
         return 'gray';
@@ -129,9 +171,9 @@ export function GuestsTable() {
   };
 
   const filteredGuests = guests.filter(guest =>
-    guest.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    guest.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    guest.industry.toLowerCase().includes(searchTerm.toLowerCase())
+    (guest.name ? guest.name.toLowerCase().includes(searchTerm.toLowerCase()) : false) ||
+    (guest.company ? guest.company.toLowerCase().includes(searchTerm.toLowerCase()) : false) ||
+    (guest.industry ? guest.industry.toLowerCase().includes(searchTerm.toLowerCase()) : false)
   );
 
   const paginatedGuests = filteredGuests.slice(
@@ -141,9 +183,44 @@ export function GuestsTable() {
 
   const totalPages = Math.ceil(filteredGuests.length / itemsPerPage);
 
-  const TABLE_HEAD = ["Name", "Company", "Industry", "Project Type", "Contact", "Status", "Last Interaction", "Actions"];
+  const TABLE_HEAD = ["Name", "Company", "Industry", "Budget", "Contact", "Status", "Last Interaction", "Actions"];
 
+  const viewField = (field: string, value: string | null) => {
+    return (
+      <div className="inline-flex flex-row gap-2 w-full">
+        <Typography variant="small" color="blue-gray" className="font-normal w-24">
+          {field}
+        </Typography>
+        <Card className={value ? value.length > 0 ? "overscroll-x-contain overflow-auto border-black border-2 h-min w-full" :
+        "overscroll-x-contain overflow-auto border-black border-2 w-full" :
+        "overscroll-x-contain overflow-auto w-full"}>
+          <Typography variant="small" color="blue-gray" className="font-normal overscroll-x-contain overflow-auto p-2">
+            {value}
+          </Typography>
+        </Card>
+      </div>
+    )
+  }
   return (
+    <Card className="border border-gray-100 overflow-hidden">
+      <div className="px-6 py-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
+        <div>
+          <Typography variant="h5" color="blue-gray">
+            Guest Management
+          </Typography>
+          <Typography variant="small" color="gray">
+            View and manage guest accounts in your system
+          </Typography>
+        </div>
+        <Button 
+          color="teal" 
+          size="sm" 
+          className="flex items-center gap-1"
+          onClick={() => handleCreate()}
+        >
+          <HomeIcon className="h-4 w-4" /> Add Guest
+        </Button>
+      </div>
     <Card className="h-full w-full">
       <CardHeader floated={false} shadow={false} className="rounded-none">
         <div className="flex items-center justify-between gap-8 mb-8">
@@ -195,35 +272,34 @@ export function GuestsTable() {
                 </td>
               </tr>
             ) : (
-              paginatedGuests.map(({ id, name, company, industry, projectType, contactInfo, status, lastInteraction }, index) => {
+              paginatedGuests.map((guest, index) => {
                 const isLast = index === paginatedGuests.length - 1;
                 const classes = isLast ? "p-4" : "p-4 border-b border-blue-gray-50";
-
                 return (
-                  <tr key={id}>
+                  <tr key={guest.id}>
                     <td className={classes}>
-                      <Typography variant="small" color="blue-gray" className="font-normal">
-                        {name}
+                      <Typography variant="small" color="blue-gray" className="font-normal overscroll-x-contain overflow-auto w-32">
+                        {guest.name ? guest.name : ''}
                       </Typography>
                     </td>
                     <td className={classes}>
-                      <Typography variant="small" color="blue-gray" className="font-normal">
-                        {company}
+                      <Typography variant="small" color="blue-gray" className="font-normal overscroll-x-contain overflow-auto w-32">
+                        {guest.company ? guest.company : ''}
                       </Typography>
                     </td>
                     <td className={classes}>
-                      <Typography variant="small" color="blue-gray" className="font-normal">
-                        {industry}
+                      <Typography variant="small" color="blue-gray" className="font-normal overscroll-x-contain overflow-auto w-32">
+                        {guest.industry ? guest.industry : ''}
                       </Typography>
                     </td>
                     <td className={classes}>
-                      <Typography variant="small" color="blue-gray" className="font-normal">
-                        {projectType}
+                      <Typography variant="small" color="blue-gray" className="font-normal overscroll-x-contain overflow-auto w-32">
+                        {guest.budget ? guest.budget : ''}
                       </Typography>
                     </td>
                     <td className={classes}>
-                      <Typography variant="small" color="blue-gray" className="font-normal">
-                        {contactInfo}
+                      <Typography variant="small" color="blue-gray" className="font-normal overscroll-x-contain overflow-auto w-32">
+                        {guest.contact_info ? guest.contact_info : ''}
                       </Typography>
                     </td>
                     <td className={classes}>
@@ -231,14 +307,14 @@ export function GuestsTable() {
                         <Chip
                           size="sm"
                           variant="ghost"
-                          value={status}
-                          color={getStatusColor(status)}
+                          value={guest.status}
+                          color={getStatusColor(guest.status)}
                         />
                       </div>
                     </td>
                     <td className={classes}>
                       <Typography variant="small" color="blue-gray" className="font-normal">
-                        {new Date(lastInteraction).toLocaleDateString()}
+                        {guest.interaction_history.length > 0 ? guest.interaction_history[guest.interaction_history.length-1].timestamp  : 'None'}
                       </Typography>
                     </td>
                     <td className={classes}>
@@ -246,14 +322,21 @@ export function GuestsTable() {
                         <IconButton
                           variant="text"
                           color="teal"
-                          onClick={() => handleEdit({ id, name, company, industry, contactInfo, projectType, lastInteraction, status })}
+                          onClick={() => handleView(guest)}
+                        >
+                          <EyeIcon className="h-4 w-4" />
+                        </IconButton>
+                        <IconButton
+                          variant="text"
+                          color="teal"
+                          onClick={() => handleEdit(guest)}
                         >
                           <PencilIcon className="h-4 w-4" />
                         </IconButton>
                         <IconButton
                           variant="text"
                           color="red"
-                          onClick={() => handleDelete({ id, name, company, industry, contactInfo, projectType, lastInteraction, status })}
+                          onClick={() => handleDelete(guest)}
                         >
                           <TrashIcon className="h-4 w-4" />
                         </IconButton>
@@ -290,6 +373,234 @@ export function GuestsTable() {
         </div>
       </div>
 
+      {/* Create Modal */}
+      <Dialog
+        size="md"
+        open={isCreateModalOpen}
+        handler={() => setIsCreateModalOpen(false)}
+      >
+        <DialogHeader>Create Guest</DialogHeader>
+        <DialogBody>
+          <div>{/*Fix jest detecting no children in DialogBody error*/}</div>
+          {createFormData && (
+            <div className="grid gap-6 overscroll-y-contain overflow-auto h-96">
+              <Input
+                label="Name"
+                value={createFormData.name ? createFormData.name : undefined}
+                onChange={(e) => setCreateFormData({ ...createFormData, name: e.target.value })}
+                crossOrigin={undefined}
+              />
+              <Input
+                label="Company"
+                value={createFormData.company ? createFormData.company : undefined}
+                onChange={(e) => setCreateFormData({ ...createFormData, company: e.target.value })}
+                crossOrigin={undefined}
+              />
+              <Input
+                label="Industry"
+                value={createFormData.industry ? createFormData.industry : undefined}
+                onChange={(e) => setCreateFormData({ ...createFormData, industry: e.target.value })}
+                crossOrigin={undefined}
+              />
+              <Input
+                label="Budget"
+                value={createFormData.budget ? createFormData.budget : undefined}
+                onChange={(e) => setCreateFormData({ ...createFormData, budget: e.target.value })}
+                crossOrigin={undefined}
+              />
+              <Input
+                label="Timeline"
+                value={createFormData.timeline ? createFormData.timeline : undefined}
+                onChange={(e) => setCreateFormData({ ...createFormData, timeline: e.target.value })}
+                crossOrigin={undefined}
+              />
+              <Input
+                label="Contact Info"
+                value={createFormData.contact_info ? createFormData.contact_info : undefined}
+                onChange={(e) => setCreateFormData({ ...createFormData, contact_info: e.target.value })}
+                crossOrigin={undefined}
+              />
+              <Input
+                label="Additional Notes"
+                value={createFormData.additional_notes ? createFormData.additional_notes : undefined}
+                onChange={(e) => setCreateFormData({ ...createFormData, additional_notes: e.target.value })}
+                crossOrigin={undefined}
+              />
+              {
+                // Create project type fields based on numProjectTypeFields
+                Array.from({length: numProjectTypeFields}, (_, num) => num+1 && 
+                <Input
+                  label={"Project Type "+(num+1)}
+                  value={createFormData.project_type ? createFormData.project_type[num] : undefined}
+                  onChange={(e) => setCreateFormData({ ...createFormData, project_type: createFormData.project_type ? createFormData.project_type.map((value, i) => (i === num ? e.target.value : value)) : [e.target.value] })}
+                  crossOrigin={undefined}
+                />)
+              }
+              <div className="inline-flex flex-row gap-6">
+                <Button
+                  color="green"
+                  size="sm"
+                  className="w-max h-max flex items-center gap-1"
+                  onClick={() => {
+                    setNumProjectTypeFields((x)=> x+1);
+                    // Add empty project type to form data
+                    setCreateFormData({ ...createFormData, project_type: createFormData.project_type ? createFormData.project_type.concat(['']) : ['']})
+                  }}>
+                  Add Project Type<PlusIcon className="h-4 w-4" />
+                </Button>
+                <Button
+                  color="red"
+                  size="sm"
+                  className="w-max h-max flex items-center gap-1"
+                  disabled={numProjectTypeFields === 0 ? true : false}
+                  onClick={() => {
+                    // Remove last project type from form data
+                    setCreateFormData({ ...createFormData, project_type: createFormData.project_type ? (numProjectTypeFields === 1 ? null : createFormData.project_type.slice(0, -1)) : null})
+                    // There can be 0 fields, meaning project type is null
+                    setNumProjectTypeFields((x)=> Math.max(x-1, 0));
+                  }}>
+                  Remove Project Type<MinusIcon className="h-4 w-4" />
+                </Button>
+              </div>
+              {
+                // Create pain point fields based on numPainPointFields
+                Array.from({length: numPainPointFields}, (_, num) => num+1 && 
+                <Input
+                  label={"Pain Point "+(num+1)}
+                  value={createFormData.pain_points ? createFormData.pain_points[num] : undefined}
+                  onChange={(e) => setCreateFormData({ ...createFormData, pain_points: createFormData.pain_points ? createFormData.pain_points.map((value, i) => (i === num ? e.target.value : value)) : [e.target.value] })}
+                  crossOrigin={undefined}
+                />)
+              }
+              <div className="inline-flex flex-row gap-6">
+                <Button
+                  color="green"
+                  size="sm"
+                  className="w-max h-max flex items-center gap-1"
+                  onClick={() => {
+                    setNumPainPointFields((x)=> x+1);
+                    // Add empty pain point to form data
+                    setCreateFormData({ ...createFormData, pain_points: createFormData.pain_points? createFormData.pain_points.concat(['']) : ['']})
+                  }}>
+                  Add Pain Point<PlusIcon className="h-4 w-4" />
+                </Button>
+                <Button
+                  color="red"
+                  size="sm"
+                  className="w-max h-max flex items-center gap-1"
+                  disabled={numPainPointFields === 0 ? true : false}
+                  onClick={() => {
+                    // Remove last pain point from form data
+                    setCreateFormData({ ...createFormData, pain_points: createFormData.pain_points ? (numPainPointFields === 1 ? null : createFormData.pain_points.slice(0, -1)) : null})
+                    // There can be 0 fields, meaning pain point is null
+                    setNumPainPointFields((x)=> Math.max(x-1, 0));
+                  }}>
+                  Remove Pain Point<MinusIcon className="h-4 w-4" />
+                </Button>
+              </div>
+              {
+                // Create current tech fields based on numCurrentTechFields
+                Array.from({length: numCurrentTechFields}, (_, num) => num+1 && 
+                <Input
+                  label={"Current Tech "+(num+1)}
+                  value={createFormData.current_tech? createFormData.current_tech[num] : undefined}
+                  onChange={(e) => setCreateFormData({ ...createFormData, current_tech: createFormData.current_tech ? createFormData.current_tech.map((value, i) => (i === num ? e.target.value : value)) : [e.target.value] })}
+                  crossOrigin={undefined}
+                />)
+              }
+              <div className="inline-flex flex-row gap-6">
+                <Button
+                  color="green"
+                  size="sm"
+                  className="w-max h-max flex items-center gap-1"
+                  onClick={() => {
+                    setNumCurrentTechFields((x)=> x+1);
+                    // Add empty current tech to form data
+                    setCreateFormData({ ...createFormData, current_tech: createFormData.current_tech ? createFormData.current_tech.concat(['']) : ['']})
+                  }}>
+                  Add Current Tech<PlusIcon className="h-4 w-4" />
+                </Button>
+                <Button
+                  color="red"
+                  size="sm"
+                  className="w-max h-max flex items-center gap-1"
+                  disabled={numCurrentTechFields === 0 ? true : false}
+                  onClick={() => {
+                    // Remove last current tech from form data
+                    setCreateFormData({ ...createFormData, current_tech: createFormData.current_tech ? (numCurrentTechFields === 1 ? null : createFormData.current_tech.slice(0, -1)) : null})
+                    // There can be 0 fields, meaning current tech is null
+                    setNumCurrentTechFields((x)=> Math.max(x-1, 0));
+                  }}>
+                  Remove Current Tech<MinusIcon className="h-4 w-4" />
+                </Button>
+              </div>
+              <div>
+                <Typography variant="small" color="blue-gray" className="mb-2">
+                  Status
+                </Typography>
+                <select
+                  value={createFormData.status}
+                  onChange={(e) => setCreateFormData({ ...createFormData, status: e.target.value as 'NEW' | 'CONTACTED' | 'CONVERTED' })}
+                  className="w-full p-2 border rounded-lg"
+                >
+                  <option value="NEW">New</option>
+                  <option value="CONTACTED">Contacted</option>
+                  <option value="CONVERTED">Converted</option>
+                </select>
+              </div>
+            </div>
+          )}
+        </DialogBody>
+        <DialogFooter className="space-x-2">
+          <Button variant="outlined" color="red" onClick={() => setIsCreateModalOpen(false)}>
+            Cancel
+          </Button>
+          <Button color="teal" onClick={handleCreateSubmit}>
+            Create
+          </Button>
+        </DialogFooter>
+      </Dialog>
+
+      {/* View Modal */}
+      <Dialog
+        size="lg"
+        open={isViewModalOpen}
+        handler={() => setIsViewModalOpen(false)}
+      >
+        <DialogHeader className="pb-0">View Guest</DialogHeader>
+        <DialogBody>
+          <div>{/*Fix jest detecting no children in DialogBody error*/}</div>
+          {selectedGuest && (
+            <div className="grid grid-cols-3 grid-flow-row gap-2 overscroll-y-contain overflow-auto h-96 w-full">
+              {viewField('Name:', selectedGuest.name)}
+              {viewField('Id:', String(selectedGuest.id))}
+              {viewField('Session Id:', selectedGuest.session_id)}
+              {viewField('Company:', selectedGuest.company)}
+              {viewField('Industry:', selectedGuest.industry)}
+              {viewField('Budget:', selectedGuest.budget)}
+              {viewField('Contact:', selectedGuest.contact_info)}
+              {viewField('Timeline:', selectedGuest.timeline)}
+              {viewField('Additional Notes:', selectedGuest.additional_notes)}
+              {viewField('Status:', selectedGuest.status)}
+              {viewField('Created At:', selectedGuest.created_at)}
+              {viewField('Updated At:', selectedGuest.updated_at)}
+              {viewField('First Visit Time:', selectedGuest.first_visit_timestamp)}
+              {viewField('Interaction History:', selectedGuest.interaction_history.map(obj => `${obj.event} at ${obj.timestamp}`).join(', '))}
+              {viewField('Interaction Events:', selectedGuest.interaction_events ? selectedGuest.interaction_events.join(', ') : null)}
+              {viewField('Project Types:', selectedGuest.project_type ? selectedGuest.project_type.join(', ') : null)}
+              {viewField('Pain Points:', selectedGuest.pain_points? selectedGuest.pain_points.join(', ') : null)}
+              {viewField('Current Tech:', selectedGuest.current_tech ? selectedGuest.current_tech.join(', ') : null)}
+              {viewField('Page Views:', selectedGuest.page_views.join(', '))}
+            </div>
+          )}
+        </DialogBody>
+        <DialogFooter className="space-x-2">
+          <Button variant="outlined" color="blue-gray" onClick={() => setIsViewModalOpen(false)}>
+            Exit
+          </Button>
+        </DialogFooter>
+      </Dialog>
+
       {/* Edit Modal */}
       <Dialog
         size="md"
@@ -300,49 +611,170 @@ export function GuestsTable() {
         <DialogBody>
           <div>{/*Fix jest detecting no children in DialogBody error*/}</div>
           {editFormData && (
-            <div className="grid gap-6">
+            <div className="grid gap-6 overscroll-y-contain overflow-auto h-96">
+              <div></div>
               <Input
                 label="Name"
-                value={editFormData.name}
+                value={editFormData.name ? editFormData.name : undefined}
                 onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
                 crossOrigin={undefined}
               />
               <Input
                 label="Company"
-                value={editFormData.company}
+                value={editFormData.company ? editFormData.company : undefined}
                 onChange={(e) => setEditFormData({ ...editFormData, company: e.target.value })}
                 crossOrigin={undefined}
               />
               <Input
                 label="Industry"
-                value={editFormData.industry}
+                value={editFormData.industry ? editFormData.industry : undefined}
                 onChange={(e) => setEditFormData({ ...editFormData, industry: e.target.value })}
                 crossOrigin={undefined}
               />
               <Input
-                label="Contact Info"
-                value={editFormData.contactInfo}
-                onChange={(e) => setEditFormData({ ...editFormData, contactInfo: e.target.value })}
+                label="Budget"
+                value={editFormData.budget ? editFormData.budget : undefined}
+                onChange={(e) => setEditFormData({ ...editFormData, budget: e.target.value })}
                 crossOrigin={undefined}
               />
               <Input
-                label="Project Type"
-                value={editFormData.projectType}
-                onChange={(e) => setEditFormData({ ...editFormData, projectType: e.target.value })}
+                label="Timeline"
+                value={editFormData.timeline ? editFormData.timeline : undefined}
+                onChange={(e) => setEditFormData({ ...editFormData, timeline: e.target.value })}
                 crossOrigin={undefined}
               />
+              <Input
+                label="Contact Info"
+                value={editFormData.contact_info ? editFormData.contact_info : undefined}
+                onChange={(e) => setEditFormData({ ...editFormData, contact_info: e.target.value })}
+                crossOrigin={undefined}
+              />
+              <Input
+                label="Additional Notes"
+                value={editFormData.additional_notes ? editFormData.additional_notes : undefined}
+                onChange={(e) => setEditFormData({ ...editFormData, additional_notes: e.target.value })}
+                crossOrigin={undefined}
+              />
+              {
+                // Create project type fields based on numProjectTypeFields
+                Array.from({length: numProjectTypeFields}, (_, num) => num+1 && 
+                <Input
+                  label={"Project Type "+(num+1)}
+                  value={editFormData.project_type ? editFormData.project_type[num] : undefined}
+                  onChange={(e) => setEditFormData({ ...editFormData, project_type: editFormData.project_type ? editFormData.project_type.map((value, i) => (i === num ? e.target.value : value)) : [e.target.value] })}
+                  crossOrigin={undefined}
+                />)
+              }
+              <div className="inline-flex flex-row gap-6">
+                <Button
+                  color="green"
+                  size="sm"
+                  className="w-max h-max flex items-center gap-1"
+                  onClick={() => {
+                    setNumProjectTypeFields((x)=> x+1);
+                    // Add empty project type to form data
+                    setEditFormData({ ...editFormData, project_type: editFormData.project_type ? editFormData.project_type.concat(['']) : ['']})
+                  }}>
+                  Add Project Type<PlusIcon className="h-4 w-4" />
+                </Button>
+                <Button
+                  color="red"
+                  size="sm"
+                  className="w-max h-max flex items-center gap-1"
+                  disabled={numProjectTypeFields === 0 ? true : false}
+                  onClick={() => {
+                    // Remove last project type from form data
+                    setEditFormData({ ...editFormData, project_type: editFormData.project_type ? (numProjectTypeFields === 1 ? null : editFormData.project_type.slice(0, -1)) : null})
+                    // There can be 0 fields, meaning project type is null
+                    setNumProjectTypeFields((x)=> Math.max(x-1, 0));
+                  }}>
+                  Remove Project Type<MinusIcon className="h-4 w-4" />
+                </Button>
+              </div>
+              {
+                // Create pain point fields based on numPainPointFields
+                Array.from({length: numPainPointFields}, (_, num) => num+1 && 
+                <Input
+                  label={"Pain Point "+(num+1)}
+                  value={editFormData.pain_points ? editFormData.pain_points[num] : undefined}
+                  onChange={(e) => setEditFormData({ ...editFormData, pain_points: editFormData.pain_points ? editFormData.pain_points.map((value, i) => (i === num ? e.target.value : value)) : [e.target.value] })}
+                  crossOrigin={undefined}
+                />)
+              }
+              <div className="inline-flex flex-row gap-6">
+                <Button
+                  color="green"
+                  size="sm"
+                  className="w-max h-max flex items-center gap-1"
+                  onClick={() => {
+                    setNumPainPointFields((x)=> x+1);
+                    // Add empty pain point to form data
+                    setEditFormData({ ...editFormData, pain_points: editFormData.pain_points? editFormData.pain_points.concat(['']) : ['']})
+                  }}>
+                  Add Pain Point<PlusIcon className="h-4 w-4" />
+                </Button>
+                <Button
+                  color="red"
+                  size="sm"
+                  className="w-max h-max flex items-center gap-1"
+                  disabled={numPainPointFields === 0 ? true : false}
+                  onClick={() => {
+                    // Remove last pain point from form data
+                    setEditFormData({ ...editFormData, pain_points: editFormData.pain_points ? (numPainPointFields === 1 ? null : editFormData.pain_points.slice(0, -1)) : null})
+                    // There can be 0 fields, meaning pain point is null
+                    setNumPainPointFields((x)=> Math.max(x-1, 0));
+                  }}>
+                  Remove Pain Point<MinusIcon className="h-4 w-4" />
+                </Button>
+              </div>
+              {
+                // Create current tech fields based on numCurrentTechFields
+                Array.from({length: numCurrentTechFields}, (_, num) => num+1 && 
+                <Input
+                  label={"Current Tech "+(num+1)}
+                  value={editFormData.current_tech? editFormData.current_tech[num] : undefined}
+                  onChange={(e) => setEditFormData({ ...editFormData, current_tech: editFormData.current_tech ? editFormData.current_tech.map((value, i) => (i === num ? e.target.value : value)) : [e.target.value] })}
+                  crossOrigin={undefined}
+                />)
+              }
+              <div className="inline-flex flex-row gap-6">
+                <Button
+                  color="green"
+                  size="sm"
+                  className="w-max h-max flex items-center gap-1"
+                  onClick={() => {
+                    setNumCurrentTechFields((x)=> x+1);
+                    // Add empty current tech to form data
+                    setEditFormData({ ...editFormData, current_tech: editFormData.current_tech ? editFormData.current_tech.concat(['']) : ['']})
+                  }}>
+                  Add Current Tech<PlusIcon className="h-4 w-4" />
+                </Button>
+                <Button
+                  color="red"
+                  size="sm"
+                  className="w-max h-max flex items-center gap-1"
+                  disabled={numCurrentTechFields === 0 ? true : false}
+                  onClick={() => {
+                    // Remove last current tech from form data
+                    setEditFormData({ ...editFormData, current_tech: editFormData.current_tech ? (numCurrentTechFields === 1 ? null : editFormData.current_tech.slice(0, -1)) : null})
+                    // There can be 0 fields, meaning current tech is null
+                    setNumCurrentTechFields((x)=> Math.max(x-1, 0));
+                  }}>
+                  Remove Current Tech<MinusIcon className="h-4 w-4" />
+                </Button>
+              </div>
               <div>
                 <Typography variant="small" color="blue-gray" className="mb-2">
                   Status
                 </Typography>
                 <select
                   value={editFormData.status}
-                  onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value as 'new' | 'contacted' | 'converted' })}
+                  onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value as 'NEW' | 'CONTACTED' | 'CONVERTED' })}
                   className="w-full p-2 border rounded-lg"
                 >
-                  <option value="new">New</option>
-                  <option value="contacted">Contacted</option>
-                  <option value="converted">Converted</option>
+                  <option value="NEW">New</option>
+                  <option value="CONTACTED">Contacted</option>
+                  <option value="CONVERTED">Converted</option>
                 </select>
               </div>
             </div>
@@ -377,6 +809,7 @@ export function GuestsTable() {
           </Button>
         </DialogFooter>
       </Dialog>
+    </Card>
     </Card>
   );
 }
