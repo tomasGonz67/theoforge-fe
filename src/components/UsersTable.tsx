@@ -66,7 +66,7 @@ export function UsersTable() {
     setLoading(true);
     try {
       const response = await axios.get('http://localhost:8000/auth/users'); // Need to Update the URL as per backend configuration
-      console.log(response.data)
+      //console.log(response.data)
       setUsers(response.data); // Assuming the API returns a list of users
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -99,18 +99,38 @@ export function UsersTable() {
   };
 */}
 
-  const handleEdit = (user: User) => {
+
+
+  const handleEdit = async(user: User) => {
     setSelectedUser(user);
     setEditFormData(user);
     setIsEditModalOpen(true);
+    
   };
+
+  const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0dXNlckBleGFtcGxlLmNvbSIsInJvbGUiOiJVU0VSIiwiZXhwIjoxNzQyNzI2OTg1fQ.S24aXn16e8mWRmZShYgesDfJnJPTNDsy4v7H0z0Oz0s'
+
+  const Authorize = async() => {
+    try {
+    await axios.get('http://localhost:8000/auth/auth', {
+      headers: {'Authorization:': `Bearer ${token}`},
+     }).then(result => {
+      console.log(result.data)
+     }).catch(err => {
+      console.log(err)
+     });
+   } catch(err) {
+    console.log(err)
+   };
+  }
+
+  
 
   const handleDelete = (user: User) => {
     setSelectedUser(user);
     setIsDeleteModalOpen(true);
   };
 
-  const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0dXNlckBleGFtcGxlLmNvbSIsInJvbGUiOiJVU0VSIiwiZXhwIjoxNzQyNzI2OTg1fQ.S24aXn16e8mWRmZShYgesDfJnJPTNDsy4v7H0z0Oz0s'
   
   /* await axios.get('http://localhost:8000/auth/auth', {
     headers: {'Authorization:': `Bearer ${token}`},
@@ -125,7 +145,7 @@ export function UsersTable() {
   const handleEditSubmit = async () => {
     if (!editFormData) return;
 
-    try {
+    try { 
       // In a real application, this would be an API call
       await axios.put('https://localhost:8000/auth/update', 
         {
@@ -142,7 +162,7 @@ export function UsersTable() {
         }).catch(err => {
           console.log(err)
         }
-      )
+      );
       
       // Update the local state
       setUsers(users.map(user => 
