@@ -110,12 +110,39 @@ export function UsersTable() {
     setIsDeleteModalOpen(true);
   };
 
+  const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0dXNlckBleGFtcGxlLmNvbSIsInJvbGUiOiJVU0VSIiwiZXhwIjoxNzQyNzI2OTg1fQ.S24aXn16e8mWRmZShYgesDfJnJPTNDsy4v7H0z0Oz0s'
+  
+  /* await axios.get('http://localhost:8000/auth/auth', {
+    headers: {'Authorization:': `Bearer ${token}`},
+   }).then(result => {
+    console.log(result)
+   }).catch(err => {
+    console.log(err)
+   }); */
+  
+
+
   const handleEditSubmit = async () => {
     if (!editFormData) return;
 
     try {
       // In a real application, this would be an API call
-      await axios.put(`/api/users/${editFormData.id}`, editFormData);
+      await axios.put('https://localhost:8000/auth/update', 
+        {
+          "first_name": "Johnny",
+          "last_name": "Appleseed",
+          "email": "johnny.appleseed@example.com",
+          "nickname": "johnny_apple",
+          "password": "Appleseed123!"
+        },
+        {
+          headers: {'Authorization' : `Bearer ${token}`}
+        }).then(result => {
+          console.log(result)
+        }).catch(err => {
+          console.log(err)
+        }
+      )
       
       // Update the local state
       setUsers(users.map(user => 
@@ -135,7 +162,14 @@ export function UsersTable() {
 
     try {
       // In a real application, this would be an API call
-      await axios.delete(`/api/users/${selectedUser.id}`);
+      await axios.delete('http:localhost:8000/auth/delete', {
+        headers: {'Authorization' : `Bearer ${token}`},
+      }).then(result => {
+        console.log(result)
+      }).catch(err => {
+        console.log(err)
+      });
+      
       
       // Update the local state
       setUsers(users.filter(user => user.id !== selectedUser.id));
