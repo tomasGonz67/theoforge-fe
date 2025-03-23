@@ -77,6 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsAuthenticated(true);
       response = 200;
     }).catch (err => {
+      console.log(err)
       if (err.response && err.response.data && err.response.data.detail) {
         if(err.response.data.detail.includes('Invalid username/password')) {
           response = 500;

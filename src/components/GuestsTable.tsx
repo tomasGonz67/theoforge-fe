@@ -14,6 +14,7 @@ import {
   DialogHeader,
   DialogBody,
   DialogFooter,
+  Alert,
 } from "@material-tailwind/react";
 
 let API_URL = window.location.origin;
@@ -23,6 +24,7 @@ interface Interaction {
   event: string,
   timestamp: string,
 }
+
 interface Guest {
   additional_notes: string | null;
   budget: string | null;
@@ -31,12 +33,12 @@ interface Guest {
   created_at: string;
   current_tech: string[] | null;
   first_visit_timestamp: string;
-  id: number;
+  id: string;
   industry: string | null;
-  interaction_events: string[];
-  interaction_history: Interaction[];
+  interaction_events: string[] | null;
+  interaction_history: Interaction[] | null;
   name: string | null;
-  page_views: string[];
+  page_views: string[] | null;
   pain_points: string[] | null;
   project_type: string[] | null;
   session_id: string;
@@ -60,6 +62,7 @@ export function GuestsTable() {
   const [numPainPointFields, setNumPainPointFields] = useState(1);
   const [numCurrentTechFields, setNumCurrentTechFields] = useState(1);
   const [editFormData, setEditFormData] = useState<Guest | null>(null);
+  const [showError, setShowError] = useState(false);
   const itemsPerPage = 10;
 
   useEffect(() => {
@@ -70,6 +73,10 @@ export function GuestsTable() {
     setLoading(true);
     try {
       const res = await axios.get(`${API_URL}/guests`);
+      if(!(Array.isArray(res.data) && res.data.every(guest => typeof guest === 'object'))) {
+        setShowError(true);
+        throw Error //Ensure an array of guests is returned
+      } else setShowError(false);
       setGuests(res.data);
     } catch (error) {
       console.error('Error fetching guests:', error);
@@ -172,9 +179,13 @@ export function GuestsTable() {
   };
 
   const filteredGuests = guests.filter(guest =>
+    searchTerm.toLowerCase() === '' ? true :
     (guest.name ? guest.name.toLowerCase().includes(searchTerm.toLowerCase()) : false) ||
     (guest.company ? guest.company.toLowerCase().includes(searchTerm.toLowerCase()) : false) ||
-    (guest.industry ? guest.industry.toLowerCase().includes(searchTerm.toLowerCase()) : false)
+    (guest.industry ? guest.industry.toLowerCase().includes(searchTerm.toLowerCase()) : false) ||
+    (guest.budget ? guest.budget.toLowerCase().includes(searchTerm.toLowerCase()) : false) ||
+    (guest.contact_info ? guest.contact_info.toLowerCase().includes(searchTerm.toLowerCase()) : false) ||
+    (guest.status ? guest.status.toLowerCase().includes(searchTerm.toLowerCase()) : false)
   );
 
   const paginatedGuests = filteredGuests.slice(
@@ -196,12 +207,35 @@ export function GuestsTable() {
         "overscroll-x-contain overflow-auto border-black border-2 w-full" :
         "overscroll-x-contain overflow-auto w-full"}>
           <Typography variant="small" color="blue-gray" className="font-normal overscroll-x-contain overflow-auto p-2">
-            {value}
+            {value ? value : ''}
           </Typography>
         </Card>
       </div>
     )
   }
+  if(showError) return (
+  <Alert
+    color="red"
+    variant="outlined"
+    className="mb-6 border border-red-200"
+    icon={
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        className="h-5 w-5"
+      >
+        <path
+          fillRule="evenodd"
+          d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z"
+          clipRule="evenodd"
+        />
+      </svg>
+    }
+  >
+    Failed to retrieve guests
+  </Alert>
+  )
   return (
     <Card className="border border-gray-100 overflow-hidden">
       <div className="px-6 py-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
@@ -315,7 +349,7 @@ export function GuestsTable() {
                     </td>
                     <td className={classes}>
                       <Typography variant="small" color="blue-gray" className="font-normal">
-                        {guest.interaction_history.length > 0 ? guest.interaction_history[guest.interaction_history.length-1].timestamp  : 'None'}
+                        {guest.interaction_history && guest.interaction_history.length > 0 ? guest.interaction_history[guest.interaction_history.length-1].timestamp  : 'None'}
                       </Typography>
                     </td>
                     <td className={classes}>
@@ -431,6 +465,7 @@ export function GuestsTable() {
                 // Create project type fields based on numProjectTypeFields
                 Array.from({length: numProjectTypeFields}, (_, num) => num+1 && 
                 <Input
+                  key={"Project Type "+(num+1)}
                   label={"Project Type "+(num+1)}
                   value={createFormData.project_type ? createFormData.project_type[num] : undefined}
                   onChange={(e) => setCreateFormData({ ...createFormData, project_type: createFormData.project_type ? createFormData.project_type.map((value, i) => (i === num ? e.target.value : value)) : [e.target.value] })}
@@ -467,6 +502,7 @@ export function GuestsTable() {
                 // Create pain point fields based on numPainPointFields
                 Array.from({length: numPainPointFields}, (_, num) => num+1 && 
                 <Input
+                  key={"Pain Point "+(num+1)}
                   label={"Pain Point "+(num+1)}
                   value={createFormData.pain_points ? createFormData.pain_points[num] : undefined}
                   onChange={(e) => setCreateFormData({ ...createFormData, pain_points: createFormData.pain_points ? createFormData.pain_points.map((value, i) => (i === num ? e.target.value : value)) : [e.target.value] })}
@@ -503,6 +539,7 @@ export function GuestsTable() {
                 // Create current tech fields based on numCurrentTechFields
                 Array.from({length: numCurrentTechFields}, (_, num) => num+1 && 
                 <Input
+                  key={"Current Tech "+(num+1)}
                   label={"Current Tech "+(num+1)}
                   value={createFormData.current_tech? createFormData.current_tech[num] : undefined}
                   onChange={(e) => setCreateFormData({ ...createFormData, current_tech: createFormData.current_tech ? createFormData.current_tech.map((value, i) => (i === num ? e.target.value : value)) : [e.target.value] })}
@@ -586,12 +623,12 @@ export function GuestsTable() {
               {viewField('Created At:', selectedGuest.created_at)}
               {viewField('Updated At:', selectedGuest.updated_at)}
               {viewField('First Visit Time:', selectedGuest.first_visit_timestamp)}
-              {viewField('Interaction History:', selectedGuest.interaction_history.map(obj => `${obj.event} at ${obj.timestamp}`).join(', '))}
+              {viewField('Interaction History:', selectedGuest.interaction_history ? selectedGuest.interaction_history.map(obj => `${obj.event} at ${obj.timestamp}`).join(', ') : null)}
               {viewField('Interaction Events:', selectedGuest.interaction_events ? selectedGuest.interaction_events.join(', ') : null)}
               {viewField('Project Types:', selectedGuest.project_type ? selectedGuest.project_type.join(', ') : null)}
               {viewField('Pain Points:', selectedGuest.pain_points? selectedGuest.pain_points.join(', ') : null)}
               {viewField('Current Tech:', selectedGuest.current_tech ? selectedGuest.current_tech.join(', ') : null)}
-              {viewField('Page Views:', selectedGuest.page_views.join(', '))}
+              {viewField('Page Views:', selectedGuest.page_views ? selectedGuest.page_views.join(', ') : null)}
             </div>
           )}
         </DialogBody>
@@ -660,6 +697,7 @@ export function GuestsTable() {
                 // Create project type fields based on numProjectTypeFields
                 Array.from({length: numProjectTypeFields}, (_, num) => num+1 && 
                 <Input
+                  key={"Project Type "+(num+1)}
                   label={"Project Type "+(num+1)}
                   value={editFormData.project_type ? editFormData.project_type[num] : undefined}
                   onChange={(e) => setEditFormData({ ...editFormData, project_type: editFormData.project_type ? editFormData.project_type.map((value, i) => (i === num ? e.target.value : value)) : [e.target.value] })}
@@ -696,6 +734,7 @@ export function GuestsTable() {
                 // Create pain point fields based on numPainPointFields
                 Array.from({length: numPainPointFields}, (_, num) => num+1 && 
                 <Input
+                  key={"Pain Point "+(num+1)}
                   label={"Pain Point "+(num+1)}
                   value={editFormData.pain_points ? editFormData.pain_points[num] : undefined}
                   onChange={(e) => setEditFormData({ ...editFormData, pain_points: editFormData.pain_points ? editFormData.pain_points.map((value, i) => (i === num ? e.target.value : value)) : [e.target.value] })}
@@ -732,6 +771,7 @@ export function GuestsTable() {
                 // Create current tech fields based on numCurrentTechFields
                 Array.from({length: numCurrentTechFields}, (_, num) => num+1 && 
                 <Input
+                  key={"Current Tech "+(num+1)}
                   label={"Current Tech "+(num+1)}
                   value={editFormData.current_tech? editFormData.current_tech[num] : undefined}
                   onChange={(e) => setEditFormData({ ...editFormData, current_tech: editFormData.current_tech ? editFormData.current_tech.map((value, i) => (i === num ? e.target.value : value)) : [e.target.value] })}

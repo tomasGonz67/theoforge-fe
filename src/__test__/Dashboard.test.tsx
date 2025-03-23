@@ -26,21 +26,20 @@ function renderUserDashboard() {
 describe('When rendering the dashboard as an admin', () => {
     it('displays appropriate text', () => {
         renderAdminDashboard();
-        // Theoforge text for collapsed sidebar, expanded sidebar, small screen size
-        expect(screen.getAllByText('Theoforge')).toHaveLength(3);
+        // Theoforge text for sidebar and drawer
+        expect(screen.getAllByText('Theoforge')).toHaveLength(2);
         expect(screen.getByText(/Welcome back, .+/)).toBeInTheDocument();
         expect(screen.getByText("Here's what's happening with your projects today.")).toBeInTheDocument();
     });
     it('displays the appropriate images', () => {
         renderAdminDashboard();
         const images = screen.queryAllByRole('img');
-        expect(images).toHaveLength(4);
-        // Theoforge logo for collapsed sidebar, expanded sidebar, and small screen size
-        expect(images[0]).toHaveAttribute('src', '/logo.png')
-        expect(images[2]).toHaveAttribute('src', '/logo.png')
-        expect(images[3]).toHaveAttribute('src', '/logo.png')
+        expect(images).toHaveLength(3);
+        // Theoforge logo for sidebar and drawer
+        expect(images[0]).toHaveAttribute('src', '/logo.png');
+        expect(images[2]).toHaveAttribute('src', '/logo.png');
         // User profile pic
-        expect(images[1]).toHaveAttribute('src', '/api/placeholder/40/40')
+        expect(images[1]).toHaveAttribute('src', '/api/placeholder/40/40');
     });
     it('contains a users list button', () => {
         renderAdminDashboard();
@@ -120,21 +119,20 @@ describe('When rendering the dashboard as an admin', () => {
 describe('When rendering the dashboard as a user', () => {
     it('displays appropriate text', () => {
         renderUserDashboard();
-        // Theoforge text for collapsed sidebar, expanded sidebar, small screen size
-        expect(screen.getAllByText('Theoforge')).toHaveLength(3);
+        // Theoforge text for sidebar and drawer
+        expect(screen.getAllByText('Theoforge')).toHaveLength(2);
         expect(screen.getByText('Welcome to Theoforge')).toBeInTheDocument();
         expect(screen.getByText("Access your AI services and explore new capabilities for your business")).toBeInTheDocument();
     });
     it('displays the appropriate images', () => {
         renderUserDashboard();
         const images = screen.queryAllByRole('img');
-        expect(images).toHaveLength(4);
-        // Theoforge logo for collapsed sidebar, expanded sidebar, and small screen size
-        expect(images[0]).toHaveAttribute('src', '/logo.png')
-        expect(images[2]).toHaveAttribute('src', '/logo.png')
-        expect(images[3]).toHaveAttribute('src', '/logo.png')
+        expect(images).toHaveLength(3);
+        // Theoforge logo for sidebar and drawer
+        expect(images[0]).toHaveAttribute('src', '/logo.png');
+        expect(images[2]).toHaveAttribute('src', '/logo.png');
         // User profile pic
-        expect(images[1]).toHaveAttribute('src', '/api/placeholder/40/40')
+        expect(images[1]).toHaveAttribute('src', '/api/placeholder/40/40');
     });
     it('does not contains a users list or guest button', () => {
         renderUserDashboard();

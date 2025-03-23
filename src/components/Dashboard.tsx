@@ -27,7 +27,6 @@ import {
   DocumentTextIcon,
   DocumentDuplicateIcon,
   BookOpenIcon,
-  ArrowRightOnRectangleIcon,
   ArrowRightStartOnRectangleIcon,
   CircleStackIcon
 } from '@heroicons/react/24/outline';
@@ -63,7 +62,8 @@ import {
   Badge,
   Textarea,
   Tooltip,
-  Alert
+  Alert,
+  CardHeader
 } from "@material-tailwind/react";
 import { UsersTable } from './UsersTable';
 import { GuestsTable } from './GuestsTable';
@@ -1995,7 +1995,6 @@ export function Dashboard() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("personal");
   const [isVisible, setIsVisible] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
@@ -2195,43 +2194,26 @@ export function Dashboard() {
     
   // Updated Sidebar with visible toggle button when collapsed
   const Sidebar = () => (
-    <div className="relative">
-      {/* Toggle button positioned absolutely to remain visible when sidebar is collapsed */}
-      <div className={`absolute top-6 ${isSidebarCollapsed ? 'right-0 -mr-10' : 'right-4'} z-20`}>
-        <IconButton 
-          variant="text" 
-          color="teal" 
-          onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-          className="shadow-md bg-white"
-        >
-          {isSidebarCollapsed ? <ChevronRightIcon className="h-5 w-5" /> : <ChevronLeftIcon className="h-5 w-5" />}
-        </IconButton>
+    <div>
+      <div className={cn(isSidebarCollapsed ? "w-28" : "w-[20rem]")}>
+        {/* Phantom element to take up space of fixed sidebar */}
       </div>
-      
       <Card className={cn(
-        "h-screen p-4 shadow-xl shadow-blue-gray-900/5 relative overflow-hidden transition-all duration-300",
-        isSidebarCollapsed ? "w-20" : "w-full max-w-[20rem]"
+        "shadow-xl shadow-blue-gray-900/5 overflow-auto transition-all duration-300",
+        isSidebarCollapsed ? "w-28" : "w-full max-w-[20rem]",
+        isDrawerOpen ? "relative p-4 pr-16" : "fixed top-24 bottom-0 p-4 pr-16"
       )}>
-        {/* Decorative elements similar to landing page */}
-        <div className="absolute top-20 right-0 w-32 h-32 bg-teal-50 rounded-full blur-3xl opacity-50 z-0"></div>
-        <div className="absolute bottom-20 left-0 w-32 h-32 bg-blue-50 rounded-full blur-3xl opacity-50 z-0"></div>
-        
-        <div className="mb-6 p-4 flex items-center justify-between relative z-10">
-          {/* Logo always visible, positioned at top right when collapsed */}
-          <div className={cn(
-            "flex items-center gap-2 transition-all duration-300",
-            isSidebarCollapsed ? "justify-center" : ""
-          )}>
-            <img src="/logo.png" alt="Theoforge Logo" className="h-12 w-12" />
-            <Typography variant="h5" color="blue-gray" className={cn(
-              "transition-opacity duration-300",
-              isSidebarCollapsed ? "opacity-0 absolute" : "opacity-100"
-            )}>
-              Theoforge
-            </Typography>
-          </div>
+        {/* Toggle button fixed position to always remain visible */}
+        <div className={isSidebarCollapsed ? "fixed top-64 left-16" : 'fixed top-64 left-64'}>
+          <IconButton
+            variant="text"
+            color="teal"
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            className="mb-4"
+          >
+            {isSidebarCollapsed ? <ChevronRightIcon className="h-5 w-5" /> : <ChevronLeftIcon className="h-5 w-5" />}
+          </IconButton>
         </div>
-        
         <div className="relative z-10">
           {/* Role identifier */}
           {!isSidebarCollapsed && (
@@ -2248,7 +2230,7 @@ export function Dashboard() {
             </div>
           )}
           
-          <List>
+          <div>
             {navigation.map((item) => {
               const isActive = location.pathname === item.href || 
                               (item.href === '/dashboard' && location.pathname === '/dashboard') || 
@@ -2258,7 +2240,8 @@ export function Dashboard() {
                   key={item.name}
                   className={cn(
                     "mb-2 hover:bg-teal-50/80 transition-all duration-200",
-                    isActive ? "bg-teal-50/80 text-teal-500 font-medium" : ""
+                    isActive ? "bg-teal-50/80 text-teal-500 font-medium" : "",
+                    isSidebarCollapsed ? "w-12" : ""
                   )}
                   onClick={() => handleNavigation(item.href)}
                 >
@@ -2283,7 +2266,7 @@ export function Dashboard() {
                 </ListItem>
               );
             })}
-          </List>
+          </div>
           
           {!isSidebarCollapsed && (
             <div className="mt-auto pt-8">
@@ -2329,21 +2312,20 @@ export function Dashboard() {
   
       <Navbar className="sticky top-0 z-10 max-w-full rounded-none px-4 py-2 lg:px-8 lg:py-4 border-b border-gray-100 bg-white/95 backdrop-blur-sm shadow-sm">
         <div className="flex items-center justify-between text-blue-gray-900">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <img src="/logo.png" alt="Theoforge Logo" className="h-12 w-12" />
+            <Typography variant="h5" color="blue-gray">
+              Theoforge
+            </Typography>
             <IconButton
               variant="text"
               color="teal"
               className="lg:hidden"
+              hidden={isDrawerOpen}
               onClick={() => setIsDrawerOpen(true)}
             >
               <MenuIcon className="h-6 w-6" />
             </IconButton>
-            <div className="flex items-center gap-2 lg:hidden">
-              <img src="/logo.png" alt="Theoforge Logo" className="h-10 w-10" />
-              <Typography variant="h5" color="blue-gray" className="font-medium">
-                Theoforge
-              </Typography>
-            </div>
           </div>
           
           <div className="flex items-center gap-4">
@@ -2498,15 +2480,6 @@ export function Dashboard() {
                     Profile Settings
                   </Typography>
                 </MenuItem>
-                <MenuItem 
-                  className="flex items-center gap-2 rounded hover:bg-teal-50/80"
-                  onClick={() => setIsSettingsOpen(true)}
-                >
-                  <Cog6ToothIcon className="h-4 w-4 text-teal-500" />
-                  <Typography variant="small" className="font-normal">
-                    Account Settings
-                  </Typography>
-                </MenuItem>
                 <Link to="/learn-more">
                   <MenuItem 
                     className="flex items-center gap-2 rounded hover:bg-teal-50/80"
@@ -2521,7 +2494,7 @@ export function Dashboard() {
                   className="flex items-center gap-2 rounded hover:bg-red-50 text-red-500"
                   onClick={handleLogout}
                 >
-                  <ArrowRightOnRectangleIcon className="h-4 w-4" />
+                  <ArrowRightStartOnRectangleIcon className="h-4 w-4" />
                   <Typography variant="small" className="font-normal">
                     Sign Out
                   </Typography>
@@ -2540,17 +2513,38 @@ export function Dashboard() {
         <Drawer
           open={isDrawerOpen}
           onClose={() => setIsDrawerOpen(false)}
-          className="lg:hidden"
+          className="lg:hidden w-auto"
         >
+          <Navbar className="sticky top-0 z-10 max-w-full rounded-none px-4 py-2 lg:px-8 lg:py-4 border-b border-gray-100 bg-white/95 backdrop-blur-sm shadow-sm">
+            <div className="flex items-center justify-between text-blue-gray-900">
+              <div className="flex items-center gap-2">
+                <img src="/logo.png" alt="Theoforge Logo" className="h-12 w-12" />
+                {!isSidebarCollapsed ? (<Typography variant="h5" color="blue-gray">
+                  Theoforge
+                </Typography>) : <></>}
+              </div>
+              <div className="flex items-center">
+                <IconButton
+                  variant="text"
+                  color="teal"
+                  className="lg:hidden"
+                  hidden={isSidebarCollapsed}
+                  onClick={() => setIsDrawerOpen(false)}
+                >
+                  <MenuIcon className="h-6 w-6" />
+                </IconButton>
+              </div>
+            </div>
+          </Navbar>
           <Sidebar />
         </Drawer>
 
-        <div className="flex-1 p-4 lg:p-6 max-w-full">
+        <div className="flex-1 p-4 lg:p-6 max-w-full overflow-auto">
           <Breadcrumbs className="bg-white rounded-lg p-3 mb-4 border border-gray-100">
             {breadcrumbs.map((breadcrumb, /*index*/) => (
               <a
                 key={breadcrumb.href}
-                href={breadcrumb.href}
+                onClick={() => navigate(breadcrumb.href)}
                 className={cn(
                   "opacity-60",
                  breadcrumb.current ? "opacity-100 text-teal-500 font-medium" : ""

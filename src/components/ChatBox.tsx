@@ -30,7 +30,7 @@ import {
 import { getGuestId, getStorageKeyForGuest } from '../lib/guestIdentifier';
 import { colors } from '@material-tailwind/react/types/generic';
 
-// Enhancedguest identification
+// Enhanced guest identification
 interface GuestInfo {
   id: string;
   name?: string;
@@ -758,357 +758,354 @@ export function ChatBox({
     ];
   };
 
-  // Render minimized view
-  if (isMinimized) {
-    return (
-      <div
-        ref={resizeRef}
-        className="fixed bottom-4 right-4 z-50 shadow-xl rounded-xl overflow-hidden transition-all duration-300"
-        style={{ width: `${chatSize.width}px`, height: `${chatSize.height}px` }}
-      >
-        <Card className={`w-full h-full flex flex-col border rounded-xl ${themeClasses.card}`}>
-          {/* Header */}
-          <CardHeader 
-            floated={false}
-            className={`sticky top-0 z-20 px-6 py-4 m-0 rounded-b-none shadow-md ${themeClasses.header}`}
-          >
-            <div className="flex justify-between items-center">
-              <div className="flex items-center">
-                <div className="relative mr-3">
-                  {logoUrl ? (
-                    <img 
-                      src={logoUrl} 
-                      alt={`${companyName} Logo`} 
-                      className="h-9 w-9 rounded-full border-2 border-white shadow-sm" 
-                    />
-                  ) : (
-                    <SparklesIcon className="h-6 w-6 text-white" />
-                  )}
-                  {guestInfo.name && (
-                    <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white animate-pulse"></div>
-                  )}
-                </div>
-                <div>
-                  <Typography className="text-white text-lg font-bold flex items-center">
-                    {companyName} AI
-                    <Tooltip content="Powered by AI">
-                      <SparklesIcon className="h-4 w-4 ml-1.5 text-white opacity-75" />
-                    </Tooltip>
-                  </Typography>
-                  {guestInfo.name && (
-                    <Typography className="text-white text-xs opacity-90 flex items-center">
-                      <UserCircleIcon className="h-3 w-3 mr-1" />
-                      Speaking with {guestInfo.name}
-                    </Typography>
-                  )}
-                </div>
-              </div>
-              <div className="flex gap-1">
-                <Tooltip content="Clear chat history">
-                  <IconButton
-                    onClick={clearChat}
-                    variant="text"
-                    color="white"
-                    className="h-8 w-8 rounded-full hover:bg-white/20 transition-all"
-                    size="sm"
-                  >
-                    <TrashIcon className="h-4 w-4" />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip content="Minimize">
-                  <IconButton
-                    onClick={toggleMinimize}
-                    variant="text"
-                    color="white"
-                    className="h-8 w-8 rounded-full hover:bg-white/20 transition-all" size="sm"
-                  >
-                    <MinusIcon className="h-4 w-4" />
-                  </IconButton>
-                  </Tooltip>
-                <Tooltip content={chatSize.width > 400 ? "Smaller size" : "Larger size"}>
-                  <IconButton
-                    onClick={() => setChatSize(
-                      chatSize.width > 400 
-                        ? { width: 380, height: 520 } 
-                        : { width: 480, height: 600 }
-                    )}
-                    variant="text"
-                    color="white"
-                    className="h-8 w-8 rounded-full hover:bg-white/20 transition-all"
-                    size="sm"
-                  >
-                    {chatSize.width > 400 ? (
-                      <ArrowsPointingInIcon className="h-4 w-4" />
-                    ) : (
-                      <ArrowsPointingOutIcon className="h-4 w-4" />
-                    )}
-                  </IconButton>
-                </Tooltip>
-                <Tooltip content="Close">
-                  <IconButton
-                    onClick={onClose}
-                    variant="text"
-                    color="white"
-                    className="h-8 w-8 rounded-full hover:bg-white/20 transition-all"
-                    size="sm"
-                  >
-                    <XMarkIcon className="h-4 w-4" />
-                  </IconButton>
-                </Tooltip>
-              </div>
-            </div>
-          </CardHeader>
-          
-          {/* Message Container */}
-          <CardBody 
-            ref={chatContainerRef} 
-            className={`flex-grow overflow-y-auto p-6 space-y-4 ${themeClasses.body}`}
-          >
-            {/* Introduction Panel - only shown at first */}
-            {showIntroduction && (
-              <div className={`mb-6 p-4 rounded-lg border border-${accentColor}-100 bg-${accentColor}-50 text-${accentColor}-900 dark:border-${accentColor}-800 dark:bg-${accentColor}-900/20 dark:text-${accentColor}-100`}>
-                <div className="flex items-center mb-3">
-                  <SparklesIcon className={`h-5 w-5 text-${accentColor}-500 mr-2`} />
-                  <Typography variant="h6" className="font-semibold">Welcome to {companyName} AI Assistant</Typography>
-                </div>
-                <Typography variant="small" className="mb-3">
-                  I'm here to help answer your questions about our services and solutions. Feel free to ask about:
-                </Typography>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
-                  <div className={`p-2 rounded border border-${accentColor}-200 bg-white/80 dark:bg-gray-800/80 flex items-center`}>
-                    <div className={`mr-2 p-1 rounded-full bg-${accentColor}-100 dark:bg-${accentColor}-900`}>
-                      <ChevronDoubleRightIcon className={`h-3 w-3 text-${accentColor}-500`} />
-                    </div>
-                    <Typography variant="small" className="font-medium">ETL Solutions</Typography>
-                  </div>
-                  <div className={`p-2 rounded border border-${accentColor}-200 bg-white/80 dark:bg-gray-800/80 flex items-center`}>
-                    <div className={`mr-2 p-1 rounded-full bg-${accentColor}-100 dark:bg-${accentColor}-900`}>
-                      <ChevronDoubleRightIcon className={`h-3 w-3 text-${accentColor}-500`} />
-                    </div>
-                    <Typography variant="small" className="font-medium">Knowledge Graphs</Typography>
-                  </div>
-                  <div className={`p-2 rounded border border-${accentColor}-200 bg-white/80 dark:bg-gray-800/80 flex items-center`}>
-                    <div className={`mr-2 p-1 rounded-full bg-${accentColor}-100 dark:bg-${accentColor}-900`}>
-                      <ChevronDoubleRightIcon className={`h-3 w-3 text-${accentColor}-500`} />
-                    </div>
-                    <Typography variant="small" className="font-medium">Custom LLM Training</Typography>
-                  </div>
-                  <div className={`p-2 rounded border border-${accentColor}-200 bg-white/80 dark:bg-gray-800/80 flex items-center`}>
-                    <div className={`mr-2 p-1 rounded-full bg-${accentColor}-100 dark:bg-${accentColor}-900`}>
-                      <ChevronDoubleRightIcon className={`h-3 w-3 text-${accentColor}-500`} />
-                    </div>
-                    <Typography variant="small" className="font-medium">Case Studies & Pricing</Typography>
-                  </div>
-                </div>
-                <div className="flex items-center mt-2">
-                  <LockClosedIcon className="h-3 w-3 mr-1 text-gray-400" />
-                  <Typography variant="small" className="text-xs text-gray-500">
-                    Your conversations are stored locally on your device only
-                  </Typography>
-                </div>
-              </div>
-            )}
-            
-            {/* Guest info chip - only show once info is collected */}
-            {guestInfo.name && guestInfo.company && (
-              <div className="flex justify-center mb-4">
-                <Chip
-                  value={
-                    <div className="flex items-center gap-2">
-                      <UserCircleIcon className="h-4 w-4" />
-                      <span>{guestInfo.name} from {guestInfo.company}</span>
-                    </div>
-                  }
-                  color={accentColor as colors}
-                  variant="ghost"
-                  className="px-3 py-1.5"
-                />
-              </div>
-            )}
-            
-            {visibleMessages.map((msg) => (
-              <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div 
-                  className={`max-w-[85%] p-4 rounded-xl shadow-md ${
-                    msg.role === 'user' 
-                      ? themeClasses.message.user 
-                      : msg.isQuestion
-                        ? themeClasses.message.question
-                        : themeClasses.message.assistant
-                  } ${msg === visibleMessages[visibleMessages.length - 1] && typingEffect ? 'animate-pulse' : ''}`}
-                >
-                  {msg === visibleMessages[visibleMessages.length - 1] && typingEffect 
-                    ? <Typography className="text-sm whitespace-pre-wrap">{currentTypingMessage}<span className="animate-pulse">▌</span></Typography>
-                    : <Typography className="text-sm whitespace-pre-wrap">{msg.content}</Typography>
-                  }
-                  <Typography 
-                    variant="small" 
-                    className={`mt-1 text-xs ${
-                      msg.role === 'user' 
-                        ? themeClasses.message.timestamp.user 
-                        : msg.isQuestion
-                          ? themeClasses.message.timestamp.question
-                          : themeClasses.message.timestamp.assistant
-                    }`}
-                  >
-                    {formatTime(msg.timestamp)}
-                  </Typography>
-                </div>
-              </div>
-            ))}
-            
-            {isThinking && (
-              <div className="flex justify-start">
-                <div className={`max-w-[80%] p-4 rounded-xl shadow ${themeClasses.message.assistant}`}>
-                  <div className="flex items-center gap-2">
-                    <Spinner className="h-4 w-4" color={accentColor as colors} />
-                    <Typography className="text-sm">Thinking...</Typography>
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            {isTranscribing && (
-              <div className="flex justify-start">
-                <div className={`max-w-[80%] p-4 rounded-xl shadow ${themeClasses.message.assistant}`}>
-                  <div className="flex items-center gap-2">
-                    <Spinner className="h-4 w-4" color={accentColor as colors} />
-                    <Typography className="text-sm">Transcribing audio...</Typography>
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            {error && (
-              <div className="flex justify-center">
-                <div className="max-w-[90%] p-3 rounded-lg bg-red-50 text-red-600 border border-red-200 dark:bg-red-900/20 dark:border-red-800 dark:text-red-300">
-                  <div className="flex items-start gap-2">
-                    <div className="flex-shrink-0 mt-0.5">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                    <div>
-                      <Typography variant="small" className="font-medium">{error}</Typography>
-                      <Button 
-                        variant="text" 
-                        size="sm" 
-                        color="red" 
-                        className="p-0 mt-1" 
-                        onClick={() => setError(null)}
-                      >
-                        Dismiss
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            {/* Quick Replies */}
-            {visibleMessages.length > 0 && !isThinking && !isAwaitingAnswer && !typingEffect && (
-              <div className="pt-2 flex flex-wrap gap-2 justify-center">
-                {getSuggestions().map((suggestion, index) => (
-                  <Button
-                    key={index}
-                    variant="outlined"
-                    size="sm"
-                    color={accentColor as colors}
-                    className={`px-3 py-1.5 cursor-pointer hover:bg-${accentColor}-50 dark:hover:bg-${accentColor}-900/20 transition-colors`}
-                    onClick={() => handleQuickReply(suggestion)}
-                  >{suggestion}</Button>
-                ))}
-              </div>
-            )}
-            
-            <div ref={messageEndRef} />
-          </CardBody>
-          
-          {/* Footer / Input */}
-          <CardFooter className={`p-4 border-t ${themeClasses.footer}`}>
-            <div className="flex items-center gap-2">
-              <input
-                ref={inputRef}
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder={isAwaitingAnswer ? `Please answer the question...` : "Type your message..."}
-                className={`flex-grow border rounded-lg p-3 pr-10 focus:outline-none focus:ring-2 focus:ring-${accentColor}-500 ${themeClasses.input} ${isAwaitingAnswer ? `border-indigo-300 animate-pulse` : ''}`}
-                disabled={isThinking || isTranscribing}
-              />
-              
-              <div className="absolute right-20 flex">
-                {isRecording ? (
-                  <IconButton
-                    onClick={stopRecording}
-                    variant="filled"
-                    color="red"
-                    className="h-9 w-9 rounded-full transition-all"
-                    size="sm"
-                  >
-                    <StopIcon className="h-4 w-4" />
-                  </IconButton>
+  return (
+    <div
+      ref={resizeRef}
+      className="fixed bottom-4 right-4 z-50 shadow-xl rounded-xl overflow-hidden transition-all duration-300"
+      style={{ width: `${chatSize.width}px`, height: `${chatSize.height}px` }}
+    >
+      <Card className={`w-full h-full flex flex-col border rounded-xl ${themeClasses.card}`}>
+        {/* Header */}
+        <CardHeader 
+          floated={false}
+          className={`sticky top-0 z-20 px-6 pt-4 pb-6 m-0 rounded-b-none shadow-md ${themeClasses.header}`}
+        >
+          <div className="flex justify-between items-center">
+            <div className="flex items-center">
+              <div className="relative mr-3">
+                {logoUrl ? (
+                  <img 
+                    src={logoUrl} 
+                    alt={`${companyName} Logo`} 
+                    className="h-9 w-9 rounded-full border-2 border-white shadow-sm" 
+                  />
                 ) : (
-                  <IconButton
-                    onClick={startRecording}
-                    variant="text"
-                    color={accentColor as colors}
-                    className="h-9 w-9 rounded-full transition-all"
-                    size="sm"
-                    disabled={isThinking || isTranscribing}
-                  >
-                    <MicrophoneIcon className="h-4 w-4" />
-                  </IconButton>
+                  <SparklesIcon className="h-6 w-6 text-white" />
+                )}
+                {guestInfo.name && (
+                  <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white animate-pulse"></div>
                 )}
               </div>
-              
-              <Button 
-                onClick={() => handleSend()} 
+              <div>
+                <Typography className="text-white text-lg font-bold flex items-center">
+                  {companyName} AI
+                  <Tooltip content="Powered by AI">
+                    <SparklesIcon className="h-4 w-4 ml-1.5 text-white opacity-75" />
+                  </Tooltip>
+                </Typography>
+                {guestInfo.name && (
+                  <Typography className="text-white text-xs opacity-90 flex items-center">
+                    <UserCircleIcon className="h-3 w-3 mr-1" />
+                    Speaking with {guestInfo.name}
+                  </Typography>
+                )}
+              </div>
+            </div>
+            <div className="flex gap-1">
+              <Tooltip content="Clear chat history">
+                <IconButton
+                  onClick={clearChat}
+                  variant="text"
+                  color="white"
+                  className="h-8 w-8 rounded-full hover:bg-white/20 transition-all"
+                  size="sm"
+                >
+                  <TrashIcon className="h-4 w-4" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip content="Minimize">
+                <IconButton
+                  onClick={toggleMinimize}
+                  variant="text"
+                  color="white"
+                  className="h-8 w-8 rounded-full hover:bg-white/20 transition-all" size="sm"
+                >
+                  <MinusIcon className="h-4 w-4" />
+                </IconButton>
+                </Tooltip>
+              <Tooltip content={chatSize.width > 400 ? "Smaller size" : "Larger size"}>
+                <IconButton
+                  onClick={() => setChatSize(
+                    chatSize.width > 400 
+                      ? { width: 380, height: 520 } 
+                      : { width: 480, height: 600 }
+                  )}
+                  variant="text"
+                  color="white"
+                  className="h-8 w-8 rounded-full hover:bg-white/20 transition-all"
+                  size="sm"
+                >
+                  {chatSize.width > 400 ? (
+                    <ArrowsPointingInIcon className="h-4 w-4" />
+                  ) : (
+                    <ArrowsPointingOutIcon className="h-4 w-4" />
+                  )}
+                </IconButton>
+              </Tooltip>
+              <Tooltip content="Close">
+                <IconButton
+                  onClick={onClose}
+                  variant="text"
+                  color="white"
+                  className="h-8 w-8 rounded-full hover:bg-white/20 transition-all"
+                  size="sm"
+                >
+                  <XMarkIcon className="h-4 w-4" />
+                </IconButton>
+              </Tooltip>
+            </div>
+          </div>
+        </CardHeader>
+        
+        {/* Message Container */}
+        <CardBody 
+          ref={chatContainerRef} 
+          className={`h-full flex-grow overflow-y-auto p-6 space-y-4 ${themeClasses.body}`}
+        >
+          {/* Introduction Panel - only shown at first */}
+          {showIntroduction && (
+            <div className={`mb-6 p-4 rounded-lg border border-${accentColor}-100 bg-${accentColor}-50 text-${accentColor}-900 dark:border-${accentColor}-800 dark:bg-${accentColor}-900/20 dark:text-${accentColor}-100`}>
+              <div className="flex items-center mb-3">
+                <SparklesIcon className={`h-5 w-5 text-${accentColor}-500 mr-2`} />
+                <Typography variant="h6" className="font-semibold">Welcome to {companyName} AI Assistant</Typography>
+              </div>
+              <Typography variant="small" className="mb-3">
+                I'm here to help answer your questions about our services and solutions. Feel free to ask about:
+              </Typography>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
+                <div className={`p-2 rounded border border-${accentColor}-200 bg-white/80 dark:bg-gray-800/80 flex items-center`}>
+                  <div className={`mr-2 p-1 rounded-full bg-${accentColor}-100 dark:bg-${accentColor}-900`}>
+                    <ChevronDoubleRightIcon className={`h-3 w-3 text-${accentColor}-500`} />
+                  </div>
+                  <Typography variant="small" className="font-medium">ETL Solutions</Typography>
+                </div>
+                <div className={`p-2 rounded border border-${accentColor}-200 bg-white/80 dark:bg-gray-800/80 flex items-center`}>
+                  <div className={`mr-2 p-1 rounded-full bg-${accentColor}-100 dark:bg-${accentColor}-900`}>
+                    <ChevronDoubleRightIcon className={`h-3 w-3 text-${accentColor}-500`} />
+                  </div>
+                  <Typography variant="small" className="font-medium">Knowledge Graphs</Typography>
+                </div>
+                <div className={`p-2 rounded border border-${accentColor}-200 bg-white/80 dark:bg-gray-800/80 flex items-center`}>
+                  <div className={`mr-2 p-1 rounded-full bg-${accentColor}-100 dark:bg-${accentColor}-900`}>
+                    <ChevronDoubleRightIcon className={`h-3 w-3 text-${accentColor}-500`} />
+                  </div>
+                  <Typography variant="small" className="font-medium">Custom LLM Training</Typography>
+                </div>
+                <div className={`p-2 rounded border border-${accentColor}-200 bg-white/80 dark:bg-gray-800/80 flex items-center`}>
+                  <div className={`mr-2 p-1 rounded-full bg-${accentColor}-100 dark:bg-${accentColor}-900`}>
+                    <ChevronDoubleRightIcon className={`h-3 w-3 text-${accentColor}-500`} />
+                  </div>
+                  <Typography variant="small" className="font-medium">Case Studies & Pricing</Typography>
+                </div>
+              </div>
+              <div className="flex items-center mt-2">
+                <LockClosedIcon className="h-3 w-3 mr-1 text-gray-400" />
+                <Typography variant="small" className="text-xs text-gray-500">
+                  Your conversations are stored locally on your device only
+                </Typography>
+              </div>
+            </div>
+          )}
+          
+          {/* Guest info chip - only show once info is collected */}
+          {guestInfo.name && guestInfo.company && (
+            <div className="flex justify-center mb-4">
+              <Chip
+                value={
+                  <div className="flex items-center gap-2">
+                    <UserCircleIcon className="h-4 w-4" />
+                    <span>{guestInfo.name} from {guestInfo.company}</span>
+                  </div>
+                }
                 color={accentColor as colors}
-                variant="gradient"
-                className="p-2 rounded-full shadow-md"
-                disabled={isThinking || isTranscribing || !input.trim()}
+                variant="ghost"
+                className="px-3 py-1.5"
+              />
+            </div>
+          )}
+          
+          {visibleMessages.map((msg) => (
+            <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div 
+                className={`max-w-[85%] p-4 rounded-xl shadow-md ${
+                  msg.role === 'user' 
+                    ? themeClasses.message.user 
+                    : msg.isQuestion
+                      ? themeClasses.message.question
+                      : themeClasses.message.assistant
+                } ${msg === visibleMessages[visibleMessages.length - 1] && typingEffect ? 'animate-pulse' : ''}`}
               >
-                <PaperAirplaneIcon className="h-5 w-5" />
-              </Button>
+                {msg === visibleMessages[visibleMessages.length - 1] && typingEffect 
+                  ? <Typography className="text-sm whitespace-pre-wrap">{currentTypingMessage}<span className="animate-pulse">▌</span></Typography>
+                  : <Typography className="text-sm whitespace-pre-wrap">{msg.content}</Typography>
+                }
+                <Typography 
+                  variant="small" 
+                  className={`mt-1 text-xs ${
+                    msg.role === 'user' 
+                      ? themeClasses.message.timestamp.user 
+                      : msg.isQuestion
+                        ? themeClasses.message.timestamp.question
+                        : themeClasses.message.timestamp.assistant
+                  }`}
+                >
+                  {formatTime(msg.timestamp)}
+                </Typography>
+              </div>
+            </div>
+          ))}
+          
+          {isThinking && (
+            <div className="flex justify-start">
+              <div className={`max-w-[80%] p-4 rounded-xl shadow ${themeClasses.message.assistant}`}>
+                <div className="flex items-center gap-2">
+                  <Spinner className="h-4 w-4" color={accentColor as colors} />
+                  <Typography className="text-sm">Thinking...</Typography>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {isTranscribing && (
+            <div className="flex justify-start">
+              <div className={`max-w-[80%] p-4 rounded-xl shadow ${themeClasses.message.assistant}`}>
+                <div className="flex items-center gap-2">
+                  <Spinner className="h-4 w-4" color={accentColor as colors} />
+                  <Typography className="text-sm">Transcribing audio...</Typography>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {error && (
+            <div className="flex justify-center">
+              <div className="max-w-[90%] p-3 rounded-lg bg-red-50 text-red-600 border border-red-200 dark:bg-red-900/20 dark:border-red-800 dark:text-red-300">
+                <div className="flex items-start gap-2">
+                  <div className="flex-shrink-0 mt-0.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div>
+                    <Typography variant="small" className="font-medium">{error}</Typography>
+                    <Button 
+                      variant="text" 
+                      size="sm" 
+                      color="red" 
+                      className="p-0 mt-1" 
+                      onClick={() => setError(null)}
+                    >
+                      Dismiss
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Quick Replies */}
+          {visibleMessages.length > 0 && !isThinking && !isAwaitingAnswer && !typingEffect && (
+            <div className="pt-2 flex flex-wrap gap-2 justify-center">
+              {getSuggestions().map((suggestion, index) => (
+                <Button
+                  key={index}
+                  variant="outlined"
+                  size="sm"
+                  color={accentColor as colors}
+                  className={`px-3 py-1.5 cursor-pointer hover:bg-${accentColor}-50 dark:hover:bg-${accentColor}-900/20 transition-colors`}
+                  onClick={() => handleQuickReply(suggestion)}
+                >{suggestion}</Button>
+              ))}
+            </div>
+          )}
+          
+          <div ref={messageEndRef} />
+        </CardBody>
+        
+        {/* Footer / Input */}
+        <CardFooter className={`p-4 border-t ${themeClasses.footer}`}>
+          <div className="flex items-center gap-2">
+            <input
+              ref={inputRef}
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder={isAwaitingAnswer ? `Please answer the question...` : "Type your message..."}
+              className={`flex-grow border rounded-lg p-3 pr-10 focus:outline-none focus:ring-2 focus:ring-${accentColor}-500 ${themeClasses.input} ${isAwaitingAnswer ? `border-indigo-300 animate-pulse` : ''}`}
+              disabled={isThinking || isTranscribing}
+            />
+            
+            <div className="absolute right-20 flex">
+              {isRecording ? (
+                <IconButton
+                  onClick={stopRecording}
+                  variant="filled"
+                  color="red"
+                  className="h-9 w-9 rounded-full transition-all"
+                  size="sm"
+                >
+                  <StopIcon className="h-4 w-4" />
+                </IconButton>
+              ) : (
+                <IconButton
+                  onClick={startRecording}
+                  variant="text"
+                  color={accentColor as colors}
+                  className="h-9 w-9 rounded-full transition-all"
+                  size="sm"
+                  disabled={isThinking || isTranscribing}
+                >
+                  <MicrophoneIcon className="h-4 w-4" />
+                </IconButton>
+              )}
             </div>
             
-            {visibleMessages.length > 1 && !isAwaitingAnswer && (
-              <div className="mt-2 text-center">
-                <Typography variant="small" className="text-gray-500 dark:text-gray-400 text-xs flex items-center justify-center gap-1">
-                  <LockClosedIcon className="h-3 w-3" />
-                  Messages are saved locally on this device
-                </Typography>
-              </div>
-            )}
-            
-            {isAwaitingAnswer && (
-              <div className="mt-2 text-center">
-                <Typography variant="small" className="text-indigo-500 dark:text-indigo-400 text-xs font-medium">
-                  Please answer the question above to continue
-                </Typography>
-              </div>
-            )}
-          </CardFooter>
-        </Card>
-        
-        {/* Resize Handle */}
-        <div
-          onMouseDown={handleResizeStart}
-          className="absolute bottom-0 right-0 w-8 h-8 cursor-se-resize bg-transparent flex items-center justify-center opacity-30 hover:opacity-100 transition-opacity"
-          aria-label="Resize chat window"
-        >
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
-            <rect x="0" y="8" width="2" height="2" />
-            <rect x="4" y="8" width="2" height="2" />
-            <rect x="8" y="8" width="2" height="2" />
-            <rect x="4" y="4" width="2" height="2" />
-            <rect x="8" y="4" width="2" height="2" />
-            <rect x="8" y="0" width="2" height="2" />
-          </svg>
-        </div>
+            <Button 
+              onClick={() => handleSend()} 
+              color={accentColor as colors}
+              variant="gradient"
+              className="p-2 rounded-full shadow-md"
+              disabled={isThinking || isTranscribing || !input.trim()}
+            >
+              <PaperAirplaneIcon className="h-5 w-5" />
+            </Button>
+          </div>
+          
+          {visibleMessages.length > 1 && !isAwaitingAnswer && (
+            <div className="mt-2 text-center">
+              <Typography variant="small" className="text-gray-500 dark:text-gray-400 text-xs flex items-center justify-center gap-1">
+                <LockClosedIcon className="h-3 w-3" />
+                Messages are saved locally on this device
+              </Typography>
+            </div>
+          )}
+          
+          {isAwaitingAnswer && (
+            <div className="mt-2 text-center">
+              <Typography variant="small" className="text-indigo-500 dark:text-indigo-400 text-xs font-medium">
+                Please answer the question above to continue
+              </Typography>
+            </div>
+          )}
+        </CardFooter>
+      </Card>
+      
+      {/* Resize Handle */}
+      <div
+        onMouseDown={handleResizeStart}
+        className="absolute bottom-0 right-0 w-8 h-8 cursor-se-resize bg-transparent flex items-center justify-center opacity-30 hover:opacity-100 transition-opacity"
+        aria-label="Resize chat window"
+      >
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+          <rect x="0" y="8" width="2" height="2" />
+          <rect x="4" y="8" width="2" height="2" />
+          <rect x="8" y="8" width="2" height="2" />
+          <rect x="4" y="4" width="2" height="2" />
+          <rect x="8" y="4" width="2" height="2" />
+          <rect x="8" y="0" width="2" height="2" />
+        </svg>
       </div>
-    );
-  }
+    </div>
+  );
 }
