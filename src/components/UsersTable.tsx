@@ -66,7 +66,7 @@ export function UsersTable() {
     setLoading(true);
     try {
       const response = await axios.get('http://localhost:8000/auth/users'); // Need to Update the URL as per backend configuration
-      //console.log(response.data)
+      console.log(response.data)
       setUsers(response.data); // Assuming the API returns a list of users
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -108,12 +108,13 @@ export function UsersTable() {
     
   };
 
-  const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0dXNlckBleGFtcGxlLmNvbSIsInJvbGUiOiJVU0VSIiwiZXhwIjoxNzQyNzI2OTg1fQ.S24aXn16e8mWRmZShYgesDfJnJPTNDsy4v7H0z0Oz0s'
+  const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0dXNlckBleGFtcGxlLmNvbSIsInJvbGUiOiJVU0VSIiwiZXhwIjoxNzQyNzk0NTY0fQ.TNc-A5PLZ1gcNyX_mx9LOFJK4TzTni4SQwCrh3nUQ5A'
 
   const Authorize = async() => {
     try {
-    await axios.get('http://localhost:8000/auth/auth', {
-      headers: {'Authorization:': `Bearer ${token}`},
+      const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0dXNlckBleGFtcGxlLmNvbSIsInJvbGUiOiJVU0VSIiwiZXhwIjoxNzQyNzk0NTY0fQ.TNc-A5PLZ1gcNyX_mx9LOFJK4TzTni4SQwCrh3nUQ5A'
+      await axios.get('http://localhost:8000/auth/auth', {
+      headers: { 'Authorization' : `Bearer ${token}` },
      }).then(result => {
       console.log(result.data)
      }).catch(err => {
@@ -156,7 +157,7 @@ export function UsersTable() {
           "password": "Appleseed123!"
         },
         {
-          headers: {'Authorization' : `Bearer ${token}`}
+          headers: { 'Authorization' : `Bearer ${token}` }
         }).then(result => {
           console.log(result)
         }).catch(err => {
@@ -181,8 +182,9 @@ export function UsersTable() {
     if (!selectedUser) return;
 
     try {
+      Authorize()
       // In a real application, this would be an API call
-      await axios.delete('http:localhost:8000/auth/delete', {
+      await axios.delete('http://localhost:8000/auth/delete', {
         headers: {'Authorization' : `Bearer ${token}`},
       }).then(result => {
         console.log(result)
