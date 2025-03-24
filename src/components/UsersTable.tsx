@@ -279,7 +279,7 @@ export function UsersTable() {
                   <tr key={user.id}>
                     <td className={classes}>
                       <Typography variant="small" color="blue-gray" className="font-normal">
-                        {user.name}
+                        {user.nickname}
                       </Typography>
                     </td>
                     <td className={classes}>
