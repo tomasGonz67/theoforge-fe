@@ -108,11 +108,11 @@ export function UsersTable() {
     
   };
 
-  const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0dXNlckBleGFtcGxlLmNvbSIsInJvbGUiOiJVU0VSIiwiZXhwIjoxNzQyNzk0NTY0fQ.TNc-A5PLZ1gcNyX_mx9LOFJK4TzTni4SQwCrh3nUQ5A'
+  const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0dXNlckBleGFtcGxlLmNvbSIsInJvbGUiOiJVU0VSIiwiZXhwIjoxNzQyODAzMzY3fQ.fCDSFSb_mc8GOIbcDhrSUyIBrPYz9Qoayawc-bhFew0'
 
   const Authorize = async() => {
     try {
-      const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0dXNlckBleGFtcGxlLmNvbSIsInJvbGUiOiJVU0VSIiwiZXhwIjoxNzQyNzk0NTY0fQ.TNc-A5PLZ1gcNyX_mx9LOFJK4TzTni4SQwCrh3nUQ5A'
+      //const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0dXNlckBleGFtcGxlLmNvbSIsInJvbGUiOiJVU0VSIiwiZXhwIjoxNzQyODAyODc2fQ.NVENgeDDai8ZXGmywwubpj_uWaxv036UJHaTTDshg6A'
       await axios.get('http://localhost:8000/auth/auth', {
       headers: { 'Authorization' : `Bearer ${token}` },
      }).then(result => {
@@ -147,8 +147,9 @@ export function UsersTable() {
     if (!editFormData) return;
 
     try { 
+      Authorize()
       // In a real application, this would be an API call
-      await axios.put('https://localhost:8000/auth/update', 
+      await axios.put('http://localhost:8000/auth/update', 
         {
           "first_name": "Johnny",
           "last_name": "Appleseed",
