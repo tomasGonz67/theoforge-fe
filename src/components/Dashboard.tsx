@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect, Fragment } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { AuthContext } from '../App';
 import {
@@ -12,20 +12,16 @@ import {
   ChevronRightIcon,
   Bars3Icon as MenuIcon,
   CreditCardIcon,
-  BuildingLibraryIcon,
-  BeakerIcon,
   ChartBarIcon,
   BellIcon,
   CheckCircleIcon,
   SparklesIcon,
-  ArrowPathIcon,
   ClipboardDocumentCheckIcon,
   ChatBubbleLeftRightIcon,
   InformationCircleIcon,
   ArrowRightIcon,
   XMarkIcon,
   CpuChipIcon,
-  ExclamationCircleIcon,
   FolderIcon,
   CalendarIcon,
   DocumentTextIcon,
@@ -70,10 +66,8 @@ import { UsersTable } from './UsersTable';
 import { GuestsTable } from './GuestsTable';
 import { Resources } from './Resources';
 import { ProfileSettings } from './ProfileSettings';
-import { LogoutModal } from './LogoutModal';
 import { ChatBox } from './ChatBox';
 import { cn } from '../lib/utils';
-import { IntegratedDashboard } from './IntegratedDashboard';
 import { RealTimeDashboard } from './RealTimeDashboard';
 import { KnowledgeGraphPage } from './KnowledgeGraphPage';
 
@@ -175,15 +169,6 @@ const adminNavigation = [
   }
 ];
 
-// Notification structure
-interface Notification {
-  id: number;
-  title: string;
-  message: string;
-  timestamp: string;
-  read: boolean;
-  type: 'alert' | 'info' | 'success';
-}
 // Analytics Dashboard component for data visualization
 const AnalyticsDashboard = () => {
   const [activeTab, setActiveTab] = useState("daily");
@@ -223,7 +208,7 @@ const AnalyticsDashboard = () => {
     setTimeout(() => setShowAlert(false), 3000);
   };
   
-  const openModal = (type) => {
+  const openModal = (type: string) => {
     setModalType(type);
     setShowModal(true);
   };
@@ -460,8 +445,8 @@ const AnalyticsDashboard = () => {
                   </div>
                 </Card>
               </div>
-{/* Chart Placeholder */}
-<Card className="border border-gray-100 p-4 h-80 flex items-center justify-center bg-gray-50">
+              {/* Chart Placeholder */}
+              <Card className="border border-gray-100 p-4 h-80 flex items-center justify-center bg-gray-50">
                 <div className="text-center">
                   <ChartBarIcon className="h-12 w-12 text-gray-400 mx-auto mb-3" />
                   <Typography variant="h6" color="gray">Monthly Performance Chart</Typography>
@@ -641,25 +626,25 @@ const AnalyticsDashboard = () => {
           
           {modalType === 'activity' && (
             <div className="space-y-4 max-h-96 overflow-y-auto">
-              {Array.from({ length: 10 }).map((_, index) => (
-                <div key={index} className="flex items-start gap-4 p-3 border border-gray-100 rounded-lg">
+              {Array.from({ length: 10 }).map((_, idx) => (
+                <div key={idx} className="flex items-start gap-4 p-3 border border-gray-100 rounded-lg">
                   <div className="rounded-full p-2 bg-blue-50">
-                    {index % 3 === 0 && <UsersIcon className="h-5 w-5 text-blue-500" />}
-                    {index % 3 === 1 && <CreditCardIcon className="h-5 w-5 text-green-500" />}
-                    {index % 3 === 2 && <ChartBarIcon className="h-5 w-5 text-purple-500" />}
+                    {idx % 3 === 0 && <UsersIcon className="h-5 w-5 text-blue-500" />}
+                    {idx % 3 === 1 && <CreditCardIcon className="h-5 w-5 text-green-500" />}
+                    {idx % 3 === 2 && <ChartBarIcon className="h-5 w-5 text-purple-500" />}
                   </div>
                   <div>
                     <Typography variant="small" className="font-medium">
-                      {index % 3 === 0 && 'User Activity'}
-                      {index % 3 === 1 && 'Billing Event'}
-                      {index % 3 === 2 && 'System Event'}
+                      {idx % 3 === 0 && 'User Activity'}
+                      {idx % 3 === 1 && 'Billing Event'}
+                      {idx % 3 === 2 && 'System Event'}
                     </Typography>
                     <Typography variant="small" color="gray">
-                      {index % 3 === 0 && `User "${['john', 'mary', 'alex', 'sarah', 'mike'][index % 5]}@example.com" performed an action`}
-                      {index % 3 === 1 && 'Subscription plan change or payment processed'}
-                      {index % 3 === 2 && 'System maintenance or report generation'}
+                      {idx % 3 === 0 && `User "${['john', 'mary', 'alex', 'sarah', 'mike'][idx % 5]}@example.com" performed an action`}
+                      {idx % 3 === 1 && 'Subscription plan change or payment processed'}
+                      {idx % 3 === 2 && 'System maintenance or report generation'}
                     </Typography>
-                    <Typography variant="small" color="gray">{index + 1} hour{index !== 0 ? 's' : ''} ago</Typography>
+                    <Typography variant="small" color="gray">{idx + 1} hour{idx !== 0 ? 's' : ''} ago</Typography>
                   </div>
                 </div>
               ))}
@@ -760,7 +745,7 @@ const ProjectManagement = () => {
     team: []
   });
     
-  const openModal = (type, project = null) => {
+  const openModal = (type: string, project = null) => {
     setModalType(type);
     setCurrentProject(project);
     
@@ -787,7 +772,7 @@ const ProjectManagement = () => {
     setShowModal(true);
   };
     
-  const handleStatusChange = (projectId, newStatus) => {
+  const handleStatusChange = (projectId: number, newStatus: string) => {
     const updatedProjects = projects.map(project => 
       project.id === projectId ? { ...project, status: newStatus } : project
     );
@@ -796,7 +781,7 @@ const ProjectManagement = () => {
     showStatusAlert('Project status updated successfully!');
   };
     
-  const handleFormChange = (field, value) => {
+  const handleFormChange = (field: string, value: string) => {
     setProjectForm({
       ...projectForm,
       [field]: value
@@ -851,13 +836,13 @@ const ProjectManagement = () => {
     }
   };
     
-  const showStatusAlert = (message, color = 'green') => {
+  const showStatusAlert = (message: string, color = 'green') => {
     setShowAlert({ show: true, message, color });
     setTimeout(() => setShowAlert({ ...showAlert, show: false }), 3000);
   };
     
   // Get status color
-  const getStatusColor = (status) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'active':
         return 'green';
@@ -872,7 +857,7 @@ const ProjectManagement = () => {
     }
   };
   // Get priority color
-  const getPriorityColor = (priority) => {
+  const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'high':
         return 'red';
@@ -886,13 +871,13 @@ const ProjectManagement = () => {
   };
   
   // Format deadline date
-  const formatDeadline = (deadline) => {
+  const formatDeadline = (deadline: string) => {
     const date = new Date(deadline);
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
   };
   
   // Is deadline close or overdue
-  const isDeadlineClose = (deadline) => {
+  const isDeadlineClose = (deadline: string) => {
     const deadlineDate = new Date(deadline);
     const today = new Date();
     const diffTime = deadlineDate.getTime() - today.getTime();
@@ -901,7 +886,7 @@ const ProjectManagement = () => {
     return diffDays <= 7;
   };
   
-  const isDeadlinePassed = (deadline) => {
+  const isDeadlinePassed = (deadline: string) => {
     const deadlineDate = new Date(deadline);
     const today = new Date();
     return deadlineDate < today;
@@ -994,9 +979,9 @@ const ProjectManagement = () => {
                   </Typography>
                   <Progress value={project.progress} color={getStatusColor(project.status)} className="h-1" />
                   <div className="mt-4 flex flex-wrap gap-2">
-                    {project.team.map((member, index) => (
+                    {project.team.map((member, idx) => (
                       <Chip
-                        key={index}
+                        key={idx}
                         value={member}
                         variant="outlined"
                         size="sm"
@@ -1166,9 +1151,9 @@ const ProjectManagement = () => {
                   Team
                 </Typography>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {currentProject.team.map((member, index) => (
+                  {currentProject.team.map((member, idx) => (
                     <Chip
-                      key={index}
+                      key={idx}
                       value={member}
                       className="bg-gray-50"
                     />
@@ -1280,6 +1265,7 @@ const ProjectManagement = () => {
     </div>
   );
 };
+
 // User Dashboard Content Component
 const UserDashboard = () => {
   const navigate = useNavigate();
@@ -1626,8 +1612,8 @@ const UserDashboard = () => {
           </Card>
         </div>
       </Card>
-{/* Service Modal */}
-<Dialog
+      {/* Service Modal */}
+      <Dialog
         open={showServiceModal}
         handler={() => setShowServiceModal(false)}
         size="lg"
@@ -1982,6 +1968,17 @@ const UserDashboard = () => {
     </div>
   );
 };
+
+// Type definition for notification
+interface NotificationType {
+  id: number;
+  title: string;
+  message: string;
+  timestamp: string;
+  read: boolean;
+  type: 'alert' | 'info' | 'success';
+}
+
 // Main Dashboard Component
 export function Dashboard() {
   const { logout } = useContext(AuthContext);
@@ -1990,15 +1987,12 @@ export function Dashboard() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("personal");
-  const [isVisible, setIsVisible] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isAdminView, setIsAdminView] = useState(true); // Default to admin view
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   
   // Sample notifications
-  const [notifications, setNotifications] = useState([
+  const [notifications, setNotifications] = useState<NotificationType[]>([
     {
       id: 1,
       title: "New User Registration",
@@ -2030,9 +2024,8 @@ export function Dashboard() {
 
   // Get current navigation based on view mode
   const navigation = isAdminView ? adminNavigation : userNavigation;
+  
   useEffect(() => {
-    setIsVisible(true);
-    
     // Set current page based on location path
     const pathSegments = location.pathname.split('/');
     const lastSegment = pathSegments[pathSegments.length - 1];
@@ -2068,6 +2061,8 @@ export function Dashboard() {
     message: "",
     color: "green"
   });
+  const [isVisible] = useState(true);
+  
   // Update user role when admin view changes
   useEffect(() => {
     setUserData(prev => ({
@@ -2496,7 +2491,6 @@ export function Dashboard() {
                 </MenuItem>
                 <MenuItem 
                   className="flex items-center gap-2 rounded hover:bg-teal-50/80"
-                  onClick={() => setIsSettingsOpen(true)}
                 >
                   <Cog6ToothIcon className="h-4 w-4 text-teal-500" />
                   <Typography variant="small" className="font-normal">
@@ -2543,7 +2537,7 @@ export function Dashboard() {
 
         <div className="flex-1 p-4 lg:p-6 max-w-full">
           <Breadcrumbs className="bg-white rounded-lg p-3 mb-4 border border-gray-100">
-            {breadcrumbs.map((breadcrumb, index) => (
+            {breadcrumbs.map((breadcrumb) => (
               <Link
                 key={breadcrumb.href}
                 href={breadcrumb.href}

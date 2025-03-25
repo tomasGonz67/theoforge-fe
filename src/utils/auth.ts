@@ -56,8 +56,8 @@ export const setAuthCookies = (token: string): UserData | null => {
     Cookies.set(USER_DATA, JSON.stringify(userData), cookieOptions);
     
     return userData;
-  } catch (error) {
-    console.error('Error decoding JWT token:', error);
+  } catch {
+    console.error('Error decoding JWT token');
     return null;
   }
 };
@@ -83,8 +83,8 @@ export const getUserData = (): UserData | null => {
   
   try {
     return JSON.parse(userDataCookie);
-  } catch (error) {
-    console.error('Error parsing user data from cookie:', error);
+  } catch {
+    console.error('Error parsing user data from cookie');
     return null;
   }
 };
@@ -106,13 +106,13 @@ export const isAuthenticated = (): boolean => {
     const currentTime = Date.now() / 1000;
     
     return decoded.exp > currentTime;
-  } catch (error) {
+  } catch {
     return false;
   }
 };
 
 /**
- * Checkif the user is an admin
+ * Check if the user is an admin
  * @returns True if user is an admin
  */
 export const isAdmin = (): boolean => {

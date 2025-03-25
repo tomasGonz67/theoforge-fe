@@ -8,11 +8,8 @@ import {
 } from '@heroicons/react/24/outline';
 import { AuthContext } from '../App';
 import {
-  Card,
-  CardBody,
   Button,
   Typography,
-  IconButton,
   Alert
 } from "@material-tailwind/react";
 
@@ -31,7 +28,7 @@ export function AuthForm({ type }: AuthFormProps) {
   useEffect(() => {
     setIsVisible(true);
     
-    // If useris already authenticated, redirect to dashboard
+    // If user is already authenticated, redirect to dashboard
     if (isAuthenticated) {
       navigate('/dashboard');
     }

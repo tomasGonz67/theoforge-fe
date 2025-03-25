@@ -3,10 +3,28 @@ import axios from 'axios';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000'; // Update with your actual backend URL
 
+interface UserData {
+  id: string;
+  username: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  role: string;
+}
+
+interface AuthError {
+  response?: {
+    data?: {
+      message?: string;
+    }
+  };
+  message: string;
+}
+
 export const authService = {
   login: async (email: string, password: string) => {
     try {
-      // Createrequest body for login endpoint using OAuth2 password grant format
+      // Create request body for login endpoint using OAuth2 password grant format
       const loginData = {
         grant_type: 'password',
         username: email,
@@ -63,7 +81,7 @@ export const authService = {
     localStorage.removeItem('user');
   },
 
-  register: async (userData: any) => {
+  register: async (userData: UserData) => {
     try {
       // Set headers for JSON content for registration
       const headers = {
@@ -74,10 +92,11 @@ export const authService = {
       const response = await axios.post(`${API_URL}/auth/register`, userData, { headers });
       return { success: true, data: response.data };
     } catch (error) {
-      console.error('Registration error:', error);
+      const err = error as AuthError;
+      console.error('Registration error:', err);
       return { 
         success: false, 
-        message: error.response?.data?.message || 'Registration failed' 
+        message: err.response?.data?.message || 'Registration failed' 
       };
     }
   },

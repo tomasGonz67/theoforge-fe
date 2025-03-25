@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-// Graph node typesand their colors
+// Graph node types and their colors
 const NODE_TYPES = {
   CONCEPT: { label: 'Concept', color: 'teal' },
   ENTITY: { label: 'Entity', color: 'blue' },
@@ -40,7 +40,7 @@ const sampleGraphData = {
 };
 
 const KnowledgeGraph = () => {
-  const [graphData, setGraphData] = useState(sampleGraphData);
+  const [graphData] = useState(sampleGraphData);
   const [searchText, setSearchText] = useState('');
   const [selectedNode, setSelectedNode] = useState(null);
   const [zoom, setZoom] = useState(100);
@@ -81,19 +81,19 @@ const KnowledgeGraph = () => {
     }
     
     setFilteredNodes(filtered);
-  }, [searchText, activeFilter, graphData]);
+  }, [searchText, activeFilter, graphData, positionedNodes]);
 
   // Reset to initial state when no filters are active
   useEffect(() => {
     if (!searchText && !activeFilter) {
       setFilteredNodes(positionedNodes);
     }
-  }, [searchText, activeFilter]);
+  }, [searchText, activeFilter, positionedNodes]);
 
   // Set initial nodes on component mount
   useEffect(() => {
     setFilteredNodes(positionedNodes);
-  }, []);
+  }, [positionedNodes]);
 
   const handleNodeClick = (node) => {
     setSelectedNode(node);

@@ -17,6 +17,17 @@ interface AIResponse {
   error?: string;
 }
 
+// Interface for API error types
+interface ApiError {
+  message: string;
+  response?: {
+    data?: {
+      message?: string;
+    };
+    statusText?: string;
+  };
+}
+
 /**
  * Send a message to the AI service and get a response
  * @param prompt User's message
@@ -79,11 +90,12 @@ export async function sendMessage(
         messageId: data.id
       } 
     };
-  } catch (error: any) {
-    console.error("Error in sendMessage:", error);
+  } catch (error: ApiError | unknown) {
+    const err = error as ApiError;
+    console.error("Error in sendMessage:", err);
     return { 
       success: false, 
-      error: error.message || "An unexpected error occurred" 
+      error: err.message || "An unexpected error occurred" 
     };
   }
 }
@@ -107,7 +119,7 @@ export async function transcribeAudio(
   }
   
   try {
-    // Create aFormData object to send the audio file
+    // Create a FormData object to send the audio file
     const formData = new FormData();
     formData.append('file', audioBlob, 'recording.webm');
     formData.append('model', 'whisper-1');
@@ -138,11 +150,12 @@ export async function transcribeAudio(
         result: data.text
       }
     };
-  } catch (error: any) {
-    console.error("Error in transcribeAudio:", error);
+  } catch (error: ApiError | unknown) {
+    const err = error as ApiError;
+    console.error("Error in transcribeAudio:", err);
     return { 
       success: false, 
-      error: error.message || "Failed to transcribe audio" 
+      error: err.message || "Failed to transcribe audio" 
     };
   }
 }

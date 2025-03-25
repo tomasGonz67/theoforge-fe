@@ -14,7 +14,12 @@ import KnowledgeGraph from './KnowledgeGraph';
 import { RealTimeDashboard } from './RealTimeDashboard';
 
 export function IntegratedDashboard() {
-  // Implementationfrom my IntegratedDashboard code
+  return (
+    <div className="p-4">
+      <h2 className="text-xl font-bold mb-4">Integrated Dashboard</h2>
+      <p>Dashboard content will be displayed here.</p>
+    </div>
+  );
 }
 
 export default IntegratedDashboard;

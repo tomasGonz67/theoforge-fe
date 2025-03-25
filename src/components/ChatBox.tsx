@@ -11,7 +11,6 @@ import {
   StopIcon,
   TrashIcon,
   UserCircleIcon,
-  InformationCircleIcon,
   LockClosedIcon,
   ChevronDoubleRightIcon
 } from '@heroicons/react/24/outline';
@@ -25,17 +24,12 @@ import {
   Button,
   Tooltip,
   Spinner,
-  Avatar,
   Chip,
   Badge,
-  Menu,
-  MenuHandler,
-  MenuList,
-  MenuItem
 } from "@material-tailwind/react";
 import { getGuestId, getStorageKeyForGuest } from '../lib/guestIdentifier';
 
-// Enhancedguest identification
+// Enhanced guest identification
 interface GuestInfo {
   id: string;
   name?: string;
@@ -161,7 +155,7 @@ export function ChatBox({
   const inputRef = useRef<HTMLInputElement>(null);
   
   // Typing effect interval
-  const typingIntervalRef = useRef<any>(null);
+  const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Auto-scroll to the latest message
   useEffect(() => {
@@ -234,7 +228,7 @@ export function ChatBox({
     } catch (e) {
       console.warn("Could not access localStorage:", e);
     }
-  }, []);
+  }, [onGuestIdentified]);
 
   // Persist chat history on every update
   useEffect(() => {
@@ -261,14 +255,14 @@ export function ChatBox({
         console.warn("Could not save guest info:", e);
       }
     }
-  }, [guestInfo]);
+  }, [guestInfo, onGuestIdentified]);
 
   // Initial prompt handling
   useEffect(() => {
     if (initialPrompt && messages.length === INITIAL_MESSAGES.length) {
       handleSend(initialPrompt);
     }
-  }, [initialPrompt]);
+  }, [initialPrompt, messages.length]);
   
   // Decision maker for when to ask questions
   useEffect(() => {
@@ -284,21 +278,25 @@ export function ChatBox({
         }
       }
     }
-  }, [messages, isThinking]);
+  }, [messages, isThinking, isAwaitingAnswer, currentQuestion]);
   
   // Typing effect for AI messages
   useEffect(() => {
     if (typingEffect && fullMessageContent) {
       let currentIndex = 0;
       
-      clearInterval(typingIntervalRef.current);
+      if (typingIntervalRef.current) {
+        clearInterval(typingIntervalRef.current);
+      }
       
       typingIntervalRef.current = setInterval(() => {
         if (currentIndex <= fullMessageContent.length) {
           setCurrentTypingMessage(fullMessageContent.substring(0, currentIndex));
           currentIndex++;
         } else {
-          clearInterval(typingIntervalRef.current);
+          if (typingIntervalRef.current) {
+            clearInterval(typingIntervalRef.current);
+          }
           setTypingEffect(false);
           
           // If this was a question, set awaiting answer flag
@@ -308,9 +306,13 @@ export function ChatBox({
         }
       }, 15); // Speed of typing
       
-      return () => clearInterval(typingIntervalRef.current);
+      return () => {
+        if (typingIntervalRef.current) {
+          clearInterval(typingIntervalRef.current);
+        }
+      };
     }
-  }, [typingEffect, fullMessageContent]);
+  }, [typingEffect, fullMessageContent, currentQuestion]);
 
   // Get the next question to ask based on what's already been answered
   const getNextQuestionToAsk = () => {
@@ -503,9 +505,10 @@ export function ChatBox({
       
       const data = await response.json();
       return data.choices[0].message.content;
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error generating AI response:", error);
-      setError(error.message || "Failed to get response from AI service");
+      const errorMessage = error instanceof Error ? error.message : "Failed to get response from AI service";
+      setError(errorMessage);
       return "I'm sorry, I encountered an error while processing your request. Please try again later.";
     } finally {
       setIsThinking(false);
@@ -605,8 +608,7 @@ export function ChatBox({
       };
       
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        await processAudioToText(audioBlob);
+        await processAudioToText();
         stream.getTracks().forEach(track => track.stop());
       };
       
@@ -627,7 +629,7 @@ export function ChatBox({
   };
 
   // Voice-to-text processing (simulated)
-  const processAudioToText = async (audioBlob: Blob) => {
+  const processAudioToText = async () => {
     setIsTranscribing(true);
     try {
       // Simulate a delay to mimic API call
@@ -655,7 +657,7 @@ export function ChatBox({
         // Default speech transcription
         setInput(`Can you tell me more about ${companyName}'s Knowledge Graph solutions?`);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error transcribing audio:", error);
       setError("Failed to transcribe your voice message.");
     } finally {
