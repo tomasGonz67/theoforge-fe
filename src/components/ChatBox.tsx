@@ -497,6 +497,7 @@ export function ChatBox({
       });
       
       if (!response.ok) {
+        console.log(apiKey)
         const errorData = await response.json().catch(() => null);
         throw new Error(errorData?.error?.message || `API Error: ${response.statusText}`);
       }
