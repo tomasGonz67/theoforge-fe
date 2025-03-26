@@ -272,19 +272,35 @@ export function ChatBox({
   
   // Decision maker for when to ask questions
   useEffect(() => {
-    if (messages.length > 3 && !isThinking && !isAwaitingAnswer) {
-      const shouldAskQuestion = Math.random() > 0.5; // 50% chance to ask a question
-      
-      if (shouldAskQuestion && !currentQuestion) {
-        const nextQuestion = getNextQuestionToAsk();
-        if (nextQuestion) {
-          setTimeout(() => {
-            askGuestQuestion(nextQuestion);
-          }, 1000);
+    console.log("message change", messages.length > 3, !isAwaitingAnswer, !currentQuestion, isThinking);
+    if ((messages.length > 3 && !isAwaitingAnswer && !currentQuestion/* && Math.random() > 0*/) ||
+      GUEST_QUESTIONS.find(question => question.question === messages[messages.length-1].content)
+    ) {
+      const nextQuestion = getNextQuestionToAsk();
+      if (nextQuestion) {
+        // Ask a specific question to the guest
+        setIsAwaitingAnswer(true);
+        setCurrentQuestion(nextQuestion.id);
+        // Do not re-ask questions
+        if(messages[messages.length-1].content !== nextQuestion.question) {
+          const questionMessage: Message = {
+            id: generateId(),
+            role: 'assistant',
+            content: nextQuestion.question,
+            timestamp: new Date().toISOString(),
+            isQuestion: true,
+            questionId: nextQuestion.id
+          };
+          
+          // Use typing effect for the question
+          setFullMessageContent(nextQuestion.question);
+          setCurrentTypingMessage('');
+          setTypingEffect(true);
+          setMessages(prev => [...prev, questionMessage]);
         }
       }
     }
-  }, [messages, isThinking]);
+  }, [messages]);
   
   // Typing effect for AI messages
   useEffect(() => {
@@ -300,11 +316,6 @@ export function ChatBox({
         } else {
           clearInterval(typingIntervalRef.current);
           setTypingEffect(false);
-          
-          // If this was a question, set awaiting answer flag
-          if (currentQuestion) {
-            setIsAwaitingAnswer(true);
-          }
         }
       }, 15); // Speed of typing
       
@@ -323,27 +334,6 @@ export function ChatBox({
     }
     
     return null; // All questions have been asked
-  };
-  
-  // Ask a specific question to the guest
-  const askGuestQuestion = (question: { id: string, question: string }) => {
-    setCurrentQuestion(question.id);
-    
-    const questionMessage: Message = {
-      id: generateId(),
-      role: 'assistant',
-      content: question.question,
-      timestamp: new Date().toISOString(),
-      isQuestion: true,
-      questionId: question.id
-    };
-    
-    // Use typing effect for the question
-    setFullMessageContent(question.question);
-    setCurrentTypingMessage('');
-    setTypingEffect(true);
-    
-    setMessages(prev => [...prev, questionMessage]);
   };
   
   // Process the answer to a question
@@ -453,7 +443,7 @@ export function ChatBox({
     try {
       // If this was in response to a question, process the answer
       if (currentQuestion) {
-        const userMessage = context.find(m => m.role === 'user');
+        const userMessage = context[context.length-1];
         if (userMessage) {
           const questionResponse = processQuestionAnswer(currentQuestion, userMessage.content);
           return questionResponse;
@@ -905,13 +895,13 @@ export function ChatBox({
           )}
           
           {/* Guest info chip - only show once info is collected */}
-          {guestInfo.name && guestInfo.company && (
+          {guestInfo.name && (
             <div className="flex justify-center mb-4">
               <Chip
                 value={
                   <div className="flex items-center gap-2">
                     <UserCircleIcon className="h-4 w-4" />
-                    <span>{guestInfo.name} from {guestInfo.company}</span>
+                    <span>{guestInfo.name+(guestInfo.company ? " from "+guestInfo.company : "")}</span>
                   </div>
                 }
                 color="teal"
