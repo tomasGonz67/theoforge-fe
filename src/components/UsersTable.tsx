@@ -65,7 +65,7 @@ export function UsersTable() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:8000/auth/users'); // Need to Update the URL as per backend configuration
+      const response = await axios.get('http://localhost:8000/auth/users'); // URL as per backend configuration
       console.log(response.data)
       setUsers(response.data); // Assuming the API returns a list of users
     } catch (error) {
@@ -75,7 +75,7 @@ export function UsersTable() {
   };
   
   
-  {/* 
+  {/* The old Users List with the Dummy Users
   const fetchUsers = async () => {
     setLoading(true);
     try {
@@ -100,7 +100,6 @@ export function UsersTable() {
 */}
 
 
-
   const handleEdit = async(user: User) => {
     setSelectedUser(user);
     setEditFormData(user);
@@ -112,7 +111,6 @@ export function UsersTable() {
 
   const Authorize = async() => {
     try {
-      //const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0dXNlckBleGFtcGxlLmNvbSIsInJvbGUiOiJVU0VSIiwiZXhwIjoxNzQyODAyODc2fQ.NVENgeDDai8ZXGmywwubpj_uWaxv036UJHaTTDshg6A'
       await axios.get('http://localhost:8000/auth/auth', {
       headers: { 'Authorization' : `Bearer ${token}` },
      }).then(result => {
@@ -125,24 +123,12 @@ export function UsersTable() {
    };
   }
 
-  
-
   const handleDelete = (user: User) => {
     setSelectedUser(user);
     setIsDeleteModalOpen(true);
   };
 
   
-  /* await axios.get('http://localhost:8000/auth/auth', {
-    headers: {'Authorization:': `Bearer ${token}`},
-   }).then(result => {
-    console.log(result)
-   }).catch(err => {
-    console.log(err)
-   }); */
-  
-
-
   const handleEditSubmit = async () => {
     if (!editFormData) return;
 
@@ -218,7 +204,7 @@ export function UsersTable() {
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
 
   //This I think should be changed to the api call key's such as email, nickname, etc..
-  const TABLE_HEAD = ["Name", "Email", "Role", "Status", "Last Login", "Actions"];
+  const TABLE_HEAD = ["Nick Name", "Email", "Role", "Status", "Last Login", "Actions"];
 
   return (
     <Card className="h-full w-full">
