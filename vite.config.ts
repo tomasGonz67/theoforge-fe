@@ -7,9 +7,6 @@ export default defineConfig({
     port: 8000,      // Ensure it matches Docker's exposed port
     strictPort: true,
   },
-  define: {
-    'process.env.VITE_OPENAI_API_KEY': JSON.stringify(process.env.VITE_OPENAI_API_KEY),
-  },
   preview: {
     allowedHosts: ['dev.theoforge.com', 'www.dev.theoforge.com', 'qa.theoforge.com', 'www.qa.theoforge.com', 'theoforge.com' ,'www.theoforge.com'],
   },

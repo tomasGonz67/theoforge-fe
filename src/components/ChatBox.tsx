@@ -505,6 +505,7 @@ export function ChatBox({
       return data.choices[0].message.content;
     } catch (error: any) {
       console.error("Error generating AI response:", error);
+      console.log("asdasd");
       setError(error.message || "Failed to get response from AI service");
       return "I'm sorry, I encountered an error while processing your request. Please try again later.";
     } finally {
