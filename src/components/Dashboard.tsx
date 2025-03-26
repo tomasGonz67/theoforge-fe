@@ -1979,9 +1979,6 @@ const UserDashboard = () => {
         <ChatBox 
           isOpen={isChatOpen} 
           onClose={() => setIsChatOpen(false)} 
-          companyName="Theoforge"
-          logoUrl="/logo.png"
-          accentColor="teal"
         />
       )}
     </div>
