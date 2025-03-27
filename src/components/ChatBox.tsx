@@ -8,7 +8,6 @@ import {
   ArrowsPointingInIcon,
   ChatBubbleLeftRightIcon,
   SparklesIcon,
-  MicrophoneIcon,
   StopIcon,
   TrashIcon,
   UserCircleIcon,
@@ -136,12 +135,6 @@ export function ChatBox({
   const [showIntroduction, setShowIntroduction] = useState(true);
   const [isStorageLoaded, setIsStorageLoaded] = useState(false);
   const [theme, setTheme] = useState<Theme>('light');
-
-  // Voice recording state
-  const [isRecording, setIsRecording] = useState(false);
-  const [isTranscribing, setIsTranscribing] = useState(false);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
 
   // UI state for resizing and minimization
   const [isMinimized, setIsMinimized] = useState(false);
@@ -581,79 +574,6 @@ export function ChatBox({
     }
   };
 
-  // VOICE RECORDING FUNCTIONS
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      audioChunksRef.current = [];
-      const mediaRecorder = new MediaRecorder(stream);
-      
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-      
-      mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        await processAudioToText(audioBlob);
-        stream.getTracks().forEach(track => track.stop());
-      };
-      
-      mediaRecorderRef.current = mediaRecorder;
-      mediaRecorder.start();
-      setIsRecording(true);
-    } catch (error) {
-      console.error("Error accessing microphone:", error);
-      setError("Could not access your microphone. Please check your permissions.");
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-    }
-  };
-
-  // Voice-to-text processing (simulated)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const processAudioToText = async (_audioBlob: Blob) => {
-    setIsTranscribing(true);
-    try {
-      // Simulate a delay to mimic API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // If we're awaiting an answer to a specific question, provide a tailored response
-      if (isAwaitingAnswer && currentQuestion) {
-        switch (currentQuestion) {
-          case 'name':
-            setInput("John Smith");
-            break;
-          case 'company':
-            setInput("Acme Corp");
-            break;
-          case 'interests':
-            setInput("Knowledge graphs, data integration, AI model training");
-            break;
-          case 'email':
-            setInput("john.smith@acmecorp.com");
-            break;
-          default:
-            setInput(`Can you tell me more about Theoforge's Knowledge Graph solutions?`);
-        }
-      } else {
-        // Default speech transcription
-        setInput(`Can you tell me more about Theoforge's Knowledge Graph solutions?`);
-      }
-    } catch (error) {
-      console.error("Error transcribing audio:", error);
-      setError("Failed to transcribe your voice message.");
-    } finally {
-      setIsTranscribing(false);
-    }
-  };
-
   // Quick replies/suggestions
   const handleQuickReply = (text: string) => {
     setInput(text);
@@ -952,17 +872,6 @@ export function ChatBox({
             </div>
           )}
           
-          {isTranscribing && (
-            <div className="flex justify-start">
-              <div className={`max-w-[80%] p-4 rounded-xl shadow ${themeClasses.message.assistant}`}>
-                <div className="flex items-center gap-2">
-                  <Spinner className="h-4 w-4" color="teal" />
-                  <Typography className="text-sm">Transcribing audio...</Typography>
-                </div>
-              </div>
-            </div>
-          )}
-          
           {error && (
             <div className="flex justify-center">
               <div className="max-w-[90%] p-3 rounded-lg bg-red-50 text-red-600 border border-red-200 dark:bg-red-900/20 dark:border-red-800 dark:text-red-300">
@@ -1019,40 +928,15 @@ export function ChatBox({
               onKeyDown={handleKeyDown}
               placeholder={isAwaitingAnswer ? `Please answer the question...` : "Type your message..."}
               className={`flex-grow border rounded-lg p-3 pr-10 focus:outline-none focus:ring-2 focus:ring-teal-500 ${themeClasses.input} ${isAwaitingAnswer ? `border-indigo-300 animate-pulse` : ''}`}
-              disabled={isThinking || isTranscribing}
+              disabled={isThinking}
             />
-            
-            <div className="absolute right-20 flex">
-              {isRecording ? (
-                <IconButton
-                  onClick={stopRecording}
-                  variant="filled"
-                  color="red"
-                  className="h-9 w-9 rounded-full transition-all"
-                  size="sm"
-                >
-                  <StopIcon className="h-4 w-4" />
-                </IconButton>
-              ) : (
-                <IconButton
-                  onClick={startRecording}
-                  variant="text"
-                  color="teal"
-                  className="h-9 w-9 rounded-full transition-all"
-                  size="sm"
-                  disabled={isThinking || isTranscribing}
-                >
-                  <MicrophoneIcon className="h-4 w-4" />
-                </IconButton>
-              )}
-            </div>
             
             <Button 
               onClick={() => handleSend()} 
               color="teal"
               variant="gradient"
               className="p-2 rounded-full shadow-md"
-              disabled={isThinking || isTranscribing || !input.trim()}
+              disabled={isThinking || !input.trim()}
             >
               <PaperAirplaneIcon className="h-5 w-5" />
             </Button>
