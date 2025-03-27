@@ -70,7 +70,7 @@ export function GuestsTable() {
   const fetchGuests = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API_URL}/guests`);
+      const res = await axios.get(`${API_URL}/guests/`);
       if(!(Array.isArray(res.data) && res.data.every(guest => typeof guest === 'object'))) {
         setShowError(true);
         throw Error //Ensure an array of guests is returned
