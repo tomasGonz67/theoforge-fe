@@ -258,10 +258,10 @@ export function UsersTable() {
       <div className="px-6 py-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
         <div>
           <Typography variant="h5" color="blue-gray">
-            Guest Management
+            User Management
           </Typography>
           <Typography variant="small" color="gray">
-            View and manage guest accounts in your system
+            View and manage user accounts in your system
           </Typography>
         </div>
         <Button 
