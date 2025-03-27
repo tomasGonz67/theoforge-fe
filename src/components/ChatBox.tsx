@@ -469,7 +469,7 @@ export function ChatBox({
       }
       
       // Use environment variable for API key
-      const apiKey = process.env.VITE_OPENAI_API_KEY || '';
+      const apiKey = import.meta.env.VITE_OPENAI_API_KEY || '';
       console.log("API: ", apiKey);
       const response = await fetch(AI_ENDPOINT, {
         method: "POST",
