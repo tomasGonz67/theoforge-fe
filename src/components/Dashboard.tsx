@@ -72,6 +72,7 @@ import { Resources } from './Resources';
 import { ProfileSettings } from './ProfileSettings';
 import { LogoutModal } from './LogoutModal';
 import { ChatBox } from './ChatBox';
+import { Chat } from './ChatApp';
 import { cn } from '../lib/utils';
 import { IntegratedDashboard } from './IntegratedDashboard';
 import { RealTimeDashboard } from './RealTimeDashboard';
@@ -114,7 +115,13 @@ const userNavigation = [
     href: '/dashboard/realtime', 
     icon: CpuChipIcon,
     description: 'Live system metrics'
-  }
+  },
+  {
+    name: 'Visualization', 
+    href: '/dashboard/Chat', 
+    icon:UsersIcon,
+    description: 'LLM Chat'
+  },
 ];
 
 // Admin navigation- full options (includes Analytics)
@@ -2865,6 +2872,10 @@ const Sidebar = () => (
             {currentPage === 'knowledge' && (
               <KnowledgeGraphPage />
             )}
+            {/* Knowledge Graph Integration */}
+            {currentPage === 'Visualization' && (
+              <Chat />
+            )}
 
             {/* Real-Time Dashboard Integration */}
             {currentPage === 'realtime' && (
@@ -2888,6 +2899,9 @@ const Sidebar = () => (
                 </Card>
                 <RealTimeDashboard />
               </div>
+
+              
+
             )}
             
             {/* Marketplace Section - Available to both roles */}
