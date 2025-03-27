@@ -569,7 +569,7 @@ export function UsersTable() {
         open={isCreateModalOpen}
         handler={() => setIsCreateModalOpen(false)}
       >
-        <DialogHeader>Create Guest</DialogHeader>
+        <DialogHeader>Create User</DialogHeader>
 
         <DialogBody>
           {createFormData && (
