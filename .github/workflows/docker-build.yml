@@ -49,3 +49,5 @@ jobs:
         context: .  # Use the current directory as the build context
         push: true  # Push the image to Docker Hub after building
         tags: tgonz67/theoforge-fe:${{ env.IMAGE_TAG }}  # Use the appropriate Docker image and tag
+        build-args: |
+         VITE_OPENAI_API_KEY=${{ secrets.VITE_OPENAI_API_KEY }}
