@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect, Fragment } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { AuthContext } from '../App';
 import {
@@ -12,16 +12,20 @@ import {
   ChevronRightIcon,
   Bars3Icon as MenuIcon,
   CreditCardIcon,
+  BuildingLibraryIcon,
+  BeakerIcon,
   ChartBarIcon,
   BellIcon,
   CheckCircleIcon,
   SparklesIcon,
+  ArrowPathIcon,
   ClipboardDocumentCheckIcon,
   ChatBubbleLeftRightIcon,
   InformationCircleIcon,
   ArrowRightIcon,
   XMarkIcon,
   CpuChipIcon,
+  ExclamationCircleIcon,
   FolderIcon,
   CalendarIcon,
   DocumentTextIcon,
@@ -66,8 +70,10 @@ import { UsersTable } from './UsersTable';
 import { GuestsTable } from './GuestsTable';
 import { Resources } from './Resources';
 import { ProfileSettings } from './ProfileSettings';
+import { LogoutModal } from './LogoutModal';
 import { ChatBox } from './ChatBox';
 import { cn } from '../lib/utils';
+import { IntegratedDashboard } from './IntegratedDashboard';
 import { RealTimeDashboard } from './RealTimeDashboard';
 import { KnowledgeGraphPage } from './KnowledgeGraphPage';
 
@@ -169,6 +175,15 @@ const adminNavigation = [
   }
 ];
 
+// Notification structure
+interface Notification {
+  id: number;
+  title: string;
+  message: string;
+  timestamp: string;
+  read: boolean;
+  type: 'alert' | 'info' | 'success';
+}
 // Analytics Dashboard component for data visualization
 const AnalyticsDashboard = () => {
   const [activeTab, setActiveTab] = useState("daily");
@@ -208,7 +223,7 @@ const AnalyticsDashboard = () => {
     setTimeout(() => setShowAlert(false), 3000);
   };
   
-  const openModal = (type: string) => {
+  const openModal = (type) => {
     setModalType(type);
     setShowModal(true);
   };
@@ -445,8 +460,8 @@ const AnalyticsDashboard = () => {
                   </div>
                 </Card>
               </div>
-              {/* Chart Placeholder */}
-              <Card className="border border-gray-100 p-4 h-80 flex items-center justify-center bg-gray-50">
+{/* Chart Placeholder */}
+<Card className="border border-gray-100 p-4 h-80 flex items-center justify-center bg-gray-50">
                 <div className="text-center">
                   <ChartBarIcon className="h-12 w-12 text-gray-400 mx-auto mb-3" />
                   <Typography variant="h6" color="gray">Monthly Performance Chart</Typography>
@@ -626,25 +641,25 @@ const AnalyticsDashboard = () => {
           
           {modalType === 'activity' && (
             <div className="space-y-4 max-h-96 overflow-y-auto">
-              {Array.from({ length: 10 }).map((_, idx) => (
-                <div key={idx} className="flex items-start gap-4 p-3 border border-gray-100 rounded-lg">
+              {Array.from({ length: 10 }).map((_, index) => (
+                <div key={index} className="flex items-start gap-4 p-3 border border-gray-100 rounded-lg">
                   <div className="rounded-full p-2 bg-blue-50">
-                    {idx % 3 === 0 && <UsersIcon className="h-5 w-5 text-blue-500" />}
-                    {idx % 3 === 1 && <CreditCardIcon className="h-5 w-5 text-green-500" />}
-                    {idx % 3 === 2 && <ChartBarIcon className="h-5 w-5 text-purple-500" />}
+                    {index % 3 === 0 && <UsersIcon className="h-5 w-5 text-blue-500" />}
+                    {index % 3 === 1 && <CreditCardIcon className="h-5 w-5 text-green-500" />}
+                    {index % 3 === 2 && <ChartBarIcon className="h-5 w-5 text-purple-500" />}
                   </div>
                   <div>
                     <Typography variant="small" className="font-medium">
-                      {idx % 3 === 0 && 'User Activity'}
-                      {idx % 3 === 1 && 'Billing Event'}
-                      {idx % 3 === 2 && 'System Event'}
+                      {index % 3 === 0 && 'User Activity'}
+                      {index % 3 === 1 && 'Billing Event'}
+                      {index % 3 === 2 && 'System Event'}
                     </Typography>
                     <Typography variant="small" color="gray">
-                      {idx % 3 === 0 && `User "${['john', 'mary', 'alex', 'sarah', 'mike'][idx % 5]}@example.com" performed an action`}
-                      {idx % 3 === 1 && 'Subscription plan change or payment processed'}
-                      {idx % 3 === 2 && 'System maintenance or report generation'}
+                      {index % 3 === 0 && `User "${['john', 'mary', 'alex', 'sarah', 'mike'][index % 5]}@example.com" performed an action`}
+                      {index % 3 === 1 && 'Subscription plan change or payment processed'}
+                      {index % 3 === 2 && 'System maintenance or report generation'}
                     </Typography>
-                    <Typography variant="small" color="gray">{idx + 1} hour{idx !== 0 ? 's' : ''} ago</Typography>
+                    <Typography variant="small" color="gray">{index + 1} hour{index !== 0 ? 's' : ''} ago</Typography>
                   </div>
                 </div>
               ))}
@@ -745,7 +760,7 @@ const ProjectManagement = () => {
     team: []
   });
     
-  const openModal = (type: string, project = null) => {
+  const openModal = (type, project = null) => {
     setModalType(type);
     setCurrentProject(project);
     
@@ -772,7 +787,7 @@ const ProjectManagement = () => {
     setShowModal(true);
   };
     
-  const handleStatusChange = (projectId: number, newStatus: string) => {
+  const handleStatusChange = (projectId, newStatus) => {
     const updatedProjects = projects.map(project => 
       project.id === projectId ? { ...project, status: newStatus } : project
     );
@@ -781,7 +796,7 @@ const ProjectManagement = () => {
     showStatusAlert('Project status updated successfully!');
   };
     
-  const handleFormChange = (field: string, value: string) => {
+  const handleFormChange = (field, value) => {
     setProjectForm({
       ...projectForm,
       [field]: value
@@ -836,13 +851,13 @@ const ProjectManagement = () => {
     }
   };
     
-  const showStatusAlert = (message: string, color = 'green') => {
+  const showStatusAlert = (message, color = 'green') => {
     setShowAlert({ show: true, message, color });
     setTimeout(() => setShowAlert({ ...showAlert, show: false }), 3000);
   };
     
   // Get status color
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status) => {
     switch (status) {
       case 'active':
         return 'green';
@@ -857,7 +872,7 @@ const ProjectManagement = () => {
     }
   };
   // Get priority color
-  const getPriorityColor = (priority: string) => {
+  const getPriorityColor = (priority) => {
     switch (priority) {
       case 'high':
         return 'red';
@@ -871,13 +886,13 @@ const ProjectManagement = () => {
   };
   
   // Format deadline date
-  const formatDeadline = (deadline: string) => {
+  const formatDeadline = (deadline) => {
     const date = new Date(deadline);
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
   };
   
   // Is deadline close or overdue
-  const isDeadlineClose = (deadline: string) => {
+  const isDeadlineClose = (deadline) => {
     const deadlineDate = new Date(deadline);
     const today = new Date();
     const diffTime = deadlineDate.getTime() - today.getTime();
@@ -886,7 +901,7 @@ const ProjectManagement = () => {
     return diffDays <= 7;
   };
   
-  const isDeadlinePassed = (deadline: string) => {
+  const isDeadlinePassed = (deadline) => {
     const deadlineDate = new Date(deadline);
     const today = new Date();
     return deadlineDate < today;
@@ -979,9 +994,9 @@ const ProjectManagement = () => {
                   </Typography>
                   <Progress value={project.progress} color={getStatusColor(project.status)} className="h-1" />
                   <div className="mt-4 flex flex-wrap gap-2">
-                    {project.team.map((member, idx) => (
+                    {project.team.map((member, index) => (
                       <Chip
-                        key={idx}
+                        key={index}
                         value={member}
                         variant="outlined"
                         size="sm"
@@ -1151,9 +1166,9 @@ const ProjectManagement = () => {
                   Team
                 </Typography>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {currentProject.team.map((member, idx) => (
+                  {currentProject.team.map((member, index) => (
                     <Chip
-                      key={idx}
+                      key={index}
                       value={member}
                       className="bg-gray-50"
                     />
@@ -1265,7 +1280,6 @@ const ProjectManagement = () => {
     </div>
   );
 };
-
 // User Dashboard Content Component
 const UserDashboard = () => {
   const navigate = useNavigate();
@@ -1612,8 +1626,8 @@ const UserDashboard = () => {
           </Card>
         </div>
       </Card>
-      {/* Service Modal */}
-      <Dialog
+{/* Service Modal */}
+<Dialog
         open={showServiceModal}
         handler={() => setShowServiceModal(false)}
         size="lg"
@@ -1968,17 +1982,6 @@ const UserDashboard = () => {
     </div>
   );
 };
-
-// Type definition for notification
-interface NotificationType {
-  id: number;
-  title: string;
-  message: string;
-  timestamp: string;
-  read: boolean;
-  type: 'alert' | 'info' | 'success';
-}
-
 // Main Dashboard Component
 export function Dashboard() {
   const { logout } = useContext(AuthContext);
@@ -1987,12 +1990,15 @@ export function Dashboard() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("personal");
+  const [isVisible, setIsVisible] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isAdminView, setIsAdminView] = useState(true); // Default to admin view
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   
   // Sample notifications
-  const [notifications, setNotifications] = useState<NotificationType[]>([
+  const [notifications, setNotifications] = useState([
     {
       id: 1,
       title: "New User Registration",
@@ -2024,8 +2030,9 @@ export function Dashboard() {
 
   // Get current navigation based on view mode
   const navigation = isAdminView ? adminNavigation : userNavigation;
-  
   useEffect(() => {
+    setIsVisible(true);
+    
     // Set current page based on location path
     const pathSegments = location.pathname.split('/');
     const lastSegment = pathSegments[pathSegments.length - 1];
@@ -2061,8 +2068,6 @@ export function Dashboard() {
     message: "",
     color: "green"
   });
-  const [isVisible] = useState(true);
-  
   // Update user role when admin view changes
   useEffect(() => {
     setUserData(prev => ({
@@ -2183,132 +2188,151 @@ export function Dashboard() {
       current: index === array.length - 1,
     }));
     
-  // Updated Sidebar with visible toggle button when collapsed
-  const Sidebar = () => (
-    <div className="relative">
-      {/* Toggle button positioned absolutely to remain visible when sidebar is collapsed */}
-      <div className={`absolute top-6 ${isSidebarCollapsed ? 'right-0 -mr-10' : 'right-4'} z-20`}>
-        <IconButton 
-          variant="text" 
-          color="teal" 
-          onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-          className="shadow-md bg-white"
-        >
-          {isSidebarCollapsed ? <ChevronRightIcon className="h-5 w-5" /> : <ChevronLeftIcon className="h-5 w-5" />}
-        </IconButton>
+// Updated Sidebar with correctly positioned toggle button
+const Sidebar = () => (
+  <div className="relative">
+    {/* Repositioned toggle button to align with content */}
+    <div className="absolute top-6 right-4 z-50">
+        {isSidebarCollapsed ? (
+          <div className="absolute right-[-40px]">
+            <IconButton 
+              variant="text" 
+              color="teal" 
+              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+              className="shadow-md bg-white"
+            >
+              <ChevronRightIcon className="h-5 w-5" />
+            </IconButton>
+          </div>
+        ) : (
+          <IconButton 
+            variant="text" 
+            color="teal" 
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            className="shadow-md bg-white"
+          >
+            <ChevronLeftIcon className="h-5 w-5" />
+          </IconButton>
+        )}
       </div>
+    
+    <Card className={cn(
+      "h-screen p-4 shadow-xl shadow-blue-gray-900/5 relative overflow-hidden transition-all duration-300",
+      isSidebarCollapsed ? "w-20" : "w-full max-w-[20rem]"
+    )}>
+      {/* Decorative elements */}
+      <div className="absolute top-20 right-0 w-32 h-32 bg-teal-50 rounded-full blur-3xl opacity-50 z-0"></div>
+      <div className="absolute bottom-20 left-0 w-32 h-32 bg-blue-50 rounded-full blur-3xl opacity-50 z-0"></div>
       
-      <Card className={cn(
-        "h-screen p-4 shadow-xl shadow-blue-gray-900/5 relative overflow-hidden transition-all duration-300",
-        isSidebarCollapsed ? "w-20" : "w-full max-w-[20rem]"
-      )}>
-        {/* Decorative elements similar to landing page */}
-        <div className="absolute top-20 right-0 w-32 h-32 bg-teal-50 rounded-full blur-3xl opacity-50 z-0"></div>
-        <div className="absolute bottom-20 left-0 w-32 h-32 bg-blue-50 rounded-full blur-3xl opacity-50 z-0"></div>
-        
-        <div className="mb-6 p-4 flex items-center justify-between relative z-10">
-          {/* Logo always visible, positioned at top right when collapsed */}
-          <div className={cn(
-            "flex items-center gap-2 transition-all duration-300",
-            isSidebarCollapsed ? "justify-center" : ""
-          )}>
-            <img src="/logo.png" alt="Theoforge Logo" className="h-12 w-12" />
-            <Typography variant="h5" color="blue-gray" className={cn(
-              "transition-opacity duration-300",
-              isSidebarCollapsed ? "opacity-0 absolute" : "opacity-100"
-            )}>
+      {/* Logo container with fixed dimensions */}
+      <div className="mb-6 p-4 relative z-10">
+        <div className={cn(
+          "flex items-center",
+          isSidebarCollapsed ? "justify-center" : "gap-2"
+        )}>
+          <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center">
+            <img 
+              src="/logo.png" 
+              alt="Theoforge Logo" 
+              className="max-h-full max-w-full object-contain" 
+            />
+          </div>
+          {!isSidebarCollapsed && (
+            <Typography variant="h5" color="blue-gray">
               Theoforge
             </Typography>
+          )}
+        </div>
+      </div>
+      
+      <div className="relative z-10">
+        {/* Role identifier */}
+        {!isSidebarCollapsed && (
+          <div className="mb-4 bg-gradient-to-r from-teal-50 to-blue-50 rounded-lg p-3 border border-teal-100">
+            <div className="flex items-center gap-2">
+              <div className={cn(
+                "h-3 w-3 rounded-full",
+                isAdminView ? "bg-red-500" : "bg-green-500"
+              )}></div>
+              <Typography variant="small" className="font-medium text-blue-gray-700">
+                {isAdminView ? "Admin View" : "User View"}
+              </Typography>
+            </div>
           </div>
-        </div>
+        )}
         
-        <div className="relative z-10">
-          {/* Role identifier */}
-          {!isSidebarCollapsed && (
-            <div className="mb-4 bg-gradient-to-r from-teal-50 to-blue-50 rounded-lg p-3 border border-teal-100">
-              <div className="flex items-center gap-2">
-                <div className={cn(
-                  "h-3 w-3 rounded-full",
-                  isAdminView ? "bg-red-500" : "bg-green-500"
-                )}></div>
-                <Typography variant="small" className="font-medium text-blue-gray-700">
-                  {isAdminView ? "Admin View" : "User View"}
-                </Typography>
-              </div>
-            </div>
-          )}
-          
-          <List>
-            {navigation.map((item) => {
-              const isActive = location.pathname === item.href || 
-                              (item.href === '/dashboard' && location.pathname === '/dashboard') || 
-                              (location.pathname.includes(item.href) && item.href !== '/dashboard');
-              return (
-                <ListItem
-                  key={item.name}
-                  className={cn(
-                    "mb-2 hover:bg-teal-50/80 transition-all duration-200",
-                    isActive && "bg-teal-50/80 text-teal-500 font-medium"
-                  )}
-                  onClick={() => handleNavigation(item.href)}
-                >
-                  <ListItemPrefix>
-                    <item.icon className={cn(
-                      "h-5 w-5",
-                      isActive ? "text-teal-500" : "text-blue-gray-500"
-                    )} />
-                  </ListItemPrefix>
-                  {!isSidebarCollapsed && (
-                    <div>
-                      <Typography variant="small" className={isActive ? "font-medium" : ""}>
-                        {item.name}
-                      </Typography>
-                      {!isActive && (
-                        <Typography variant="small" className="text-xs text-gray-500">
-                          {item.description}
-                        </Typography>
-                      )}
-                    </div>
-                  )}
-                </ListItem>
-              );
-            })}
-          </List>
-          
-          {!isSidebarCollapsed && (
-            <div className="mt-auto pt-8">
-              <Card className="mt-6 bg-gradient-to-br from-teal-500 to-teal-700 text-white p-4 rounded-xl">
-                <Typography variant="h6" className="mb-2">Need Help?</Typography>
-                <Typography variant="small" className="mb-4 opacity-80">
-                  Contact our support team for assistance with any issues.
-                </Typography>
-                <Button 
-                  size="sm" 
-                  className="bg-white text-teal-800 flex items-center gap-2 shadow-md hover:shadow-lg"
-                  fullWidth
-                  onClick={() => setIsSupportModalOpen(true)}
-                >
-                  <ChatBubbleLeftRightIcon className="h-4 w-4" />
-                  Contact Support
-                </Button>
-              </Card>
-              
-              <Button 
-                size="sm"
-                color="red"
-                variant="text"
-                className="flex items-center gap-2 mt-4 w-full justify-center"
-                onClick={handleLogout} 
+        {/* Navigation List with item alignment fix */}
+        <List>
+          {navigation.map((item) => {
+            const isActive = location.pathname === item.href || 
+                            (item.href === '/dashboard' && location.pathname === '/dashboard') || 
+                            (location.pathname.includes(item.href) && item.href !== '/dashboard');
+            return (
+              <ListItem
+                key={item.name}
+                className={cn(
+                  "mb-2 hover:bg-teal-50/80 transition-all duration-200",
+                  isActive && "bg-teal-50/80 text-teal-500 font-medium"
+                )}
+                onClick={() => handleNavigation(item.href)}
               >
-                <ArrowRightOnRectangleIcon className="h-4 w-4" />
-                Sign Out
+                <ListItemPrefix>
+                  <item.icon className={cn(
+                    "h-5 w-5",
+                    isActive ? "text-teal-500" : "text-blue-gray-500"
+                  )} />
+                </ListItemPrefix>
+                {!isSidebarCollapsed && (
+                  <div className="flex-grow">
+                    <Typography variant="small" className={isActive ? "font-medium" : ""}>
+                      {item.name}
+                    </Typography>
+                    {!isActive && (
+                      <Typography variant="small" className="text-xs text-gray-500">
+                        {item.description}
+                      </Typography>
+                    )}
+                  </div>
+                )}
+              </ListItem>
+            );
+          })}
+        </List>
+        
+        {!isSidebarCollapsed && (
+          <div className="mt-auto pt-8">
+            <Card className="mt-6 bg-gradient-to-br from-teal-500 to-teal-700 text-white p-4 rounded-xl">
+              <Typography variant="h6" className="mb-2">Need Help?</Typography>
+              <Typography variant="small" className="mb-4 opacity-80">
+                Contact our support team for assistance with any issues.
+              </Typography>
+              <Button 
+                size="sm" 
+                className="bg-white text-teal-800 flex items-center gap-2 shadow-md hover:shadow-lg"
+                fullWidth
+                onClick={() => setIsSupportModalOpen(true)}
+              >
+                <ChatBubbleLeftRightIcon className="h-4 w-4" />
+                Contact Support
               </Button>
-            </div>
-          )}
-        </div>
-      </Card>
-    </div>
-  );
+            </Card>
+            
+            <Button 
+              size="sm"
+              color="red"
+              variant="text"
+              className="flex items-center gap-2 mt-4 w-full justify-center"
+              onClick={handleLogout} 
+            >
+              <ArrowRightOnRectangleIcon className="h-4 w-4" />
+              Sign Out
+            </Button>
+          </div>
+        )}
+      </div>
+    </Card>
+  </div>
+);
     
   return (
     <div className="min-h-screen bg-gray-50/50">
@@ -2491,6 +2515,7 @@ export function Dashboard() {
                 </MenuItem>
                 <MenuItem 
                   className="flex items-center gap-2 rounded hover:bg-teal-50/80"
+                  onClick={() => setIsSettingsOpen(true)}
                 >
                   <Cog6ToothIcon className="h-4 w-4 text-teal-500" />
                   <Typography variant="small" className="font-normal">
@@ -2537,7 +2562,7 @@ export function Dashboard() {
 
         <div className="flex-1 p-4 lg:p-6 max-w-full">
           <Breadcrumbs className="bg-white rounded-lg p-3 mb-4 border border-gray-100">
-            {breadcrumbs.map((breadcrumb) => (
+            {breadcrumbs.map((breadcrumb, index) => (
               <Link
                 key={breadcrumb.href}
                 href={breadcrumb.href}
