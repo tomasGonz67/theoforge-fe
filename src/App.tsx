@@ -29,123 +29,137 @@ import {
 } from "@material-tailwind/react";
 import axios from 'axios';
 
-const BASE_URL = 'https://dev.theoforge.com/API';
+const API_URL = window.location.origin.includes("localhost") ? "http://localhost:8000" : "https://dev.theoforge.com/API"
 
 type Role = 'USER' | 'ADMIN';
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const AuthContext = React.createContext<{
   isAuthenticated: boolean;
+  accessToken: string | null;
   role: Role;
-  login: (email: string, password: string) => Promise<boolean>;
-  register: (email: string, firstName: string, lastName: string, nickname: string, password: string) => Promise<number>;
+  login: (email: string, password: string) => Promise<number>;
+  register: (email: string, passsword: string, firstName?: string, lastName?: string, nickname?: string) => Promise<number>;
   logout: () => void;
+  accessTokenLogin: (accessToken: string) => Promise<boolean>;
 }>({
   isAuthenticated: false,
+  accessToken: null,
   role: 'USER',
-  login: async () => false,
+  login: async () => -1,
   register: async () => -1,
   logout: () => {},
+  accessTokenLogin: async () => false
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
   const [role, setRole] = useState('USER' as Role);
 
-  // Check if user is already authenticated on load
-  useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      // Set authorization header for all future requests
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      setIsAuthenticated(true);
-      
-      // Try to get user info to set role
-      // This is a placeholder - you might need to adjust based on your API
-      axios.get(`${BASE_URL}/auth/me`)
-        .then(res => {
-          if (res.data.role) {
-            setRole(res.data.role);
-          }
-        })
-        .catch(() => {
-          // If token is invalid, clear it
-          localStorage.removeItem('accessToken');
-          setIsAuthenticated(false);
-        });
-    }
-  }, []);
-
   const login = async (email: string, password: string) => {
-    // Test account for development
+    // Remove once backend API is released
+    let response = -1;
     if (email === 'test@test.com' && password === 'test123') {
       setRole("ADMIN");
       setIsAuthenticated(true);
-      return true;
+      return 200;
     }
-    
-    try {
-      // Send login as form-data to the API
-      const formData = new URLSearchParams();
-      formData.append('username', email);
-      formData.append('password', password);
-      
-      const response = await axios.post(`${BASE_URL}/auth/login`, formData, {
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-      });
-      
-      const token = response.data.access_token;
-      
-      // Store token and set auth header
-      localStorage.setItem('accessToken', token);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      
-      // Decode JWT to get role
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      setRole(payload.role || 'USER');
-      setIsAuthenticated(true);
-      
-      return true;
-    } catch (error) {
-      console.error('Login error:', error);
-      return false;
-    }
+    const params = new URLSearchParams();
+    params.append('username', email);
+    params.append('password', password);
+    await axios.post(`${API_URL}/auth/login`, params).then(res => {
+      try {
+        // Decode jwt token into json
+        const json = JSON.parse(decodeURIComponent(window.atob(res.data.access_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')).split('').map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join('')));
+        // Set cookie for 15 minutes(same time access token lasts)
+        const d = new Date();
+        d.setTime(d.getTime() + (15*60*1000));
+        document.cookie = "accessToken=" + res.data.access_token + ";" + "expires="+ d.toUTCString() + ";path=/";
+        // Authenticate 
+        setAccessToken(res.data.access_token);
+        setRole(json.role);
+        setIsAuthenticated(true);
+        response = 200;
+      } catch {
+        response = 1;
+      }
+    }).catch (err => {
+      console.log(err);
+      if (err.response && err.response.data && err.response.data.detail) {
+        if(err.response.data.detail.includes('Invalid username/password')) {
+          response = 500;
+        } else {
+          response = -1;
+        }
+      } else {
+        response = 0;
+      }
+    });
+    return response;
   };
 
-  const register = async (email: string, firstName: string, lastName: string, nickname: string, password: string) => {
-    try {
-      const response = await axios.post(`${BASE_URL}/auth/register`, {
-        email,
-        first_name: firstName,
-        last_name: lastName,
-        nickname,
-        password
-      });
-      
-      return response.status;
-    } catch (error: any) {
-      if (error.response) {
-        if (error.response.data?.detail === '400: Email already exists') {
-          return 400;
-        } else if (error.response.data?.detail === 'Not Found') {
-          return 404;
-        } else if (/Key \(nickname\)=\([a-zA-Z0-9]+\) already exists/.test(error.response.data?.detail)) {
-          return 500;
-        }
-      }
-      return -1;
+  const register = async (email: string, password: string, firstName?: string, lastName?: string, nickname?: string) => {
+    let response = -1;
+    const params: {email: string, password: string, first_name?: string, last_name?: string, nickname?: string} = {
+      "email": email,
+      "password": password
     }
+    if (firstName) params["first_name"] = firstName;
+    if (lastName) params["last_name"] = lastName;
+    if (nickname) params["nickname"] = nickname
+    await axios.post(`${API_URL}/auth/register`, params).then(() => {
+      response = 200;
+    }).catch(err => {
+      if (err.response && err.response.data && err.response.data.detail) {
+        if (/User with email [\w-.]{1,64}@([\w-]{1,63}\.)+[\w-]{2,63} already exists/.test(err.response.data.detail)) {
+          response = 400;
+        } else if (err.response.data.detail === 'Not Found') {
+          response = 404;
+        } else if (/Key \(nickname\)=\([a-zA-Z0-9]+\) already exists/.test(err.response.data.detail)) {
+          response = 500;
+        } else {
+          response = -1;
+        }
+      } else {
+        response = 0;
+      }
+    });
+    return response;
   };
 
   const logout = () => {
-    localStorage.removeItem('accessToken');
-    delete axios.defaults.headers.common['Authorization'];
+    document.cookie = "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     setIsAuthenticated(false);
     setRole('USER');
   };
 
+  const accessTokenLogin = async (token: string) => {
+    let success = false;
+    await axios.get(`${API_URL}/auth/auth`, {
+      headers: {'Authorization': `Bearer ${token}`},
+    }).then(res => {
+      try {
+        if (res.status === 200 && res.data.username.role) {
+          setAccessToken(token);
+          setRole(res.data.username.role);
+          setIsAuthenticated(true);
+          success = true;
+        };
+      } catch {
+        setAccessToken(null);
+        setRole("USER");
+        setIsAuthenticated(false);
+        success = false;
+      }
+    }).catch(() => {success = false});
+    return success;
+  }
+  
   return (
-    <AuthContext.Provider value={{ isAuthenticated, role, login, register, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, accessToken, role, login, register, logout, accessTokenLogin }}>
       {children}
     </AuthContext.Provider>
   );

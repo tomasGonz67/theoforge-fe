@@ -1,15 +1,12 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, EnvelopeIcon, LockClosedIcon, SparklesIcon, UserIcon, IdentificationIcon } from '@heroicons/react/24/outline';
-import axios from 'axios';
 import { AuthContext } from '../App';
 import { Typography, Alert, Button } from "@material-tailwind/react";
 
 interface AuthFormProps {
   type: 'login' | 'register';
 }
-
-const BASE_URL = 'https://dev.theoforge.com/API';
 
 export function AuthForm({ type }: AuthFormProps) {
   const [email, setEmail] = useState('');
@@ -19,45 +16,92 @@ export function AuthForm({ type }: AuthFormProps) {
   const [lastName, setLastName] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  const { login, isAuthenticated } = useContext(AuthContext);
+  const { login, isAuthenticated, register, accessTokenLogin } = useContext(AuthContext);
 
   useEffect(() => {
     if (isAuthenticated) navigate('/dashboard');
   }, [isAuthenticated, navigate]);
 
+  useEffect(() => {
+    // If the user's cookie contains a valid access token, redirect to dashboard
+    const authenticate = async (accessToken: string) => {
+      if(await accessTokenLogin(accessToken)) navigate('/dashboard');
+    }
+    // Get the access token from the cookie
+    const field = "accessToken=";
+    let token = "";
+    const pairs = decodeURIComponent(document.cookie).split(';');
+    for(let i = 0; i <pairs.length; i++) {
+      let c = pairs[i];
+      // Remove leading whitespace
+      while (c.charAt(0) == ' ') {
+        c = c.substring(1);
+      }
+      if (c.indexOf(field) == 0) {
+        token = c.substring(field.length, c.length);
+      }
+    }
+    if (token.length > 0) authenticate(token);
+  }, [accessTokenLogin, navigate]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    if(!email || !password) {
+      setError('Please fill out all fields');
+      return;
+    }
+    let errorMessage = '';
+    if(!/^[\w-.]{1,64}@([\w-]{1,63}\.)+[\w-]{2,63}$/.test(email)) errorMessage = 'Invalid email';
+    else if(type === 'register' && !/^[a-zA-Z0-9]*$/.test(nickname)) errorMessage = 'Nickname may not include special characters';
+    else if(password.length < 8) errorMessage = 'Password must be at least 8 characters';
+    else if(!/[A-Z]/.test(password)) errorMessage = 'Password must contain at least 1 uppercase character';
+    else if(!/[`!@#$%^&*()_+\-=[\]{};':|,.<>/?~]/.test(password)) errorMessage = 'Password must contain at least 1 special character';
+    else if (firstName.length > 100) errorMessage = 'First name must not be more than 100 characters';
+    else if (lastName.length > 100) errorMessage = 'Last name must not be more than 100 characters';
+    else if (nickname.length > 50) errorMessage = 'Nickname must not be more than 50 characters';
+    // Prevent sql injection by invalidating " and \
+    else if (/["\\]/.test(email.concat(firstName, lastName, nickname, password))) errorMessage = 'Invalid character " or \\ used';
+    if (errorMessage !== ''){
+      setError(errorMessage);
+      return;
+    }
 
-    try {
-      if (type === 'login') {
-        // Send login as form-data to the correct production URL
-        const formData = new URLSearchParams();
-        formData.append('username', email);
-        formData.append('password', password);
-
-        const response = await axios.post(`${BASE_URL}/auth/login`, formData, {
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        });
-
-        localStorage.setItem('accessToken', response.data.access_token);
-        login(email, password);  // Update auth state
+    if (type === 'login') {
+      const response = await login(email, password);
+      if ( response === 200) {
         navigate('/dashboard');
+      } else if (response === 500) {
+        setError('Invalid credentials');
+      } else if (response === 1) {
+        setError('Failed to authenticate');
+      } else if (response === 0) {
+        setError('Failed to contact server. Please try again later.');
       } else {
-        // Register with full user data
-        await axios.post(`${BASE_URL}/auth/register`, {
-          email,
-          password,
-          nickname,
-          first_name: firstName,
-          last_name: lastName,
-        });
-
-        navigate('/login');  // Redirect to login after success
+        setError('An unknown error encountered. Please try again later.');
       }
-    } catch (err: any) {
-      console.error(err);
-      setError(err.response?.data?.detail || 'Something went wrong');
+    } else {
+      const response = await register(email, password,
+        firstName.length > 0 ? firstName : undefined,
+        lastName.length > 0 ? lastName : undefined,
+        nickname.length > 0 ? nickname : undefined);
+      if (response === 200) {
+        const loginResponse = await login(email, password);
+        if ( loginResponse === 200) {
+          navigate('/dashboard');
+        } else {
+          setError('Failed to automatically login');
+        }
+      } else if (response === 400) {
+        setError('Email already taken');
+      } else if (response === 404) {
+        setError('The server has encountered an error. Please try again later.');//Invalid API endpoint
+      } else if (response === 500) {
+        setError('Nickname already taken');
+      } else if (response === 0) {
+        setError('Failed to contact server. Please try again later.');
+      } else {
+        setError('An unknown error encountered. Please try again later.');
+      }
     }
   };
 
@@ -188,7 +232,7 @@ export function AuthForm({ type }: AuthFormProps) {
                 className="mt-6 py-3 font-medium tracking-wide shadow-md hover:shadow-lg transition-all duration-300"
                 fullWidth
               >
-                {type === 'login' ? 'Sign In' : 'Create Account'}
+                {type === 'login' ? 'Login' : 'Register'}
               </Button>
             </form>
 
@@ -203,8 +247,8 @@ export function AuthForm({ type }: AuthFormProps) {
                 <Button
                   variant="outlined"
                   color="teal"
-                  onClick={() => {
-                    const success = login('test@test.com', 'test123');
+                  onClick={async () => {
+                    const success = await login('test@test.com', 'test123');
                     if (success) navigate('/dashboard');
                   }}
                   fullWidth

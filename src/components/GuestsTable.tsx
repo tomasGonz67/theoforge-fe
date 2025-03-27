@@ -16,9 +16,7 @@ import {
   DialogFooter,
   Alert,
 } from "@material-tailwind/react";
-
-let API_URL = window.location.origin;
-API_URL = API_URL.replace(/800./, "8000") // Map port 800x to 8000 for localhost testing
+import { API_URL } from '../utils/axiosConfig'
 
 interface Interaction {
   event: string,
@@ -78,8 +76,8 @@ export function GuestsTable() {
         throw Error //Ensure an array of guests is returned
       } else setShowError(false);
       setGuests(res.data);
-    } catch (error) {
-      console.error('Error fetching guests:', error);
+    } catch {
+      setShowError(true);
     }
     setLoading(false);
   };

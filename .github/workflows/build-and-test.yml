@@ -23,5 +23,3 @@ jobs:
           node-version: '18'
       - name: Build and test frontend components
         run: npm ci && npm run build && npm run lint && npm test
-
-

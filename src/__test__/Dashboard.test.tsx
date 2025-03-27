@@ -12,13 +12,13 @@ jest.mock('react-router-dom', () => ({
 }));
 
 function renderAdminDashboard() {
-    render(<AuthContext.Provider value={{isAuthenticated: false, accessToken: null, role: 'ADMIN', login: jest.fn(), register: jest.fn(), logout: jest.fn()}}>
+    render(<AuthContext.Provider value={{isAuthenticated: false, accessToken: null, role: 'ADMIN', login: jest.fn(), register: jest.fn(), logout: jest.fn(), accessTokenLogin: jest.fn()}}>
     <Router future={{v7_relativeSplatPath: true, v7_startTransition: true}}><Dashboard></Dashboard></Router>
 </AuthContext.Provider>);
 }
 
 function renderUserDashboard() {
-    render(<AuthContext.Provider value={{isAuthenticated: false, accessToken: null, role: 'USER', login: jest.fn(), register: jest.fn(), logout: jest.fn()}}>
+    render(<AuthContext.Provider value={{isAuthenticated: false, accessToken: null, role: 'USER', login: jest.fn(), register: jest.fn(), logout: jest.fn(), accessTokenLogin: jest.fn()}}>
         <Router future={{v7_relativeSplatPath: true, v7_startTransition: true}}><Dashboard></Dashboard></Router>
     </AuthContext.Provider>);
 }
