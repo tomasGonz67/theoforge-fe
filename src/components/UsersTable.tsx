@@ -231,7 +231,7 @@ export function UsersTable() {
   const TABLE_HEAD = ["Nick Name", "Email", "Role", "Status", "Last Login", "Actions"];
 
   return (
-   /* <Card className="border border-gray-100 overflow-hidden">
+    <Card className="border border-gray-100 overflow-hidden">
       <div className="px-6 py-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
         <div>
           <Typography variant="h5" color="blue-gray">
@@ -247,10 +247,10 @@ export function UsersTable() {
           className="flex items-center gap-1"
           onClick={() => handleCreate()}
         >
-          <HomeIcon className="h-4 w-4" /> Add User
+          <PencilIcon className="h-4 w-4" /> Add User
         </Button>
-      </div>
-    */
+      </div> 
+    
 
     <Card className="h-full w-full">
       <CardHeader floated={false} shadow={false} className="rounded-none">
@@ -459,7 +459,7 @@ export function UsersTable() {
       </Dialog>
 
       {/* Create Modal */}
-      {/*<Dialog
+      <Dialog
         size="md"
         open={isCreateModalOpen}
         handler={() => setIsCreateModalOpen(false)}
@@ -519,7 +519,7 @@ export function UsersTable() {
                 label="Additional Notes"
                 value={createFormData.additional_notes ? createFormData.additional_notes : undefined}
                 onChange={(e) => setCreateFormData({ ...createFormData, additional_notes: e.target.value })}
-              /> 
+              /> */}
               <div>
                 <Typography variant="small" color="blue-gray" className="mb-2">
                   Subscription Plan
@@ -547,12 +547,13 @@ export function UsersTable() {
           </Button>
         </DialogFooter>
 
-      </Dialog> */}
+      </Dialog> 
 
 
 
-     </Card>
+      </Card>
     
+     </Card>
 
 
 
