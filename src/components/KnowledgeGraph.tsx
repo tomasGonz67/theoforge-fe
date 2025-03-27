@@ -1,12 +1,22 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect } from 'react';
 
-// Graph node typesand their colors
-const NODE_TYPES = {
-  CONCEPT: { label: 'Concept', color: 'teal' },
-  ENTITY: { label: 'Entity', color: 'blue' },
-  PERSON: { label: 'Person', color: 'purple' },
-  DOCUMENT: { label: 'Document', color: 'amber' },
-  PROCESS: { label: 'Process', color: 'green' }
+interface PositionedNode {
+  x: number;
+  y: number;
+  id: number;
+  label: string;
+  type: string;
+  desc: string;
+}
+
+// Graph node types and their colors
+const NODE_TYPES: {[label: string] : {label: string, color: string}} = {
+  "CONCEPT": { label: 'Concept', color: 'teal' },
+  "ENTITY": { label: 'Entity', color: 'blue' },
+  "PERSON": { label: 'Person', color: 'purple' },
+  "DOCUMENT": { label: 'Document', color: 'amber' },
+  "PROCESS": { label: 'Process', color: 'green' }
 };
 
 // Sample knowledge graph data
@@ -40,14 +50,15 @@ const sampleGraphData = {
 };
 
 const KnowledgeGraph = () => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [graphData, setGraphData] = useState(sampleGraphData);
   const [searchText, setSearchText] = useState('');
-  const [selectedNode, setSelectedNode] = useState(null);
+  const [selectedNode, setSelectedNode] = useState<PositionedNode | null>(null);
   const [zoom, setZoom] = useState(100);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showNodeInfo, setShowNodeInfo] = useState(false);
-  const [filteredNodes, setFilteredNodes] = useState([]);
-  const [activeFilter, setActiveFilter] = useState(null);
+  const [filteredNodes, setFilteredNodes] = useState<PositionedNode[]>([]);
+  const [activeFilter, setActiveFilter] = useState<string | null>(null);
 
   // Calculate positions for nodes (simple circular layout)
   const calculateNodePositions = () => {
@@ -95,7 +106,7 @@ const KnowledgeGraph = () => {
     setFilteredNodes(positionedNodes);
   }, []);
 
-  const handleNodeClick = (node) => {
+  const handleNodeClick = (node: PositionedNode) => {
     setSelectedNode(node);
     setShowNodeInfo(true);
   };
@@ -120,7 +131,7 @@ const KnowledgeGraph = () => {
     setIsFullscreen(!isFullscreen);
   };
 
-  const handleFilterByType = (type) => {
+  const handleFilterByType = (type: string) => {
     if (activeFilter === type) {
       setActiveFilter(null);
     } else {
@@ -129,8 +140,8 @@ const KnowledgeGraph = () => {
   };
 
   // Get color for nodes based on type
-  const getNodeColors = (type) => {
-    const colorMap = {
+  const getNodeColors = (type: string) => {
+    const colorMap: {[color: string] : {bg: string, border: string, text: string}} = {
       'teal': { bg: 'bg-teal-100', border: 'border-teal-500', text: 'text-teal-600' },
       'blue': { bg: 'bg-blue-100', border: 'border-blue-500', text: 'text-blue-600' },
       'purple': { bg: 'bg-purple-100', border: 'border-purple-500', text: 'text-purple-600' },

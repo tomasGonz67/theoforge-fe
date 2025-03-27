@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // services/aiServices.ts
 import { getGuestId } from '../lib/guestIdentifier';
 

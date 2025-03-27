@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect, useRef, KeyboardEvent } from 'react';
 import {
   PaperAirplaneIcon,
@@ -11,9 +12,9 @@ import {
   StopIcon,
   TrashIcon,
   UserCircleIcon,
-  InformationCircleIcon,
   LockClosedIcon,
-  ChevronDoubleRightIcon
+  ChevronDoubleRightIcon,
+  LightBulbIcon
 } from '@heroicons/react/24/outline';
 import {
   Card,
@@ -25,17 +26,12 @@ import {
   Button,
   Tooltip,
   Spinner,
-  Avatar,
   Chip,
-  Badge,
-  Menu,
-  MenuHandler,
-  MenuList,
-  MenuItem
+  Badge
 } from "@material-tailwind/react";
 import { getGuestId, getStorageKeyForGuest } from '../lib/guestIdentifier';
 
-// Enhancedguest identification
+// Enhanced guest identification
 interface GuestInfo {
   id: string;
   name?: string;
@@ -57,15 +53,13 @@ interface Message {
   questionId?: string;
 }
 
+type Theme = 'light' | 'dark';
+
 interface ChatBoxProps {
   isOpen: boolean;
   onClose: () => void;
   initialPrompt?: string;
-  theme?: 'light' | 'dark';
   onGuestIdentified?: (guestInfo: GuestInfo) => void;
-  companyName?: string;
-  logoUrl?: string;
-  accentColor?: string;
 }
 
 // Constants
@@ -80,15 +74,43 @@ const GUEST_QUESTIONS = [
   { id: 'email', question: "Would you like to receive a detailed resource about how Theoforge can help with your challenges? If so, I'd be happy to have someone send it to your email." }
 ];
 
+// Generate a unique ID for messages
+function generateId(): string {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return `id-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+}
+
+// Initial welcome message
+const INITIAL_MESSAGES: Message[] = [
+  {
+    id: generateId(),
+    role: 'system',
+    content: SYSTEM_PROMPT,
+    timestamp: new Date().toISOString()
+  },
+  {
+    id: generateId(),
+    role: 'assistant',
+    content: `Hello! I'm your AI assistant from Theoforge. How can I help you with your data and AI needs today?`,
+    timestamp: new Date().toISOString()
+  }
+];
+
+const INITIAL_GUEST_INFO: GuestInfo = {
+  id: getGuestId(),
+  firstVisit: new Date().toISOString(),
+  lastVisit: new Date().toISOString(),
+  sessionCount: 0,
+  questionsAnswered: []
+}
+
 export function ChatBox({ 
   isOpen, 
   onClose, 
   initialPrompt, 
-  theme = 'light', 
   onGuestIdentified,
-  companyName = "Theoforge",
-  logoUrl = "/logo.png",
-  accentColor = "teal"
 }: ChatBoxProps) {
   // Guest identification
   const guestId = useRef<string>(getGuestId());
@@ -96,40 +118,10 @@ export function ChatBox({
   const GUEST_INFO_KEY = useRef<string>(getStorageKeyForGuest('theoforge_guest_info', guestId.current));
   
   // Guest info state
-  const [guestInfo, setGuestInfo] = useState<GuestInfo>({
-    id: guestId.current,
-    firstVisit: new Date().toISOString(),
-    lastVisit: new Date().toISOString(),
-    sessionCount: 1,
-    questionsAnswered: []
-  });
+  const [guestInfo, setGuestInfo] = useState<GuestInfo>(INITIAL_GUEST_INFO);
   
   // Current question being asked
   const [currentQuestion, setCurrentQuestion] = useState<string | null>(null);
-  
-  // Initial welcome message
-  const INITIAL_MESSAGES: Message[] = [
-    {
-      id: generateId(),
-      role: 'system',
-      content: SYSTEM_PROMPT,
-      timestamp: new Date().toISOString()
-    },
-    {
-      id: generateId(),
-      role: 'assistant',
-      content: `Hello! I'm your AI assistant from ${companyName}. How can I help you with your data and AI needs today?`,
-      timestamp: new Date().toISOString()
-    }
-  ];
-
-  // Generate a unique ID for messages
-  function generateId(): string {
-    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-      return crypto.randomUUID();
-    }
-    return `id-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-  }
 
   // Chat state management
   const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
@@ -142,6 +134,8 @@ export function ChatBox({
   const [fullMessageContent, setFullMessageContent] = useState<string>('');
   const [isAwaitingAnswer, setIsAwaitingAnswer] = useState(false);
   const [showIntroduction, setShowIntroduction] = useState(true);
+  const [isStorageLoaded, setIsStorageLoaded] = useState(false);
+  const [theme, setTheme] = useState<Theme>('light');
 
   // Voice recording state
   const [isRecording, setIsRecording] = useState(false);
@@ -161,6 +155,7 @@ export function ChatBox({
   const inputRef = useRef<HTMLInputElement>(null);
   
   // Typing effect interval
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const typingIntervalRef = useRef<any>(null);
 
   // Auto-scroll to the latest message
@@ -206,6 +201,8 @@ export function ChatBox({
         } catch (error) {
           console.error("Failed to parse chat history:", error);
         }
+      } else {
+        localStorage.setItem(CHAT_STORAGE_KEY.current, JSON.stringify(messages));
       }
       
       // Load guest info
@@ -230,7 +227,10 @@ export function ChatBox({
         } catch (error) {
           console.error("Failed to parse guest info:", error);
         }
+      } else {
+        localStorage.setItem(GUEST_INFO_KEY.current, JSON.stringify(guestInfo));
       }
+      setIsStorageLoaded(true);
     } catch (e) {
       console.warn("Could not access localStorage:", e);
     }
@@ -238,7 +238,7 @@ export function ChatBox({
 
   // Persist chat history on every update
   useEffect(() => {
-    if (messages.length > 0) {
+    if (isStorageLoaded) {
       try {
         localStorage.setItem(CHAT_STORAGE_KEY.current, JSON.stringify(messages));
       } catch (e) {
@@ -249,7 +249,7 @@ export function ChatBox({
   
   // Persist guest info on every update
   useEffect(() => {
-    if (guestInfo) {
+    if (isStorageLoaded) {
       try {
         localStorage.setItem(GUEST_INFO_KEY.current, JSON.stringify(guestInfo));
         
@@ -261,7 +261,7 @@ export function ChatBox({
         console.warn("Could not save guest info:", e);
       }
     }
-  }, [guestInfo]);
+  }, [guestInfo, onGuestIdentified]);
 
   // Initial prompt handling
   useEffect(() => {
@@ -272,19 +272,35 @@ export function ChatBox({
   
   // Decision maker for when to ask questions
   useEffect(() => {
-    if (messages.length > 3 && !isThinking && !isAwaitingAnswer) {
-      const shouldAskQuestion = Math.random() > 0.5; // 50% chance to ask a question
-      
-      if (shouldAskQuestion && !currentQuestion) {
-        const nextQuestion = getNextQuestionToAsk();
-        if (nextQuestion) {
-          setTimeout(() => {
-            askGuestQuestion(nextQuestion);
-          }, 1000);
+    console.log("message change", messages.length > 3, !isAwaitingAnswer, !currentQuestion, isThinking);
+    if ((messages.length > 3 && !isAwaitingAnswer && !currentQuestion/* && Math.random() > 0*/) ||
+      GUEST_QUESTIONS.find(question => question.question === messages[messages.length-1].content)
+    ) {
+      const nextQuestion = getNextQuestionToAsk();
+      if (nextQuestion) {
+        // Ask a specific question to the guest
+        setIsAwaitingAnswer(true);
+        setCurrentQuestion(nextQuestion.id);
+        // Do not re-ask questions
+        if(messages[messages.length-1].content !== nextQuestion.question) {
+          const questionMessage: Message = {
+            id: generateId(),
+            role: 'assistant',
+            content: nextQuestion.question,
+            timestamp: new Date().toISOString(),
+            isQuestion: true,
+            questionId: nextQuestion.id
+          };
+          
+          // Use typing effect for the question
+          setFullMessageContent(nextQuestion.question);
+          setCurrentTypingMessage('');
+          setTypingEffect(true);
+          setMessages(prev => [...prev, questionMessage]);
         }
       }
     }
-  }, [messages, isThinking]);
+  }, [messages]);
   
   // Typing effect for AI messages
   useEffect(() => {
@@ -300,11 +316,6 @@ export function ChatBox({
         } else {
           clearInterval(typingIntervalRef.current);
           setTypingEffect(false);
-          
-          // If this was a question, set awaiting answer flag
-          if (currentQuestion) {
-            setIsAwaitingAnswer(true);
-          }
         }
       }, 15); // Speed of typing
       
@@ -323,27 +334,6 @@ export function ChatBox({
     }
     
     return null; // All questions have been asked
-  };
-  
-  // Ask a specific question to the guest
-  const askGuestQuestion = (question: { id: string, question: string }) => {
-    setCurrentQuestion(question.id);
-    
-    const questionMessage: Message = {
-      id: generateId(),
-      role: 'assistant',
-      content: question.question,
-      timestamp: new Date().toISOString(),
-      isQuestion: true,
-      questionId: question.id
-    };
-    
-    // Use typing effect for the question
-    setFullMessageContent(question.question);
-    setCurrentTypingMessage('');
-    setTypingEffect(true);
-    
-    setMessages(prev => [...prev, questionMessage]);
   };
   
   // Process the answer to a question
@@ -389,7 +379,7 @@ export function ChatBox({
         response = `Thanks for letting me know you're with ${answer}. That helps me provide more relevant information for your industry.`;
         break;
       case 'interests':
-        response = `I appreciate you sharing your data and AI challenges. ${companyName} has expertise in those areas and can definitely help address them.`;
+        response = `I appreciate you sharing your data and AI challenges. Theoforge has expertise in those areas and can definitely help address them.`;
         break;
       case 'email':
         if (answer.includes('@') && answer.includes('.')) {
@@ -453,7 +443,7 @@ export function ChatBox({
     try {
       // If this was in response to a question, process the answer
       if (currentQuestion) {
-        const userMessage = context.find(m => m.role === 'user');
+        const userMessage = context[context.length-1];
         if (userMessage) {
           const questionResponse = processQuestionAnswer(currentQuestion, userMessage.content);
           return questionResponse;
@@ -480,8 +470,8 @@ export function ChatBox({
       }
       
       // Use environment variable for API key
-      const apiKey = import.meta.env.VITE_OPENAI_API_KEY || '';
-      
+      const apiKey = process.env.VITE_OPENAI_API_KEY || '';
+      console.log("API: ", apiKey);
       const response = await fetch(AI_ENDPOINT, {
         method: "POST",
         headers: {
@@ -503,6 +493,7 @@ export function ChatBox({
       
       const data = await response.json();
       return data.choices[0].message.content;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error("Error generating AI response:", error);
       setError(error.message || "Failed to get response from AI service");
@@ -627,7 +618,8 @@ export function ChatBox({
   };
 
   // Voice-to-text processing (simulated)
-  const processAudioToText = async (audioBlob: Blob) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const processAudioToText = async (_audioBlob: Blob) => {
     setIsTranscribing(true);
     try {
       // Simulate a delay to mimic API call
@@ -649,13 +641,13 @@ export function ChatBox({
             setInput("john.smith@acmecorp.com");
             break;
           default:
-            setInput(`Can you tell me more about ${companyName}'s Knowledge Graph solutions?`);
+            setInput(`Can you tell me more about Theoforge's Knowledge Graph solutions?`);
         }
       } else {
         // Default speech transcription
-        setInput(`Can you tell me more about ${companyName}'s Knowledge Graph solutions?`);
+        setInput(`Can you tell me more about Theoforge's Knowledge Graph solutions?`);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error transcribing audio:", error);
       setError("Failed to transcribe your voice message.");
     } finally {
@@ -677,7 +669,7 @@ export function ChatBox({
       <div className="fixed bottom-4 right-4 z-50">
         <button 
           onClick={toggleMinimize}
-          className={`bg-${accentColor}-500 text-white p-4 rounded-full shadow-lg hover:bg-${accentColor}-600 transition transform hover:scale-105 flex items-center justify-center`}
+          className={`bg-teal-500 text-white p-4 rounded-full shadow-lg hover:bg-teal-600 transition transform hover:scale-105 flex items-center justify-center`}
           aria-label="Open chat"
         >
           <Badge content={visibleMessages.length > 2 ? "1" : "0"} color="red">
@@ -693,14 +685,14 @@ export function ChatBox({
   const themeClasses = theme === 'dark' 
     ? {
         card: "bg-gray-900 border-gray-800",
-        header: `bg-gradient-to-r from-${accentColor}-800 to-${accentColor}-900`,
+        header: `bg-gradient-to-r from-teal-800 to-teal-900`,
         body: "bg-gray-900",
         message: {
-          user: `bg-${accentColor}-600 text-white`,
+          user: `bg-teal-600 text-white`,
           assistant: "bg-gray-800 text-gray-100",
           question: "bg-indigo-700 text-white border border-indigo-400",
           timestamp: {
-            user: `text-${accentColor}-200`,
+            user: `text-teal-200`,
             assistant: "text-gray-400",
             question: "text-indigo-200"
           }
@@ -712,14 +704,14 @@ export function ChatBox({
       }
     : {
         card: "bg-white border-gray-200",
-        header: `bg-gradient-to-r from-${accentColor}-500 to-${accentColor}-600`,
+        header: `bg-gradient-to-r from-teal-500 to-teal-600`,
         body: "bg-white",
         message: {
-          user: `bg-${accentColor}-500 text-white`,
+          user: `bg-teal-500 text-white`,
           assistant: "bg-gray-100 text-gray-800",
           question: "bg-indigo-500 text-white border border-indigo-300",
           timestamp: {
-            user: `text-${accentColor}-100`,
+            user: `text-teal-100`,
             assistant: "text-gray-500",
             question: "text-indigo-100"
           }
@@ -734,7 +726,7 @@ export function ChatBox({
   const getSuggestions = () => {
     if (visibleMessages.length <= 1) {
       return [
-        `Tell me about ${companyName}`,
+        `Tell me about Theoforge`,
         "What services do you offer?",
         "How can I schedule a demo?"
       ];
@@ -765,40 +757,38 @@ export function ChatBox({
         {/* Header */}
         <CardHeader 
           floated={false}
-          className={`sticky top-0 z-20 px-6 py-4 m-0 rounded-b-none shadow-md ${themeClasses.header}`}
+          className={`sticky top-0 z-20 px-6 pt-4 pb-6 m-0 rounded-b-none shadow-md ${themeClasses.header}`}
         >
           <div className="flex justify-between items-center">
             <div className="flex items-center">
               <div className="relative mr-3">
-                {logoUrl ? (
-                  <img 
-                    src={logoUrl} 
-                    alt={`${companyName} Logo`} 
-                    className="h-9 w-9 rounded-full border-2 border-white shadow-sm" 
-                  />
-                ) : (
-                  <SparklesIcon className="h-6 w-6 text-white" />
-                )}
+                <img 
+                  src={"/logo.png"} 
+                  alt={`Theoforge Logo`} 
+                  className="h-9 w-9 rounded-full border-2 border-white shadow-sm" 
+                />
                 {guestInfo.name && (
                   <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white animate-pulse"></div>
                 )}
               </div>
               <div>
                 <Typography className="text-white text-lg font-bold flex items-center">
-                  {companyName} AI
-                  <Tooltip content="Powered by AI">
-                    <SparklesIcon className="h-4 w-4 ml-1.5 text-white opacity-75" />
-                  </Tooltip>
+                  Theoforge AI
                 </Typography>
-                {guestInfo.name && (
-                  <Typography className="text-white text-xs opacity-90 flex items-center">
-                    <UserCircleIcon className="h-3 w-3 mr-1" />
-                    Speaking with {guestInfo.name}
-                  </Typography>
-                )}
               </div>
             </div>
             <div className="flex gap-1">
+              <Tooltip content="Change theme">
+                <IconButton
+                  onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+                  variant="text"
+                  color="white"
+                  className="h-8 w-8 rounded-full hover:bg-white/20 transition-all"
+                  size="sm"
+                >
+                  <LightBulbIcon className="h-4 w-4" />
+                </IconButton>
+              </Tooltip>
               <Tooltip content="Clear chat history">
                 <IconButton
                   onClick={clearChat}
@@ -816,7 +806,7 @@ export function ChatBox({
                   variant="text"
                   color="white"
                   className="h-8 w-8 rounded-full hover:bg-white/20 transition-all" size="sm"
-                 >
+                >
                   <MinusIcon className="h-4 w-4" />
                 </IconButton>
                 </Tooltip>
@@ -857,40 +847,40 @@ export function ChatBox({
         {/* Message Container */}
         <CardBody 
           ref={chatContainerRef} 
-          className={`flex-grow overflow-y-auto p-6 space-y-4 ${themeClasses.body}`}
+          className={`h-full flex-grow overflow-y-auto p-6 space-y-4 ${themeClasses.body}`}
         >
           {/* Introduction Panel - only shown at first */}
           {showIntroduction && (
-            <div className={`mb-6 p-4 rounded-lg border border-${accentColor}-100 bg-${accentColor}-50 text-${accentColor}-900 dark:border-${accentColor}-800 dark:bg-${accentColor}-900/20 dark:text-${accentColor}-100`}>
+            <div className={`mb-6 p-4 rounded-lg border border-teal-100 bg-teal-50 text-teal-900 dark:border-teal-800 dark:bg-teal-900/20 dark:text-teal-100`}>
               <div className="flex items-center mb-3">
-                <SparklesIcon className={`h-5 w-5 text-${accentColor}-500 mr-2`} />
-                <Typography variant="h6" className="font-semibold">Welcome to {companyName} AI Assistant</Typography>
+                <SparklesIcon className={`h-5 w-5 text-teal-500 mr-2`} />
+                <Typography variant="h6" className="font-semibold">Welcome to Theoforge AI Assistant</Typography>
               </div>
               <Typography variant="small" className="mb-3">
                 I'm here to help answer your questions about our services and solutions. Feel free to ask about:
               </Typography>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
-                <div className={`p-2 rounded border border-${accentColor}-200 bg-white/80 dark:bg-gray-800/80 flex items-center`}>
-                  <div className={`mr-2 p-1 rounded-full bg-${accentColor}-100 dark:bg-${accentColor}-900`}>
-                    <ChevronDoubleRightIcon className={`h-3 w-3 text-${accentColor}-500`} />
+                <div className={`p-2 rounded border border-teal-200 bg-white/80 dark:bg-gray-800/80 flex items-center`}>
+                  <div className={`mr-2 p-1 rounded-full bg-teal-100 dark:bg-teal-900`}>
+                    <ChevronDoubleRightIcon className={`h-3 w-3 text-teal-500`} />
                   </div>
                   <Typography variant="small" className="font-medium">ETL Solutions</Typography>
                 </div>
-                <div className={`p-2 rounded border border-${accentColor}-200 bg-white/80 dark:bg-gray-800/80 flex items-center`}>
-                  <div className={`mr-2 p-1 rounded-full bg-${accentColor}-100 dark:bg-${accentColor}-900`}>
-                    <ChevronDoubleRightIcon className={`h-3 w-3 text-${accentColor}-500`} />
+                <div className={`p-2 rounded border border-teal-200 bg-white/80 dark:bg-gray-800/80 flex items-center`}>
+                  <div className={`mr-2 p-1 rounded-full bg-teal-100 dark:bg-teal-900`}>
+                    <ChevronDoubleRightIcon className={`h-3 w-3 text-teal-500`} />
                   </div>
                   <Typography variant="small" className="font-medium">Knowledge Graphs</Typography>
                 </div>
-                <div className={`p-2 rounded border border-${accentColor}-200 bg-white/80 dark:bg-gray-800/80 flex items-center`}>
-                  <div className={`mr-2 p-1 rounded-full bg-${accentColor}-100 dark:bg-${accentColor}-900`}>
-                    <ChevronDoubleRightIcon className={`h-3 w-3 text-${accentColor}-500`} />
+                <div className={`p-2 rounded border border-teal-200 bg-white/80 dark:bg-gray-800/80 flex items-center`}>
+                  <div className={`mr-2 p-1 rounded-full bg-teal-100 dark:bg-teal-900`}>
+                    <ChevronDoubleRightIcon className={`h-3 w-3 text-teal-500`} />
                   </div>
                   <Typography variant="small" className="font-medium">Custom LLM Training</Typography>
                 </div>
-                <div className={`p-2 rounded border border-${accentColor}-200 bg-white/80 dark:bg-gray-800/80 flex items-center`}>
-                  <div className={`mr-2 p-1 rounded-full bg-${accentColor}-100 dark:bg-${accentColor}-900`}>
-                    <ChevronDoubleRightIcon className={`h-3 w-3 text-${accentColor}-500`} />
+                <div className={`p-2 rounded border border-teal-200 bg-white/80 dark:bg-gray-800/80 flex items-center`}>
+                  <div className={`mr-2 p-1 rounded-full bg-teal-100 dark:bg-teal-900`}>
+                    <ChevronDoubleRightIcon className={`h-3 w-3 text-teal-500`} />
                   </div>
                   <Typography variant="small" className="font-medium">Case Studies & Pricing</Typography>
                 </div>
@@ -905,16 +895,16 @@ export function ChatBox({
           )}
           
           {/* Guest info chip - only show once info is collected */}
-          {guestInfo.name && guestInfo.company && (
+          {guestInfo.name && (
             <div className="flex justify-center mb-4">
               <Chip
                 value={
                   <div className="flex items-center gap-2">
                     <UserCircleIcon className="h-4 w-4" />
-                    <span>{guestInfo.name} from {guestInfo.company}</span>
+                    <span>{guestInfo.name+(guestInfo.company ? " from "+guestInfo.company : "")}</span>
                   </div>
                 }
-                color={accentColor}
+                color="teal"
                 variant="ghost"
                 className="px-3 py-1.5"
               />
@@ -956,7 +946,7 @@ export function ChatBox({
             <div className="flex justify-start">
               <div className={`max-w-[80%] p-4 rounded-xl shadow ${themeClasses.message.assistant}`}>
                 <div className="flex items-center gap-2">
-                  <Spinner className="h-4 w-4" color={accentColor} />
+                  <Spinner className="h-4 w-4" color="teal" />
                   <Typography className="text-sm">Thinking...</Typography>
                 </div>
               </div>
@@ -967,7 +957,7 @@ export function ChatBox({
             <div className="flex justify-start">
               <div className={`max-w-[80%] p-4 rounded-xl shadow ${themeClasses.message.assistant}`}>
                 <div className="flex items-center gap-2">
-                  <Spinner className="h-4 w-4" color={accentColor} />
+                  <Spinner className="h-4 w-4" color="teal" />
                   <Typography className="text-sm">Transcribing audio...</Typography>
                 </div>
               </div>
@@ -1004,14 +994,14 @@ export function ChatBox({
           {visibleMessages.length > 0 && !isThinking && !isAwaitingAnswer && !typingEffect && (
             <div className="pt-2 flex flex-wrap gap-2 justify-center">
               {getSuggestions().map((suggestion, index) => (
-                <Chip
+                <Button
                   key={index}
-                  value={suggestion}
                   variant="outlined"
-                  color={accentColor}
-                  className={`px-3 py-1.5 cursor-pointer hover:bg-${accentColor}-50 dark:hover:bg-${accentColor}-900/20 transition-colors`}
+                  size="sm"
+                  color="teal"
+                  className={`px-3 py-1.5 cursor-pointer hover:bg-teal-50 dark:hover:bg-teal-900/20 transition-colors`}
                   onClick={() => handleQuickReply(suggestion)}
-                />
+                >{suggestion}</Button>
               ))}
             </div>
           )}
@@ -1029,7 +1019,7 @@ export function ChatBox({
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={isAwaitingAnswer ? `Please answer the question...` : "Type your message..."}
-              className={`flex-grow border rounded-lg p-3 pr-10 focus:outline-none focus:ring-2 focus:ring-${accentColor}-500 ${themeClasses.input} ${isAwaitingAnswer ? `border-indigo-300 animate-pulse` : ''}`}
+              className={`flex-grow border rounded-lg p-3 pr-10 focus:outline-none focus:ring-2 focus:ring-teal-500 ${themeClasses.input} ${isAwaitingAnswer ? `border-indigo-300 animate-pulse` : ''}`}
               disabled={isThinking || isTranscribing}
             />
             
@@ -1048,7 +1038,7 @@ export function ChatBox({
                 <IconButton
                   onClick={startRecording}
                   variant="text"
-                  color={accentColor}
+                  color="teal"
                   className="h-9 w-9 rounded-full transition-all"
                   size="sm"
                   disabled={isThinking || isTranscribing}
@@ -1060,7 +1050,7 @@ export function ChatBox({
             
             <Button 
               onClick={() => handleSend()} 
-              color={accentColor}
+              color="teal"
               variant="gradient"
               className="p-2 rounded-full shadow-md"
               disabled={isThinking || isTranscribing || !input.trim()}

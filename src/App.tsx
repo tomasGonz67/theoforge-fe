@@ -28,17 +28,23 @@ import {
   Chip
 } from "@material-tailwind/react";
 import axios from 'axios';
+
+let API_URL = window.location.origin;
+API_URL = API_URL.replace(/800./, "8000") // Map port 800x to 8000 for localhost testing
+
 type Role = 'USER' | 'ADMIN';
 
-// eslintdisable-next-line react-refresh/only-export-components
+// eslint-disable-next-line react-refresh/only-export-components
 export const AuthContext = React.createContext<{
   isAuthenticated: boolean;
+  accessToken: string | null;
   role: Role;
   login: (email: string, password: string) => Promise<number>;
   register: (email: string, firstName: string, lastName: string, nickname: string, passsword: string) => Promise<number>;
   logout: () => void;
 }>({
   isAuthenticated: false,
+  accessToken: null,
   role: 'USER',
   login: async () => -1,
   register: async () => -1,
@@ -47,6 +53,7 @@ export const AuthContext = React.createContext<{
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [accessToken, setAccessToken] = useState(null);
   const [role, setRole] = useState('USER' as Role);
 
   const login = async (email: string, password: string) => {
@@ -60,17 +67,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const params = new URLSearchParams();
     params.append('username', email);
     params.append('password', password);
-    await axios.post('/auth/login', params).then(res => {
+    await axios.post(`${API_URL}/auth/login`, params).then(res => {
       // Decode jwt token into json
       const json = JSON.parse(decodeURIComponent(window.atob(res.data.access_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')).split('').map(function(c) {
         return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
       }).join('')));
+      setAccessToken(res.data.access_token);
       setRole(json.role);
       setIsAuthenticated(true);
       response = 200;
     }).catch (err => {
+      console.log(err)
       if (err.response && err.response.data && err.response.data.detail) {
-        if(err.response.data.detail === '400: Invalid username/password') {
+        if(err.response.data.detail.includes('Invalid username/password')) {
           response = 500;
         } else {
           response = -1;
@@ -84,7 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const register = async (email: string, firstName: string, lastName: string, nickname: string, password: string) => {
     let response = -1;
-    await axios.post('/auth/register', {
+    await axios.post(`${API_URL}/auth/register`, {
       "email": email,
       "first_name": firstName,
       "last_name": lastName,
@@ -96,7 +105,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       response = 200;
     }).catch(err => {
       if (err.response && err.response.data && err.response.data.detail) {
-        if (err.response.data.detail === '400: Email already exists') {
+        if (/User with email [\w-.]{1,64}@([\w-]{1,63}\.)+[\w-]{2,63} already exists/.test(err.response.data.detail)) {
           response = 400;
         } else if (err.response.data.detail === 'Not Found') {
           response = 404;
@@ -118,7 +127,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, role, login, register, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, accessToken, role, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

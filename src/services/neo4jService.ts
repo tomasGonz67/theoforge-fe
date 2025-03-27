@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import axiosInstance from '../utils/axiosConfig';
 
 const neo4jService = {
@@ -6,7 +7,7 @@ const neo4jService = {
     try {
       const response = await axiosInstance.get('/neo4j/hello-world');
       return { success: true, data: response.data };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching Neo4j hello world:', error);
       return {
         success: false,
@@ -20,7 +21,7 @@ const neo4jService = {
     try {
       const response = await axiosInstance.get('/neo4j/health');
       return { success: true, data: response.data };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error checking Neo4j health:', error);
       return {
         success: false,
@@ -34,7 +35,7 @@ const neo4jService = {
     try {
       const response = await axiosInstance.get('/neo4j/knowledge-graph');
       return { success: true, data: response.data };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching knowledge graph:', error);
       return {
         success: false,
@@ -44,11 +45,11 @@ const neo4jService = {
   },
 
   // Create a new node in the knowledge graph
-  createNode: async (nodeData) => {
+  createNode: async (nodeData: any) => {
     try {
       const response = await axiosInstance.post('/neo4j/nodes', nodeData);
       return { success: true, data: response.data };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating node:', error);
       return {
         success: false,
@@ -58,11 +59,11 @@ const neo4jService = {
   },
 
   // Create a new relationship between nodes
-  createRelationship: async (relationshipData) => {
+  createRelationship: async (relationshipData: any) => {
     try {
       const response = await axiosInstance.post('/neo4j/relationships', relationshipData);
       return { success: true, data: response.data };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating relationship:', error);
       return {
         success: false,

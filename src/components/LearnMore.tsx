@@ -28,8 +28,7 @@ import {
   TabsBody,
   Tab,
   TabPanel,
-  Navbar,
-  IconButton
+  Navbar
 } from "@material-tailwind/react";
 import { ChatBox } from "../components/ChatBox";
 

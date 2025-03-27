@@ -1,4 +1,5 @@
-import React, { useContext, useState, useEffect, Fragment } from 'react';
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import React, { useContext, useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { AuthContext } from '../App';
 import {
@@ -7,30 +8,27 @@ import {
   ShoppingBagIcon,
   UserCircleIcon,
   Cog6ToothIcon,
-  ArrowRightOnRectangleIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   Bars3Icon as MenuIcon,
   CreditCardIcon,
-  BuildingLibraryIcon,
-  BeakerIcon,
   ChartBarIcon,
   BellIcon,
   CheckCircleIcon,
   SparklesIcon,
-  ArrowPathIcon,
   ClipboardDocumentCheckIcon,
   ChatBubbleLeftRightIcon,
   InformationCircleIcon,
   ArrowRightIcon,
   XMarkIcon,
   CpuChipIcon,
-  ExclamationCircleIcon,
   FolderIcon,
   CalendarIcon,
   DocumentTextIcon,
   DocumentDuplicateIcon,
-  BookOpenIcon
+  BookOpenIcon,
+  ArrowRightStartOnRectangleIcon,
+  CircleStackIcon
 } from '@heroicons/react/24/outline';
 import {
   Card,
@@ -64,7 +62,8 @@ import {
   Badge,
   Textarea,
   Tooltip,
-  Alert
+  Alert,
+  CardHeader
 } from "@material-tailwind/react";
 import { UsersTable } from './UsersTable';
 import { GuestsTable } from './GuestsTable';
@@ -73,9 +72,9 @@ import { ProfileSettings } from './ProfileSettings';
 import { LogoutModal } from './LogoutModal';
 import { ChatBox } from './ChatBox';
 import { cn } from '../lib/utils';
-import { IntegratedDashboard } from './IntegratedDashboard';
 import { RealTimeDashboard } from './RealTimeDashboard';
 import { KnowledgeGraphPage } from './KnowledgeGraphPage';
+import { colors } from '@material-tailwind/react/types/generic';
 
 // User navigation - restricted options (no Analytics)
 const userNavigation = [
@@ -223,7 +222,7 @@ const AnalyticsDashboard = () => {
     setTimeout(() => setShowAlert(false), 3000);
   };
   
-  const openModal = (type) => {
+  const openModal = (type: string) => {
     setModalType(type);
     setShowModal(true);
   };
@@ -692,9 +691,20 @@ const AnalyticsDashboard = () => {
   );
 };
 
+interface project {
+  id: number,
+  name: string,
+  description: string,
+  progress?: number,
+  deadline: string,
+  status: string,
+  team: string[],
+  priority: string
+}
+
 // Project Management Component
 const ProjectManagement = () => {
-  const [projects, setProjects] = useState([
+  const [projects, setProjects] = useState<project[]>([
     {
       id: 1,
       name: 'AI Customer Service Bot',
@@ -748,7 +758,7 @@ const ProjectManagement = () => {
   ]);
     
   const [showModal, setShowModal] = useState(false);
-  const [currentProject, setCurrentProject] = useState(null);
+  const [currentProject, setCurrentProject] = useState<project | null>(null);
   const [modalType, setModalType] = useState('');
   const [showAlert, setShowAlert] = useState({ show: false, message: '', color: 'green' });
   const [projectForm, setProjectForm] = useState({
@@ -757,10 +767,10 @@ const ProjectManagement = () => {
     deadline: '',
     status: 'planned',
     priority: 'medium',
-    team: []
+    team: ''
   });
     
-  const openModal = (type, project = null) => {
+  const openModal = (type: string, project: project | null = null) => {
     setModalType(type);
     setCurrentProject(project);
     
@@ -771,7 +781,7 @@ const ProjectManagement = () => {
         deadline: new Date().toISOString().split('T')[0],
         status: 'planned',
         priority: 'medium',
-        team: []
+        team: ''
       });
     } else if (type === 'edit' && project) {
       setProjectForm({
@@ -787,7 +797,7 @@ const ProjectManagement = () => {
     setShowModal(true);
   };
     
-  const handleStatusChange = (projectId, newStatus) => {
+  const handleStatusChange = (projectId: number, newStatus: string) => {
     const updatedProjects = projects.map(project => 
       project.id === projectId ? { ...project, status: newStatus } : project
     );
@@ -796,7 +806,7 @@ const ProjectManagement = () => {
     showStatusAlert('Project status updated successfully!');
   };
     
-  const handleFormChange = (field, value) => {
+  const handleFormChange = (field: string, value: string) => {
     setProjectForm({
       ...projectForm,
       [field]: value
@@ -851,13 +861,13 @@ const ProjectManagement = () => {
     }
   };
     
-  const showStatusAlert = (message, color = 'green') => {
+  const showStatusAlert = (message: string, color = 'green') => {
     setShowAlert({ show: true, message, color });
     setTimeout(() => setShowAlert({ ...showAlert, show: false }), 3000);
   };
     
   // Get status color
-  const getStatusColor = (status) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'active':
         return 'green';
@@ -872,7 +882,7 @@ const ProjectManagement = () => {
     }
   };
   // Get priority color
-  const getPriorityColor = (priority) => {
+  const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'high':
         return 'red';
@@ -886,13 +896,13 @@ const ProjectManagement = () => {
   };
   
   // Format deadline date
-  const formatDeadline = (deadline) => {
+  const formatDeadline = (deadline: string | number | Date) => {
     const date = new Date(deadline);
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
   };
   
   // Is deadline close or overdue
-  const isDeadlineClose = (deadline) => {
+  const isDeadlineClose = (deadline: string | number | Date) => {
     const deadlineDate = new Date(deadline);
     const today = new Date();
     const diffTime = deadlineDate.getTime() - today.getTime();
@@ -901,7 +911,7 @@ const ProjectManagement = () => {
     return diffDays <= 7;
   };
   
-  const isDeadlinePassed = (deadline) => {
+  const isDeadlinePassed = (deadline: string | number | Date) => {
     const deadlineDate = new Date(deadline);
     const today = new Date();
     return deadlineDate < today;
@@ -913,7 +923,7 @@ const ProjectManagement = () => {
       {showAlert.show && (
         <Alert
           open={showAlert.show}
-          color={showAlert.color}
+          color={showAlert.color as colors}
           className="fixed top-20 right-4 z-50 max-w-md"
           icon={<CheckCircleIcon className="h-6 w-6" />}
           onClose={() => setShowAlert({...showAlert, show: false})}
@@ -1051,8 +1061,7 @@ const ProjectManagement = () => {
                 <Input
                   value={projectForm.name}
                   onChange={(e) => handleFormChange('name', e.target.value)}
-                  label="Enter project name"
-                />
+                  label="Enter project name" crossOrigin={undefined}                />
               </div>
               <div>
                 <Typography variant="small" color="blue-gray" className="mb-2 font-medium">
@@ -1072,8 +1081,7 @@ const ProjectManagement = () => {
                   <Input
                     type="date"
                     value={projectForm.deadline}
-                    onChange={(e) => handleFormChange('deadline', e.target.value)}
-                  />
+                    onChange={(e) => handleFormChange('deadline', e.target.value)} crossOrigin={undefined}                  />
                 </div>
                 <div>
                   <Typography variant="small" color="blue-gray" className="mb-2 font-medium">
@@ -1113,8 +1121,7 @@ const ProjectManagement = () => {
                   <Input
                     value={projectForm.team}
                     onChange={(e) => handleFormChange('team', e.target.value)}
-                    label="Comma-separated list of members"
-                  />
+                    label="Comma-separated list of members" crossOrigin={undefined}                  />
                 </div>
               </div>
             </div>
@@ -1284,7 +1291,7 @@ const ProjectManagement = () => {
 const UserDashboard = () => {
   const navigate = useNavigate();
   const [showServiceModal, setShowServiceModal] = useState(false);
-  const [selectedService, setSelectedService] = useState(null);
+  const [selectedService, setSelectedService] = useState<string | null>(null);
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
   const [showSupportModal, setShowSupportModal] = useState(false);
@@ -1308,12 +1315,12 @@ const UserDashboard = () => {
     navigate('/dashboard/analytics');
   };
 
-  const handleServiceClick = (service) => {
+  const handleServiceClick = (service: string) => {
     setSelectedService(service);
     setShowServiceModal(true);
   };
 
-  const showSuccessAlert = (message) => {
+  const showSuccessAlert = (message: string) => {
     setShowAlert({
       show: true,
       message: message,
@@ -1331,7 +1338,7 @@ const UserDashboard = () => {
       {showAlert.show && (
         <Alert
           open={showAlert.show}
-          color={showAlert.color}
+          color={showAlert.color as colors}
           className="fixed top-20 right-4 z-50 max-w-md"
           icon={<CheckCircleIcon className="h-6 w-6" />}
           onClose={() => setShowAlert({...showAlert, show: false})}
@@ -1483,13 +1490,12 @@ const UserDashboard = () => {
                 </div>
               </div>
               <Tooltip content="Active project">
-                <Chip 
+                <Button 
                   size="sm" 
-                  value="Active" 
                   color="teal" 
                   className="rounded-full cursor-pointer"
                   onClick={() => showSuccessAlert("Opened Sales Forecasting project")}
-                />
+                >Active</Button>
               </Tooltip>
             </div>
             <Typography variant="small" className="mt-3 text-gray-600">
@@ -1510,13 +1516,12 @@ const UserDashboard = () => {
                 </div>
               </div>
               <Tooltip content="In progress">
-                <Chip 
-                  size="sm" 
-                  value="In Progress" 
+                <Button 
+                  size="sm"
                   color="blue" 
                   className="rounded-full cursor-pointer"
                   onClick={() => showSuccessAlert("Opened Customer Segmentation project")}
-                />
+                >In Progress</Button>
               </Tooltip>
             </div>
             <Typography variant="small" className="mt-3 text-gray-600">
@@ -1726,7 +1731,7 @@ const UserDashboard = () => {
               <Typography variant="small" color="blue-gray" className="mb-2 font-medium">
                 Project Name
               </Typography>
-              <Input label="Enter project name" />
+              <Input label="Enter project name" crossOrigin={undefined} />
             </div>
             <div>
               <Typography variant="small" color="blue-gray" className="mb-2 font-medium">
@@ -1913,7 +1918,7 @@ const UserDashboard = () => {
                   Receive AI-powered recommendations based on your activity
                 </Typography>
               </div>
-              <Switch color="amber" defaultChecked />
+              <Switch color="amber" defaultChecked crossOrigin={undefined} />
             </div>
             
             <div className="flex items-center justify-between">
@@ -1923,7 +1928,7 @@ const UserDashboard = () => {
                   Generate and send reports automatically on schedule
                 </Typography>
               </div>
-              <Switch color="amber" />
+              <Switch color="amber" crossOrigin={undefined} />
             </div>
             
             <div className="flex items-center justify-between">
@@ -1933,7 +1938,7 @@ const UserDashboard = () => {
                   Allow anonymous usage data to improve our services
                 </Typography>
               </div>
-              <Switch color="amber" defaultChecked />
+              <Switch color="amber" defaultChecked crossOrigin={undefined} />
             </div>
             
             <div>
@@ -1974,9 +1979,6 @@ const UserDashboard = () => {
         <ChatBox 
           isOpen={isChatOpen} 
           onClose={() => setIsChatOpen(false)} 
-          companyName="Theoforge"
-          logoUrl="/logo.png"
-          accentColor="teal"
         />
       )}
     </div>
@@ -1984,17 +1986,16 @@ const UserDashboard = () => {
 };
 // Main Dashboard Component
 export function Dashboard() {
-  const { logout } = useContext(AuthContext);
+  const { role, logout } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("personal");
   const [isVisible, setIsVisible] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
-  const [isAdminView, setIsAdminView] = useState(true); // Default to admin view
+  const [isAdminView, setIsAdminView] = useState(role === "ADMIN"); // Default to admin view
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   
   // Sample notifications
@@ -2077,7 +2078,7 @@ export function Dashboard() {
   }, [isAdminView]);
   
   // Function to show toast notifications
-  const showNotification = (message, color = "green") => {
+  const showNotification = (message: string, color = "green") => {
     setShowToast({
       show: true,
       message,
@@ -2102,7 +2103,7 @@ export function Dashboard() {
     navigate('/login');
   };
 
-  const handleNavigation = (path) => {
+  const handleNavigation = (path: string) => {
     // Check if the path is available in current view mode
     const isPathAvailable = navigation.some(item => item.href === path);
     if (!isPathAvailable) {
@@ -2131,7 +2132,7 @@ export function Dashboard() {
     }
   };
 
-  const markNotificationAsRead = (id) => {
+  const markNotificationAsRead = (id: number) => {
     setNotifications(notifications.map(notification => 
       notification.id === id ? { ...notification, read: true } : notification
     ));
@@ -2141,11 +2142,11 @@ export function Dashboard() {
     setNotifications(notifications.map(notification => ({ ...notification, read: true })));
   };
 
-  const deleteNotification = (id) => {
+  const deleteNotification = (id: number) => {
     setNotifications(notifications.filter(notification => notification.id !== id));
   };
 
-  const formatNotificationTime = (timestamp) => {
+  const formatNotificationTime = (timestamp: string | number | Date) => {
     const date = new Date(timestamp);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
@@ -2168,7 +2169,7 @@ export function Dashboard() {
     return date.toLocaleDateString();
   };
 
-  const getNotificationIcon = (type) => {
+  const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'alert':
         return <BellIcon className="h-5 w-5 text-red-500" />;
@@ -2190,43 +2191,26 @@ export function Dashboard() {
     
   // Updated Sidebar with visible toggle button when collapsed
   const Sidebar = () => (
-    <div className="relative">
-      {/* Toggle button positioned absolutely to remain visible when sidebar is collapsed */}
-      <div className={`absolute top-6 ${isSidebarCollapsed ? 'right-0 -mr-10' : 'right-4'} z-20`}>
-        <IconButton 
-          variant="text" 
-          color="teal" 
-          onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-          className="shadow-md bg-white"
-        >
-          {isSidebarCollapsed ? <ChevronRightIcon className="h-5 w-5" /> : <ChevronLeftIcon className="h-5 w-5" />}
-        </IconButton>
+    <div>
+      <div className={cn(isSidebarCollapsed ? "w-28" : "w-[20rem]")}>
+        {/* Phantom element to take up space of fixed sidebar */}
       </div>
-      
       <Card className={cn(
-        "h-screen p-4 shadow-xl shadow-blue-gray-900/5 relative overflow-hidden transition-all duration-300",
-        isSidebarCollapsed ? "w-20" : "w-full max-w-[20rem]"
+        "shadow-xl shadow-blue-gray-900/5 overflow-auto transition-all duration-300",
+        isSidebarCollapsed ? "w-28" : "w-full max-w-[20rem]",
+        isDrawerOpen ? "relative p-4 pr-16" : "fixed top-24 bottom-0 p-4 pr-16"
       )}>
-        {/* Decorative elements similar to landing page */}
-        <div className="absolute top-20 right-0 w-32 h-32 bg-teal-50 rounded-full blur-3xl opacity-50 z-0"></div>
-        <div className="absolute bottom-20 left-0 w-32 h-32 bg-blue-50 rounded-full blur-3xl opacity-50 z-0"></div>
-        
-        <div className="mb-6 p-4 flex items-center justify-between relative z-10">
-          {/* Logo always visible, positioned at top right when collapsed */}
-          <div className={cn(
-            "flex items-center gap-2 transition-all duration-300",
-            isSidebarCollapsed ? "justify-center" : ""
-          )}>
-            <img src="/logo.png" alt="Theoforge Logo" className="h-12 w-12" />
-            <Typography variant="h5" color="blue-gray" className={cn(
-              "transition-opacity duration-300",
-              isSidebarCollapsed ? "opacity-0 absolute" : "opacity-100"
-            )}>
-              Theoforge
-            </Typography>
-          </div>
+        {/* Toggle button fixed position to always remain visible */}
+        <div className={isSidebarCollapsed ? "fixed top-64 left-16" : 'fixed top-64 left-64'}>
+          <IconButton
+            variant="text"
+            color="teal"
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            className="mb-4"
+          >
+            {isSidebarCollapsed ? <ChevronRightIcon className="h-5 w-5" /> : <ChevronLeftIcon className="h-5 w-5" />}
+          </IconButton>
         </div>
-        
         <div className="relative z-10">
           {/* Role identifier */}
           {!isSidebarCollapsed && (
@@ -2243,7 +2227,7 @@ export function Dashboard() {
             </div>
           )}
           
-          <List>
+          <div>
             {navigation.map((item) => {
               const isActive = location.pathname === item.href || 
                               (item.href === '/dashboard' && location.pathname === '/dashboard') || 
@@ -2253,7 +2237,8 @@ export function Dashboard() {
                   key={item.name}
                   className={cn(
                     "mb-2 hover:bg-teal-50/80 transition-all duration-200",
-                    isActive && "bg-teal-50/80 text-teal-500 font-medium"
+                    isActive ? "bg-teal-50/80 text-teal-500 font-medium" : "",
+                    isSidebarCollapsed ? "w-12" : ""
                   )}
                   onClick={() => handleNavigation(item.href)}
                 >
@@ -2278,7 +2263,7 @@ export function Dashboard() {
                 </ListItem>
               );
             })}
-          </List>
+          </div>
           
           {!isSidebarCollapsed && (
             <div className="mt-auto pt-8">
@@ -2305,7 +2290,7 @@ export function Dashboard() {
                 className="flex items-center gap-2 mt-4 w-full justify-center"
                 onClick={handleLogout} 
               >
-                <ArrowRightOnRectangleIcon className="h-4 w-4" />
+                <ArrowRightStartOnRectangleIcon className="h-4 w-4" />
                 Sign Out
               </Button>
             </div>
@@ -2324,21 +2309,20 @@ export function Dashboard() {
   
       <Navbar className="sticky top-0 z-10 max-w-full rounded-none px-4 py-2 lg:px-8 lg:py-4 border-b border-gray-100 bg-white/95 backdrop-blur-sm shadow-sm">
         <div className="flex items-center justify-between text-blue-gray-900">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <img src="/logo.png" alt="Theoforge Logo" className="h-12 w-12" />
+            <Typography variant="h5" color="blue-gray">
+              Theoforge
+            </Typography>
             <IconButton
               variant="text"
               color="teal"
               className="lg:hidden"
+              hidden={isDrawerOpen}
               onClick={() => setIsDrawerOpen(true)}
             >
               <MenuIcon className="h-6 w-6" />
             </IconButton>
-            <div className="flex items-center gap-2 lg:hidden">
-              <img src="/logo.png" alt="Theoforge Logo" className="h-10 w-10" />
-              <Typography variant="h5" color="blue-gray" className="font-medium">
-                Theoforge
-              </Typography>
-            </div>
           </div>
           
           <div className="flex items-center gap-4">
@@ -2348,12 +2332,11 @@ export function Dashboard() {
                 Admin
               </Typography>
               <Switch 
-                color="teal" 
-                checked={!isAdminView} 
+                color="teal"
+                checked={!isAdminView}
                 onChange={handleToggleView}
                 label=""
-                className="h-full"
-              />
+                className="h-full" crossOrigin={undefined}              />
               <Typography variant="small" color={!isAdminView ? "teal" : "gray"} className="font-medium">
                 User
               </Typography>
@@ -2375,7 +2358,7 @@ export function Dashboard() {
                       content={unreadCount}
                       color="teal"
                       className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center p-0 text-[10px]"
-                    />
+                    >{' '}</Badge>
                   )}
                 </div>
               </MenuHandler>
@@ -2398,7 +2381,7 @@ export function Dashboard() {
                   notifications.map((notification) => (
                     <MenuItem key={notification.id} className={cn(
                       "flex flex-col items-start gap-1 border-b border-gray-50 hover:bg-gray-50 transition-colors",
-                      !notification.read && "bg-teal-50/50"
+                      !notification.read ? "bg-teal-50/50" : ""
                     )}>
                       <div className="flex items-start justify-between w-full">
                         <div className="flex gap-2">
@@ -2494,15 +2477,6 @@ export function Dashboard() {
                     Profile Settings
                   </Typography>
                 </MenuItem>
-                <MenuItem 
-                  className="flex items-center gap-2 rounded hover:bg-teal-50/80"
-                  onClick={() => setIsSettingsOpen(true)}
-                >
-                  <Cog6ToothIcon className="h-4 w-4 text-teal-500" />
-                  <Typography variant="small" className="font-normal">
-                    Account Settings
-                  </Typography>
-                </MenuItem>
                 <Link to="/learn-more">
                   <MenuItem 
                     className="flex items-center gap-2 rounded hover:bg-teal-50/80"
@@ -2517,7 +2491,7 @@ export function Dashboard() {
                   className="flex items-center gap-2 rounded hover:bg-red-50 text-red-500"
                   onClick={handleLogout}
                 >
-                  <ArrowRightOnRectangleIcon className="h-4 w-4" />
+                  <ArrowRightStartOnRectangleIcon className="h-4 w-4" />
                   <Typography variant="small" className="font-normal">
                     Sign Out
                   </Typography>
@@ -2536,24 +2510,45 @@ export function Dashboard() {
         <Drawer
           open={isDrawerOpen}
           onClose={() => setIsDrawerOpen(false)}
-          className="lg:hidden"
+          className="lg:hidden w-auto"
         >
+          <Navbar className="sticky top-0 z-10 max-w-full rounded-none px-4 py-2 lg:px-8 lg:py-4 border-b border-gray-100 bg-white/95 backdrop-blur-sm shadow-sm">
+            <div className="flex items-center justify-between text-blue-gray-900">
+              <div className="flex items-center gap-2">
+                <img src="/logo.png" alt="Theoforge Logo" className="h-12 w-12" />
+                {!isSidebarCollapsed ? (<Typography variant="h5" color="blue-gray">
+                  Theoforge
+                </Typography>) : <></>}
+              </div>
+              <div className="flex items-center">
+                <IconButton
+                  variant="text"
+                  color="teal"
+                  className="lg:hidden"
+                  hidden={isSidebarCollapsed}
+                  onClick={() => setIsDrawerOpen(false)}
+                >
+                  <MenuIcon className="h-6 w-6" />
+                </IconButton>
+              </div>
+            </div>
+          </Navbar>
           <Sidebar />
         </Drawer>
 
-        <div className="flex-1 p-4 lg:p-6 max-w-full">
+        <div className="flex-1 p-4 lg:p-6 max-w-full overflow-auto">
           <Breadcrumbs className="bg-white rounded-lg p-3 mb-4 border border-gray-100">
-            {breadcrumbs.map((breadcrumb, index) => (
-              <Link
+            {breadcrumbs.map((breadcrumb, /*index*/) => (
+              <a
                 key={breadcrumb.href}
-                href={breadcrumb.href}
+                onClick={() => navigate(breadcrumb.href)}
                 className={cn(
                   "opacity-60",
-                 breadcrumb.current && "opacity-100 text-teal-500 font-medium"
+                 breadcrumb.current ? "opacity-100 text-teal-500 font-medium" : ""
                 )}
               >
                 <span>{breadcrumb.name}</span>
-              </Link>
+              </a>
             ))}   
           </Breadcrumbs>
 
@@ -2782,26 +2777,7 @@ export function Dashboard() {
             
             {/* Guests Table Section - Only shown in Admin view */}
             {currentPage === 'guests' && isAdminView && (
-              <Card className="border border-gray-100 overflow-hidden">
-                <div className="px-6 py-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
-                  <div>
-                    <Typography variant="h5" color="blue-gray">
-                      Guest Management
-                    </Typography>
-                    <Typography variant="small" color="gray">
-                      View and manage guest accounts in your system
-                    </Typography>
-                  </div>
-                  <Button 
-                    color="teal" 
-                    size="sm" 
-                    className="flex items-center gap-1"
-                  >
-                    <HomeIcon className="h-4 w-4" />
-                  </Button>
-                </div>
-                <GuestsTable />
-              </Card>
+              <GuestsTable />
             )}
             
             {/* Resources Section - Available to both roles */}
@@ -3001,7 +2977,7 @@ export function Dashboard() {
       {showToast.show && (
         <Alert
           open={showToast.show}
-          color={showToast.color}
+          color={showToast.color as colors}
           className="fixed top-20 right-4 z-50 max-w-md"
           icon={<CheckCircleIcon className="h-6 w-6" />}
           onClose={() => setShowToast({...showToast, show: false})}
@@ -3098,8 +3074,8 @@ export function Dashboard() {
                 Date Range
               </Typography>
               <div className="grid grid-cols-2 gap-4">
-                <Input type="date" label="Start Date" />
-                <Input type="date" label="End Date" />
+                <Input type="date" label="Start Date" crossOrigin={undefined} />
+                <Input type="date" label="End Date" crossOrigin={undefined} />
               </div>
             </div>
             <div>

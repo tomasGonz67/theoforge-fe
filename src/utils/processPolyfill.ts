@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/utils/processPolyfill.ts
 /**
  * Thispolyfill adds a process object to the window when it doesn't exist

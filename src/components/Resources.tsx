@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useRef, useEffect } from 'react';
 import {
   DocumentTextIcon,
@@ -38,7 +39,7 @@ import {
 } from "@material-tailwind/react";
 
 // Simple utility function for class names
-const cn = (...classes) => classes.filter(Boolean).join(' ');
+const cn = (...classes: string[]) => classes.filter(Boolean).join(' ');
 
 // Define types for resources
 interface Resource {
@@ -55,17 +56,17 @@ interface Resource {
 export function Resources() {
   // Basic state
   const [activeTab, setActiveTab] = useState("all");
-  const [resources, setResources] = useState([]);
+  const [resources, setResources] = useState<Resource[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [selectedResource, setSelectedResource] = useState(null);
+  const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showAlert, setShowAlert] = useState({ show: false, message: "", type: "success" });
   
-  const fileInputRef = useRef(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Load sample data on component mount
   useEffect(() => {
@@ -144,7 +145,7 @@ export function Resources() {
   });
 
   // Format file size from bytes to readable format
-  const formatFileSize = (bytes) => {
+  const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return bytes + " B";
     else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + " KB";
     else if (bytes < 1073741824) return (bytes / 1048576).toFixed(1) + " MB";
@@ -152,7 +153,7 @@ export function Resources() {
   };
 
   // Format date to readable format
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
       year: "numeric",
@@ -162,7 +163,7 @@ export function Resources() {
   };
 
   // Handle file upload
-  const handleFileUpload = (files) => {
+  const handleFileUpload = (files: any[]) => {
     setIsUploading(true);
     setUploadProgress(0);
     
@@ -230,31 +231,31 @@ export function Resources() {
   };
 
   // Handle file input change
-  const handleFileInputChange = (event) => {
+  const handleFileInputChange = (event: any) => {
     if (event.target.files && event.target.files.length > 0) {
       handleFileUpload(event.target.files);
     }
   };
 
   // Handle drag events
-  const handleDragEnter = (e) => {
+  const handleDragEnter = (e: any) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(true);
   };
 
-  const handleDragLeave = (e) => {
+  const handleDragLeave = (e: any) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
   };
 
-  const handleDragOver = (e) => {
+  const handleDragOver = (e: any) => {
     e.preventDefault();
     e.stopPropagation();
   };
 
-  const handleDrop = (e) => {
+  const handleDrop = (e: any) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
@@ -265,7 +266,7 @@ export function Resources() {
   };
 
   // Toggle favorite status
-  const toggleFavorite = (resourceId) => {
+  const toggleFavorite = (resourceId: any) => {
     setResources(resources.map(resource => 
       resource.id === resourceId 
         ? { ...resource, favorite: !resource.favorite } 
@@ -274,7 +275,7 @@ export function Resources() {
   };
 
   // Toggle shared status
-  const toggleShared = (resourceId) => {
+  const toggleShared = (resourceId: any) => {
     setResources(resources.map(resource => 
       resource.id === resourceId 
         ? { ...resource, shared: !resource.shared } 
@@ -304,7 +305,7 @@ export function Resources() {
   };
 
   // Get icon based on file type
-  const getFileIcon = (type) => {
+  const getFileIcon = (type: string) => {
     switch (type) {
       case 'pdf':
         return <DocumentTextIcon className="h-6 w-6 text-red-500" />;
@@ -320,7 +321,7 @@ export function Resources() {
   };
 
   // Get color based on file type
-  const getTypeColor = (type) => {
+  const getTypeColor = (type: string) => {
     switch (type) {
       case 'pdf':
         return 'red';
@@ -379,8 +380,7 @@ export function Resources() {
                   icon={<DocumentIcon className="h-5 w-5 text-blue-gray-300" />}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="min-w-[250px]"
-                />
+                  className="min-w-[250px]" crossOrigin={undefined}                />
               </div>
               <Button
                 className="flex items-center gap-2"

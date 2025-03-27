@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useContext } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   UserCircleIcon,
   EnvelopeIcon,
@@ -16,7 +16,6 @@ import {
   CardBody,
   Button,
   Input,
-  Tooltip,
   Avatar,
   Dialog,
   DialogHeader,
@@ -24,7 +23,6 @@ import {
   DialogFooter,
   Alert
 } from "@material-tailwind/react";
-import { AuthContext } from '../App';
 import axiosInstance from '../utils/axiosConfig';
 
 interface ProfileInfo {
@@ -36,7 +34,6 @@ interface ProfileInfo {
 }
 
 export function ProfileSettings() {
-  const { user } = useContext(AuthContext);
   const [profileInfo, setProfileInfo] = useState<ProfileInfo>({
     name: 'John Doe',
     email: 'john.doe@example.com',
@@ -93,7 +90,7 @@ export function ProfileSettings() {
         }
       } catch (error) {
         console.error('Error loading profile data:', error);
-        showAlert({
+        setShowAlert({
           show: true,
           message: "Failed to load profile data. Using defaults.",
           type: "error"
@@ -104,7 +101,7 @@ export function ProfileSettings() {
     };
 
     loadUserProfile();
-  }, [user]);
+  }, []);
 
   // Update editedInfo when profileInfo changes
   useEffect(() => {
@@ -139,7 +136,7 @@ export function ProfileSettings() {
 
       // Send the update to the API
       try {
-        const response = await axiosInstance.put('/users/profile', updateData);
+        await axiosInstance.put('/users/profile', updateData);
         
         // Update profile info with the saved data
         setProfileInfo(editedInfo);
@@ -386,10 +383,11 @@ export function ProfileSettings() {
                 </Typography>
                 {isEditing ? (
                   <Input
-                    icon={<UserIcon className="h-5 w-5 text-blue-gray-300" />}
-                    value={editedInfo.name}
-                    onChange={(e) => handleInfoChange("name", e.target.value)}
-                    label="Name"
+                      icon={<UserIcon className="h-5 w-5 text-blue-gray-300" />}
+                      value={editedInfo.name}
+                      onChange={(e) => handleInfoChange("name", e.target.value)}
+                      label="Name"
+                      crossOrigin={undefined}
                   />
                 ) : (
                   <Typography>{profileInfo.name}</Typography>
@@ -405,6 +403,7 @@ export function ProfileSettings() {
                     value={editedInfo.email}
                     onChange={(e) => handleInfoChange("email", e.target.value)}
                     label="Email"
+                    crossOrigin={undefined}
                   />
                 ) : (
                   <Typography>{profileInfo.email}</Typography>
@@ -421,6 +420,7 @@ export function ProfileSettings() {
                     onChange={(e) => handleInfoChange("role", e.target.value)}
                     label="Role"
                     disabled
+                    crossOrigin={undefined}
                   />
                 ) : (
                   <Typography>{profileInfo.role}</Typography>
@@ -436,6 +436,7 @@ export function ProfileSettings() {
                     value={editedInfo.department}
                     onChange={(e) => handleInfoChange("department", e.target.value)}
                     label="Department"
+                    crossOrigin={undefined}
                   />
                 ) : (
                   <Typography>{profileInfo.department}</Typography>

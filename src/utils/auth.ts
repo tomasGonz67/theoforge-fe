@@ -106,7 +106,7 @@ export const isAuthenticated = (): boolean => {
     const currentTime = Date.now() / 1000;
     
     return decoded.exp > currentTime;
-  } catch (error) {
+  } catch {
     return false;
   }
 };

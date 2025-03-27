@@ -26,6 +26,14 @@ import {
   Tooltip as MTTooltip
 } from "@material-tailwind/react";
 
+interface TimeSeriesData {
+  time: string,
+  cpu: number,
+  memory: number,
+  requests: number,
+  errors: number
+}
+
 export function RealTimeDashboard() {
   // State for active tab
   const [activeTab, setActiveTab] = useState("system-metrics");
@@ -46,7 +54,7 @@ export function RealTimeDashboard() {
   });
   
   // Sample time series data
-  const [timeSeriesData, setTimeSeriesData] = useState([]);
+  const [timeSeriesData, setTimeSeriesData] = useState<TimeSeriesData[]>([]);
   const [modelPerformance, setModelPerformance] = useState([
     { name: 'ETL Pipeline', accuracy: 99.2, latency: 45, throughput: 850 },
     { name: 'NLP Model', accuracy: 94.7, latency: 120, throughput: 320 },
@@ -81,6 +89,7 @@ export function RealTimeDashboard() {
     }, 5000);
     
     return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
   // Refresh data manually
@@ -147,13 +156,14 @@ export function RealTimeDashboard() {
   };
   
   // Format for percentages
-  const formatPercent = (value) => `${value.toFixed(1)}%`;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const formatPercent = (value: number) => `${value.toFixed(1)}%`;
   
   // Format for data transfer
-  const formatDataTransfer = (value) => `${value.toFixed(1)} MB/s`;
+  const formatDataTransfer = (value: number) => `${value.toFixed(1)} MB/s`;
   
   // Get status color based on value thresholds
-  const getStatusColor = (value, thresholds = { warning: 70, critical: 90 }) => {
+  const getStatusColor = (value: number, thresholds = { warning: 70, critical: 90 }) => {
     if (value >= thresholds.critical) return "red";
     if (value >= thresholds.warning) return "amber";
     return "green";
@@ -163,7 +173,7 @@ export function RealTimeDashboard() {
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
   
   // Calculate trend indicators
-  const calculateTrend = (current, previous) => {
+  const calculateTrend = (current: number, previous: number) => {
     if (!previous || current === previous) return { direction: 'neutral', value: 0 };
     
     const diff = current - previous;
@@ -778,7 +788,7 @@ export function RealTimeDashboard() {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="name" />
                       <YAxis domain={[85, 100]} />
-                      <Tooltip formatter={(value) => `${value.toFixed(1)}%`} />
+                      <Tooltip formatter={(value) => `${(value as number).toFixed(1)}%`} />
                       <Legend />
                       <Bar dataKey="accuracy" name="Accuracy (%)" fill="#8884d8" />
                     </BarChart>

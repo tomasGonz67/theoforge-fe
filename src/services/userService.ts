@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/services/userService.ts
 import axiosInstance from '../utils/axiosConfig';
 
@@ -7,7 +8,7 @@ const userService = {
     try {
       const response = await axiosInstance.get('/users/profile');
       return { success: true, data: response.data };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching user profile:', error);
       return {
         success: false,
@@ -21,7 +22,7 @@ const userService = {
     try {
       const response = await axiosInstance.put('/users/profile', profileData);
       return { success: true, data: response.data };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating user profile:', error);
       return {
         success: false,
@@ -35,7 +36,7 @@ const userService = {
     try {
       const response = await axiosInstance.get('/users');
       return { success: true, data: response.data };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching users:', error);
       return {
         success: false,
@@ -49,7 +50,7 @@ const userService = {
     try {
       const response = await axiosInstance.get(`/users/${userId}`);
       return { success: true, data: response.data };
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error fetching user ${userId}:`, error);
       return {
         success: false,
@@ -63,7 +64,7 @@ const userService = {
     try {
       const response = await axiosInstance.put(`/users/${userId}`, userData);
       return { success: true, data: response.data };
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error updating user ${userId}:`, error);
       return {
         success: false,
@@ -77,7 +78,7 @@ const userService = {
     try {
       await axiosInstance.delete(`/users/${userId}`);
       return { success: true };
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error deleting user ${userId}:`, error);
       return {
         success: false,

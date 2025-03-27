@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/services/authService.ts
 import axios from 'axios';
 
@@ -73,7 +74,7 @@ export const authService = {
 
       const response = await axios.post(`${API_URL}/auth/register`, userData, { headers });
       return { success: true, data: response.data };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Registration error:', error);
       return { 
         success: false, 

@@ -130,6 +130,7 @@ export function KnowledgeGraphPage() {
                   <Input 
                     icon={<MagnifyingGlassIcon className="h-4 w-4" />} 
                     label="Search nodes and relationships" 
+                    crossOrigin={undefined}
                   />
                 </div>
               </div>
@@ -175,7 +176,7 @@ export function KnowledgeGraphPage() {
               <Typography variant="small" color="blue-gray" className="mb-2 font-medium">
                 Node Label
               </Typography>
-              <Input label="Enter node label" />
+              <Input label="Enter node label" crossOrigin={undefined} />
             </div>
             <div>
               <Typography variant="small" color="blue-gray" className="mb-2 font-medium">
@@ -241,7 +242,7 @@ export function KnowledgeGraphPage() {
               <Typography variant="small" color="blue-gray" className="mb-2 font-medium">
                 Relation Type
               </Typography>
-              <Input label="Enter relation type (e.g. 'includes', 'created by')" />
+              <Input label="Enter relation type (e.g. 'includes', 'created by')" crossOrigin={undefined} />
             </div>
             <div>
               <Typography variant="small" color="blue-gray" className="mb-2 font-medium">
