@@ -319,6 +319,7 @@ export function GuestsTable() {
                     </td>
                     <td className={classes}>
                       <div className="flex gap-2">
+
                         <IconButton
                           variant="text"
                           color="teal"
@@ -326,6 +327,7 @@ export function GuestsTable() {
                         >
                           <EyeIcon className="h-4 w-4" />
                         </IconButton>
+
                         <IconButton
                           variant="text"
                           color="teal"
@@ -333,6 +335,7 @@ export function GuestsTable() {
                         >
                           <PencilIcon className="h-4 w-4" />
                         </IconButton>
+                        
                         <IconButton
                           variant="text"
                           color="red"

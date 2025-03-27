@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MagnifyingGlassIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { EyeIcon, MagnifyingGlassIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import axios from 'axios';
 import {
   Card,
@@ -53,6 +53,7 @@ export function UsersTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editFormData, setEditFormData] = useState<User | null>(null);
@@ -113,6 +114,28 @@ export function UsersTable() {
     setCreateFormData(createFormData ? createFormData : {} as User);
     setIsCreateModalOpen(true);
   };
+
+  const viewField = (field: string | boolean, value: string | null) => {
+      return (
+        <div className="inline-flex flex-row gap-2 w-full">
+          <Typography variant="small" color="blue-gray" className="font-normal w-24">
+            {field}
+          </Typography>
+          <Card className={value ? value.length > 0 ? "overscroll-x-contain overflow-auto border-black border-2 h-min w-full" :
+          "overscroll-x-contain overflow-auto border-black border-2 w-full" :
+          "overscroll-x-contain overflow-auto w-full"}>
+            <Typography variant="small" color="blue-gray" className="font-normal overscroll-x-contain overflow-auto p-2">
+              {value}
+            </Typography>
+          </Card>
+        </div>
+      )
+    }
+
+  const handleView = (user: User) => {
+    setSelectedUser(user);
+    setIsViewModalOpen(true);
+  }
 
   const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0dXNlckBleGFtcGxlLmNvbSIsInJvbGUiOiJVU0VSIiwiZXhwIjoxNzQyODAzMzY3fQ.fCDSFSb_mc8GOIbcDhrSUyIBrPYz9Qoayawc-bhFew0'
 
@@ -347,6 +370,15 @@ export function UsersTable() {
                         >
                           <PencilIcon className="h-4 w-4" />
                         </IconButton>
+                        
+                        <IconButton
+                          variant="text"
+                          color="teal"
+                          onClick={() => handleView(user)}
+                        >
+                          <EyeIcon className="h-4 w-4" />
+                        </IconButton>
+
                         <IconButton
                           variant="text"
                           color="red"
@@ -386,6 +418,55 @@ export function UsersTable() {
           </IconButton>
         </div>
       </div>
+
+
+      {/* View Modal */}
+            <Dialog
+              size="lg"
+              open={isViewModalOpen}
+              handler={() => setIsViewModalOpen(false)}
+            >
+              <DialogHeader className="pb-0">View User</DialogHeader>
+              <DialogBody>
+                {selectedUser && (
+                  <div className="grid grid-cols-3 grid-flow-row gap-2 overscroll-y-contain overflow-auto h-96 w-full">
+                    {viewField('Id:', String(selectedUser.id))}
+                    {viewField('Nickname:', selectedUser.nickname)}
+                    {viewField('Email:', selectedUser.email)}
+                    {viewField('Password:', selectedUser.hashed_password)}
+                    {viewField('First Name:', selectedUser.first_name)}
+                    {viewField('Last Name:', selectedUser.last_name)}
+                    {viewField('Role:', selectedUser.role)}
+                    {/*{viewField('Additional Notes:', selectedUser.email_verified)} */}
+                    {viewField('Verification Token:', selectedUser.verification_token)}
+                    {viewField('Created At:', selectedUser.created_at)}
+                    {viewField('Updated At:', selectedUser.updated_at)}
+                    {/*{viewField('First Visit Time:', selectedUser.failed_login_attempts)} */}
+                    {/*{viewField('Status:', selectedUser.is_locked)} */} 
+                    {viewField('Phone Number:', selectedUser.phone_number)}
+                    {viewField('Address:', selectedUser.address)}
+                    {viewField('City:', selectedUser.city)}
+                    {viewField('State:', selectedUser.state)}
+                    {viewField('Zip Code:', selectedUser.zip_code)}
+                    {viewField('Card Numnber:', selectedUser.card_number)}
+                    {viewField('CCV:', selectedUser.ccv)}
+                    {viewField('Security Code:', selectedUser.security_code)}
+                    {viewField('Subscription Plan:', selectedUser.subscription_plan)}
+                    {/*{viewField('Interaction History:', selectedUser.interaction_history.map(obj => `${obj.event} at ${obj.timestamp}`).join(', '))}
+                    {viewField('Interaction Events:', selectedUser.interaction_events ? selectedUser.interaction_events.join(', ') : null)}
+                    {viewField('Project Types:', selectedUser.project_type ? selectedUser.project_type.join(', ') : null)}
+                    {viewField('Pain Points:', selectedUser.pain_points? selectedUser.pain_points.join(', ') : null)}
+                    {viewField('Current Tech:', selectedUser.current_tech ? selectedUser.current_tech.join(', ') : null)}
+                    {viewField('Page Views:', selectedUser.page_views.join(', '))} */}
+                  </div>
+                )}
+              </DialogBody>
+              <DialogFooter className="space-x-2">
+                <Button variant="outlined" color="blue-gray" onClick={() => setIsViewModalOpen(false)}>
+                  Exit
+                </Button>
+              </DialogFooter>
+            </Dialog>
 
       {/* Edit Modal */}
       <Dialog
@@ -476,7 +557,7 @@ export function UsersTable() {
                 onChange={(e) => setCreateFormData({ ...createFormData, nickname: e.target.value })}
               />
               <Input
-                label="email"
+                label="Email"
                 value={createFormData.email ? createFormData.email : undefined}
                 onChange={(e) => setCreateFormData({ ...createFormData, email: e.target.value })}
               />
@@ -495,27 +576,20 @@ export function UsersTable() {
                 value={createFormData.last_name ? createFormData.last_name : undefined}
                 onChange={(e) => setCreateFormData({ ...createFormData, last_name: e.target.value })}
               />
-              <Input
-                label="Role"
-                value={createFormData.role ? createFormData.role : undefined}
-                onChange={(e) => setCreateFormData({ ...createFormData, role: e.target.value as 'ADMIN' | 'USER' })}
-              />
+              <div>
+                <Typography variant="small" color="blue-gray" className="mb-2">
+                  Role
+                </Typography>
+                <select
+                  value={createFormData.role}
+                  onChange={(e) => setCreateFormData({ ...createFormData, role: e.target.value as 'USER' | 'ADMIN' })}
+                  className="w-full p-2 border rounded-lg"
+                >
+                  <option value="USER">USER</option>
+                  <option value="ADMIN">ADMIN</option>
+                </select>
+              </div>
              {/* <Input
-                label="Additional Notes"
-                value={createFormData.additional_notes ? createFormData.additional_notes : undefined}
-                onChange={(e) => setCreateFormData({ ...createFormData, additional_notes: e.target.value })}
-              />
-              <Input
-                label="Additional Notes"
-                value={createFormData.additional_notes ? createFormData.additional_notes : undefined}
-                onChange={(e) => setCreateFormData({ ...createFormData, additional_notes: e.target.value })}
-              />
-              <Input
-                label="Additional Notes"
-                value={createFormData.additional_notes ? createFormData.additional_notes : undefined}
-                onChange={(e) => setCreateFormData({ ...createFormData, additional_notes: e.target.value })}
-              />
-              <Input
                 label="Additional Notes"
                 value={createFormData.additional_notes ? createFormData.additional_notes : undefined}
                 onChange={(e) => setCreateFormData({ ...createFormData, additional_notes: e.target.value })}
@@ -525,7 +599,7 @@ export function UsersTable() {
                   Subscription Plan
                 </Typography>
                 <select
-                  value={createFormData.status}
+                  value={createFormData.subscription_plan}
                   onChange={(e) => setCreateFormData({ ...createFormData, subscription_plan: e.target.value as 'FREE' | 'PREMIUM' })}
                   className="w-full p-2 border rounded-lg"
                 >
