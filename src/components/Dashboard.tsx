@@ -119,7 +119,7 @@ const userNavigation = [
   {
     name: 'Visualization', 
     href: '/dashboard/Chat', 
-    icon:UsersIcon,
+    icon: UsersIcon,
     description: 'LLM Chat'
   },
 ];
@@ -179,7 +179,7 @@ const adminNavigation = [
     href: '/dashboard/realtime', 
     icon: CpuChipIcon,
     description: 'Live system metrics'
-  }
+  },
 ];
 
 // Notification structure
@@ -2873,7 +2873,7 @@ const Sidebar = () => (
               <KnowledgeGraphPage />
             )}
             {/* Knowledge Graph Integration */}
-            {currentPage === 'Visualization' && (
+            {currentPage === 'Chat' && (
               <Chat />
             )}
 
