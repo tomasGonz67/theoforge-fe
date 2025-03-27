@@ -496,33 +496,40 @@ export function UsersTable() {
           {editFormData && (
             <div className="grid gap-6">
               <Input
-                label="Name"
-                value={editFormData.name ? editFormData.name : undefined}
-                onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                label="Nick Name"
+                value={editFormData.nickname ? editFormData.nickname : undefined}
+                onChange={(e) => setEditFormData({ ...editFormData, nickname: e.target.value })}
+              />
+              <Input
+                label="First Name"
+                value={editFormData.first_name ? editFormData.first_name : undefined}
+                onChange={(e) => setEditFormData({ ...editFormData, first_name: e.target.value })}
+              />
+              <Input
+                label="Last Name"
+                value={editFormData.last_name ? editFormData.last_name : undefined}
+                onChange={(e) => setEditFormData({ ...editFormData, last_name: e.target.value })}
               />
               <Input
                 label="Email"
                 value={editFormData.email}
                 onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
               />
-              <Input
-                label="Role"
-                value={editFormData.role}
-                onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value as "ADMIN" | "USER" })}
-              />
+              
               <div>
                 <Typography variant="small" color="blue-gray" className="mb-2">
-                  Status
+                  Role
                 </Typography>
                 <select
                   value={editFormData.status}
-                  onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value as 'active' | 'inactive' })}
+                  onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value as 'ADMIN' | 'USER' })}
                   className="w-full p-2 border rounded-lg"
                 >
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
+                  <option value="USER">USER</option>
+                  <option value="ADMIN">ADMIN</option>
                 </select>
               </div>
+
             </div>
           )}
         </DialogBody>
