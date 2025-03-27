@@ -76,8 +76,8 @@ export function GuestsTable() {
         throw Error //Ensure an array of guests is returned
       } else setShowError(false);
       setGuests(res.data);
-    } catch (error) {
-      console.error('Error fetching guests:', error);
+    } catch {
+      setShowError(true);
     }
     setLoading(false);
   };

@@ -21,8 +21,8 @@ async function validateForm(authType: AuthFormType) {
   jest.clearAllMocks();
   render(<AuthProvider><AuthForm type={authType.type}></AuthForm></AuthProvider>);
   // MUI input element's text is in a separate label element, so query by placeholder
-  const emailInput = screen.getByPlaceholderText('your@email.com');
-  const passwordInput = screen.getByPlaceholderText('••••••••');
+  const emailInput = screen.getByPlaceholderText('Email');
+  const passwordInput = screen.getByPlaceholderText('Password');
   let submitButton;
   if (authType.type === 'login' ) submitButton = screen.getByRole('button', {name: 'Login'});
   if (authType.type === 'register') submitButton = screen.getByRole('button', {name: 'Register'});
@@ -35,9 +35,9 @@ async function validateForm(authType: AuthFormType) {
     // checks for @ in email by default
     fireEvent.change(emailInput, { target: { value: 'test' } });
     fireEvent.change(passwordInput, { target: { value: 'test' } });
-    const firstNameInput = screen.queryByPlaceholderText('John');
-    const lastNameInput = screen.queryByPlaceholderText('Doe');
-    const nicknameInput = screen.queryByPlaceholderText('johndoe');
+    const firstNameInput = screen.queryByPlaceholderText('First Name');
+    const lastNameInput = screen.queryByPlaceholderText('Last Name');
+    const nicknameInput = screen.queryByPlaceholderText('Nickname');
     if (authType.type === 'register' && firstNameInput && lastNameInput && nicknameInput) {
       fireEvent.change(firstNameInput, { target: { value: 'test' } });
       fireEvent.change(lastNameInput, { target: { value: 'test' } });
@@ -230,24 +230,19 @@ describe('When rendering login page', () => {
     expect(screen.getByText('Back to home')).toBeInTheDocument();
     expect(screen.getByText('Welcome Back')).toBeInTheDocument()
     expect(screen.queryByText('Create Account')).toBeNull();
-    expect(screen.queryByText('Sign in to your account')).not.toBeNull();
-    expect(screen.queryByText('Join Theoforge today')).toBeNull();
+    expect(screen.queryByText('Sign in to access your account')).not.toBeNull();
+    expect(screen.queryByText('Join us and start your journey')).toBeNull();
     expect(screen.getByText('Or continue with')).toBeInTheDocument();
     expect(screen.queryByText("Already have an account?")).toBeNull();
     expect(screen.getByText("Don't have an account?")).toBeInTheDocument();
   });
   it('renders the form properly', () => {
     renderAuthForm({type: 'login'});
-    expect(screen.getByText('Email Address')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('your@email.com')).toBeInTheDocument();
-    expect(screen.getByText('Password')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('••••••••')).toBeInTheDocument();
-    expect(screen.queryByText('First Name')).toBeNull();
-    expect(screen.queryByPlaceholderText('John')).toBeNull();
-    expect(screen.queryByText('Last Name')).toBeNull();
-    expect(screen.queryByPlaceholderText('Doe')).toBeNull();
-    expect(screen.queryByText('Nickname')).toBeNull();
-    expect(screen.queryByPlaceholderText('johndoe')).toBeNull();
+    expect(screen.getByPlaceholderText('Email')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Password')).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('First Name')).toBeNull();
+    expect(screen.queryByPlaceholderText('Last Name')).toBeNull();
+    expect(screen.queryByPlaceholderText('Nickname')).toBeNull();
     const registerButton = screen.queryByRole('button', {name: 'Register'});
     const loginButton = screen.queryByRole('button', {name: 'Login'});
     expect(registerButton).toBeNull();
@@ -283,24 +278,19 @@ describe('When rendering registration page', () => {
     expect(screen.getByText('Back to home')).toBeInTheDocument();
     expect(screen.queryByText('Welcome Back')).toBeNull();
     expect(screen.getByText('Create Account')).toBeInTheDocument();
-    expect(screen.queryByText('Sign in to your account')).toBeNull();
-    expect(screen.queryByText('Join Theoforge today')).not.toBeNull();
+    expect(screen.queryByText('Sign in to access your account')).toBeNull();
+    expect(screen.queryByText('Join us and start your journey')).not.toBeNull();
     expect(screen.queryByText('Or continue with')).toBeNull();
     expect(screen.getByText("Already have an account?")).toBeDefined();
     expect(screen.queryByText("Don't have an account?")).toBeNull();
   });
   it('renders the form properly', () => {
     renderAuthForm({type: 'register'});
-    expect(screen.getByText('Email Address')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('your@email.com')).toBeInTheDocument();
-    expect(screen.getByText('Password')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('••••••••')).toBeInTheDocument();
-    expect(screen.queryByText('First Name')).not.toBeNull();
-    expect(screen.queryByPlaceholderText('John')).not.toBeNull();
-    expect(screen.queryByText('Last Name')).not.toBeNull();
-    expect(screen.queryByPlaceholderText('Doe')).not.toBeNull();
-    expect(screen.queryByText('Nickname')).not.toBeNull();
-    expect(screen.queryByPlaceholderText('johndoe')).not.toBeNull();
+    expect(screen.getByPlaceholderText('Email')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Password')).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('First Name')).not.toBeNull();
+    expect(screen.queryByPlaceholderText('Last Name')).not.toBeNull();
+    expect(screen.queryByPlaceholderText('Nickname')).not.toBeNull();
     const registerButton = screen.queryByRole('button', {name: 'Register'});
     const loginButton = screen.queryByRole('button', {name: 'Login'});
     expect(registerButton).not.toBeNull();

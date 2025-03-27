@@ -7,6 +7,9 @@ FROM node:18-slim
 WORKDIR /app
 COPY package*.json ./
 
+ARG VITE_OPENAI_API_KEY
+ENV VITE_OPENAI_API_KEY=$VITE_OPENAI_API_KEY
+
 # Install ALL dependencies (dev + prod)
 RUN npm install
 

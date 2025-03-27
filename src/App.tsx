@@ -29,8 +29,7 @@ import {
 } from "@material-tailwind/react";
 import axios from 'axios';
 
-let API_URL = window.location.origin;
-API_URL = API_URL.replace(/800./, "8000") // Map port 800x to 8000 for localhost testing
+const API_URL = window.location.origin.includes("localhost") ? "http://localhost:8000" : "https://dev.theoforge.com/API"
 
 type Role = 'USER' | 'ADMIN';
 
@@ -88,6 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         response = 1;
       }
     }).catch (err => {
+      console.log(err);
       if (err.response && err.response.data && err.response.data.detail) {
         if(err.response.data.detail.includes('Invalid username/password')) {
           response = 500;
@@ -235,6 +235,7 @@ function LandingPage() {
       
       // First call the onClick handler (if provided) to close the menu
       if (onClick) {   
+        onClick(e as React.MouseEvent<HTMLButtonElement>);
         // Add a small delay to allow menu close animation to complete
         setTimeout(() => {
           const element = document.getElementById(to);
@@ -584,7 +585,7 @@ function LandingPage() {
                       </Typography>
                       <div className="flex flex-wrap justify-center gap-2 mb-8">
                         {["Data Solutions", "AI Integration", "Enterprise", "Healthcare", "Finance"].map((category) => (
-                          <Button //Chip is missing onClick property which breaks tests
+                          <Button 
                             key={category}
                             size="sm" 
                             color={activeFilters.includes(category) ? "teal" : "blue-gray"}
@@ -905,6 +906,20 @@ function LandingPage() {
   );
 }
 
+function LearnMore() {
+  return (
+    <div className="container mx-auto px-4 py-10">
+      <h1 className="text-3xl font-bold mb-6">Learn More About Theoforge</h1>
+      <p className="mb-4">
+        This page would contain detailed information about Theoforge's services, company background, and more.
+      </p>
+      <Link to="/" className="text-teal-500 hover:text-teal-700">
+        Return to Home
+      </Link>
+    </div>
+  );
+}
+
 function App() {
   return (
     <AuthProvider>
@@ -925,20 +940,6 @@ function App() {
         </Routes>
       </Router>
     </AuthProvider>
-  );
-}
-
-function LearnMore() {
-  return (
-    <div className="container mx-auto px-4 py-10">
-      <h1 className="text-3xl font-bold mb-6">Learn More About Theoforge</h1>
-      <p className="mb-4">
-        This page would contain detailed information about Theoforge's services, company background, and more.
-      </p>
-      <Link to="/" className="text-teal-500 hover:text-teal-700">
-        Return to Home
-      </Link>
-    </div>
   );
 }
 
