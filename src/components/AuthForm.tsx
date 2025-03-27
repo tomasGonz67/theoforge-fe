@@ -27,8 +27,30 @@ export function AuthForm({ type }: AuthFormProps) {
   const [error, setError] = useState('');
   const [isVisible, setIsVisible] = useState(false);
   const navigate = useNavigate();
-  const { login, isAuthenticated, register } = useContext(AuthContext);
-
+  const { login, isAuthenticated, register, accessTokenLogin } = useContext(AuthContext);
+  
+  useEffect(() => {
+    // If the user's cookie contains a valid access token, redirect to dashboard
+    const authenticate = async (accessToken: string) => {
+      if(await accessTokenLogin(accessToken)) navigate('/dashboard');
+    }
+    // Get the access token from the cookie
+    const field = "accessToken=";
+    let token = "";
+    const pairs = decodeURIComponent(document.cookie).split(';');
+    for(let i = 0; i <pairs.length; i++) {
+      let c = pairs[i];
+      // Remove leading whitespace
+      while (c.charAt(0) == ' ') {
+        c = c.substring(1);
+      }
+      if (c.indexOf(field) == 0) {
+        token = c.substring(field.length, c.length);
+      }
+    }
+    if (token.length > 0) authenticate(token);
+  }, [accessTokenLogin, navigate]);
+  
   useEffect(() => {
     setIsVisible(true);
     
@@ -65,16 +87,26 @@ export function AuthForm({ type }: AuthFormProps) {
       if ( response === 200) {
         navigate('/dashboard');
       } else if (response === 500) {
-        setError('Invalid credentials')
+        setError('Invalid credentials');
+      } else if (response === 1) {
+        setError('Failed to authenticate');
       } else if (response === 0) {
         setError('Failed to contact server. Please try again later.');
       } else {
-        setError('An unknown error encountered. Please try again later.')
+        setError('An unknown error encountered. Please try again later.');
       }
     } else {
-      const response = await register(email, firstName, lastName, nickname, password);
+      const response = await register(email, password,
+        firstName.length > 0 ? firstName : undefined,
+        lastName.length > 0 ? lastName : undefined,
+        nickname.length > 0 ? nickname : undefined);
       if (response === 200) {
-        navigate('/dashboard');
+        const loginResponse = await login(email, password);
+        if ( loginResponse === 200) {
+          navigate('/dashboard');
+        } else {
+          setError('Failed to automatically login');
+        }
       } else if (response === 400) {
         setError('Email already taken');
       } else if (response === 404) {

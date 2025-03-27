@@ -216,7 +216,8 @@ async function validateForm(authType: AuthFormType) {
       fireEvent.change(passwordInput, { target: { value: 'Test1234!' } });
       fireEvent.click(submitButton);
       await waitFor(() => {
-        expect(axios.post).toHaveBeenCalledTimes(1);
+        // Create account, then automatically login with that account
+        expect(axios.post).toHaveBeenCalledTimes(2);
         expect(mockUseNavigate).toHaveBeenCalledWith('/dashboard');
       });
     }

@@ -272,7 +272,6 @@ export function ChatBox({
   
   // Decision maker for when to ask questions
   useEffect(() => {
-    console.log("message change", messages.length > 3, !isAwaitingAnswer, !currentQuestion, isThinking);
     if ((messages.length > 3 && !isAwaitingAnswer && !currentQuestion/* && Math.random() > 0*/) ||
       GUEST_QUESTIONS.find(question => question.question === messages[messages.length-1].content)
     ) {

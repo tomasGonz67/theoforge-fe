@@ -1,7 +1,7 @@
 // src/utils/axiosConfig.ts
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8000'; //Update with your actual backend URL
+export const API_URL = window.location.origin.replace(/800./, "8000"); // Map port 800x to 8000 for localhost testing
 
 // Create axios instance with base URL
 const axiosInstance = axios.create({

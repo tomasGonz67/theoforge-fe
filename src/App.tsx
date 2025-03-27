@@ -40,8 +40,9 @@ export const AuthContext = React.createContext<{
   accessToken: string | null;
   role: Role;
   login: (email: string, password: string) => Promise<number>;
-  register: (email: string, firstName: string, lastName: string, nickname: string, passsword: string) => Promise<number>;
+  register: (email: string, passsword: string, firstName?: string, lastName?: string, nickname?: string) => Promise<number>;
   logout: () => void;
+  accessTokenLogin: (accessToken: string) => Promise<boolean>;
 }>({
   isAuthenticated: false,
   accessToken: null,
@@ -49,11 +50,12 @@ export const AuthContext = React.createContext<{
   login: async () => -1,
   register: async () => -1,
   logout: () => {},
+  accessTokenLogin: async () => false
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [accessToken, setAccessToken] = useState(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
   const [role, setRole] = useState('USER' as Role);
 
   const login = async (email: string, password: string) => {
@@ -68,16 +70,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     params.append('username', email);
     params.append('password', password);
     await axios.post(`${API_URL}/auth/login`, params).then(res => {
-      // Decode jwt token into json
-      const json = JSON.parse(decodeURIComponent(window.atob(res.data.access_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')).split('').map(function(c) {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-      }).join('')));
-      setAccessToken(res.data.access_token);
-      setRole(json.role);
-      setIsAuthenticated(true);
-      response = 200;
+      try {
+        // Decode jwt token into json
+        const json = JSON.parse(decodeURIComponent(window.atob(res.data.access_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')).split('').map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join('')));
+        // Set cookie for 15 minutes(same time access token lasts)
+        const d = new Date();
+        d.setTime(d.getTime() + (15*60*1000));
+        document.cookie = "accessToken=" + res.data.access_token + ";" + "expires="+ d.toUTCString() + ";path=/";
+        // Authenticate 
+        setAccessToken(res.data.access_token);
+        setRole(json.role);
+        setIsAuthenticated(true);
+        response = 200;
+      } catch {
+        response = 1;
+      }
     }).catch (err => {
-      console.log(err)
       if (err.response && err.response.data && err.response.data.detail) {
         if(err.response.data.detail.includes('Invalid username/password')) {
           response = 500;
@@ -91,17 +101,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return response;
   };
 
-  const register = async (email: string, firstName: string, lastName: string, nickname: string, password: string) => {
+  const register = async (email: string, password: string, firstName?: string, lastName?: string, nickname?: string) => {
     let response = -1;
-    await axios.post(`${API_URL}/auth/register`, {
+    const params: {email: string, password: string, first_name?: string, last_name?: string, nickname?: string} = {
       "email": email,
-      "first_name": firstName,
-      "last_name": lastName,
-      "nickname": nickname,
-      "password": password,
-    }).then(res => {
-      setRole(res.data.role);
-      setIsAuthenticated(true);
+      "password": password
+    }
+    if (firstName) params["first_name"] = firstName;
+    if (lastName) params["last_name"] = lastName;
+    if (nickname) params["nickname"] = nickname
+    await axios.post(`${API_URL}/auth/register`, params).then(() => {
       response = 200;
     }).catch(err => {
       if (err.response && err.response.data && err.response.data.detail) {
@@ -122,12 +131,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = () => {
+    document.cookie = "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     setIsAuthenticated(false);
     setRole('USER');
   };
 
+  const accessTokenLogin = async (token: string) => {
+    let success = false;
+    await axios.get(`${API_URL}/auth/auth`, {
+      headers: {'Authorization': `Bearer ${token}`},
+    }).then(res => {
+      try {
+        if (res.status === 200 && res.data.username.role) {
+          setAccessToken(token);
+          setRole(res.data.username.role);
+          setIsAuthenticated(true);
+          success = true;
+        };
+      } catch {
+        setAccessToken(null);
+        setRole("USER");
+        setIsAuthenticated(false);
+        success = false;
+      }
+    }).catch(() => {success = false});
+    return success;
+  }
+  
   return (
-    <AuthContext.Provider value={{ isAuthenticated, accessToken, role, login, register, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, accessToken, role, login, register, logout, accessTokenLogin }}>
       {children}
     </AuthContext.Provider>
   );
