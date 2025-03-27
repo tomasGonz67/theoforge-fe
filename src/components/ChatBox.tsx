@@ -1073,7 +1073,7 @@ export function ChatBox({
             <div className="mt-2 text-center">
               <Typography variant="small" className="text-gray-500 dark:text-gray-400 text-xs flex items-center justify-center gap-1">
                 <LockClosedIcon className="h-3 w-3" />
-                Messages are saved locally on this device
+                Messages are saved locally on this devic. this is a test
               </Typography>
             </div>
           )}
