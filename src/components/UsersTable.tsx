@@ -52,9 +52,11 @@ export function UsersTable() {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editFormData, setEditFormData] = useState<User | null>(null);
+  const [createFormData, setCreateFormData] = useState<User | null>(null);
   const itemsPerPage = 10;
 
   useEffect(() => {
@@ -97,7 +99,7 @@ export function UsersTable() {
     }
     setLoading(false);
   };
-*/}
+ */}
 
 
   const handleEdit = async(user: User) => {
@@ -105,6 +107,11 @@ export function UsersTable() {
     setEditFormData(user);
     setIsEditModalOpen(true);
     
+  };
+
+  const handleCreate = () => {
+    setCreateFormData(createFormData ? createFormData : {} as User);
+    setIsCreateModalOpen(true);
   };
 
   const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0dXNlckBleGFtcGxlLmNvbSIsInJvbGUiOiJVU0VSIiwiZXhwIjoxNzQyODAzMzY3fQ.fCDSFSb_mc8GOIbcDhrSUyIBrPYz9Qoayawc-bhFew0'
@@ -191,6 +198,23 @@ export function UsersTable() {
     }
   };
 
+  const handleCreateSubmit = async () => {
+    if (!createFormData) return;
+
+    try {
+      const res = await axios.post('http://localhost:8000/auth/register', createFormData);
+
+      // Update the local state
+      setUsers(users.concat(res.data as User));
+      
+      setIsCreateModalOpen(false);
+      setCreateFormData(null);
+    } catch (error) {
+      console.error('Error updating guest:', error);
+      // Handle error (show error message to user)
+    }
+  };
+
   const filteredUsers = users.filter(user =>
     (user.name ? user.name.toLowerCase().includes(searchTerm.toLowerCase()) : false) ||
     (user.email ? user.email.toLowerCase().includes(searchTerm.toLowerCase()) : false)
@@ -207,6 +231,27 @@ export function UsersTable() {
   const TABLE_HEAD = ["Nick Name", "Email", "Role", "Status", "Last Login", "Actions"];
 
   return (
+   /* <Card className="border border-gray-100 overflow-hidden">
+      <div className="px-6 py-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
+        <div>
+          <Typography variant="h5" color="blue-gray">
+            Guest Management
+          </Typography>
+          <Typography variant="small" color="gray">
+            View and manage guest accounts in your system
+          </Typography>
+        </div>
+        <Button 
+          color="teal" 
+          size="sm" 
+          className="flex items-center gap-1"
+          onClick={() => handleCreate()}
+        >
+          <HomeIcon className="h-4 w-4" /> Add User
+        </Button>
+      </div>
+    */
+
     <Card className="h-full w-full">
       <CardHeader floated={false} shadow={false} className="rounded-none">
         <div className="flex items-center justify-between gap-8 mb-8">
@@ -412,6 +457,104 @@ export function UsersTable() {
           </Button>
         </DialogFooter>
       </Dialog>
-    </Card>
+
+      {/* Create Modal */}
+      {/*<Dialog
+        size="md"
+        open={isCreateModalOpen}
+        handler={() => setIsCreateModalOpen(false)}
+      >
+        <DialogHeader>Create Guest</DialogHeader>
+
+        <DialogBody>
+          {createFormData && (
+            <div className="grid gap-6 overscroll-y-contain overflow-auto h-96">
+              <div></div>
+              <Input
+                label="Nick Name"
+                value={createFormData.nickname ? createFormData.nickname : undefined}
+                onChange={(e) => setCreateFormData({ ...createFormData, nickname: e.target.value })}
+              />
+              <Input
+                label="email"
+                value={createFormData.email ? createFormData.email : undefined}
+                onChange={(e) => setCreateFormData({ ...createFormData, email: e.target.value })}
+              />
+              <Input
+                label="Password"
+                value={createFormData.hashed_password ? createFormData.hashed_password : undefined}
+                onChange={(e) => setCreateFormData({ ...createFormData, hashed_password: e.target.value })}
+              />
+              <Input
+                label="First Name"
+                value={createFormData.first_name ? createFormData.first_name : undefined}
+                onChange={(e) => setCreateFormData({ ...createFormData, first_name: e.target.value })}
+              />
+              <Input
+                label="Last Name"
+                value={createFormData.last_name ? createFormData.last_name : undefined}
+                onChange={(e) => setCreateFormData({ ...createFormData, last_name: e.target.value })}
+              />
+              <Input
+                label="Role"
+                value={createFormData.role ? createFormData.role : undefined}
+                onChange={(e) => setCreateFormData({ ...createFormData, role: e.target.value as 'ADMIN' | 'USER' })}
+              />
+             {/* <Input
+                label="Additional Notes"
+                value={createFormData.additional_notes ? createFormData.additional_notes : undefined}
+                onChange={(e) => setCreateFormData({ ...createFormData, additional_notes: e.target.value })}
+              />
+              <Input
+                label="Additional Notes"
+                value={createFormData.additional_notes ? createFormData.additional_notes : undefined}
+                onChange={(e) => setCreateFormData({ ...createFormData, additional_notes: e.target.value })}
+              />
+              <Input
+                label="Additional Notes"
+                value={createFormData.additional_notes ? createFormData.additional_notes : undefined}
+                onChange={(e) => setCreateFormData({ ...createFormData, additional_notes: e.target.value })}
+              />
+              <Input
+                label="Additional Notes"
+                value={createFormData.additional_notes ? createFormData.additional_notes : undefined}
+                onChange={(e) => setCreateFormData({ ...createFormData, additional_notes: e.target.value })}
+              /> 
+              <div>
+                <Typography variant="small" color="blue-gray" className="mb-2">
+                  Subscription Plan
+                </Typography>
+                <select
+                  value={createFormData.status}
+                  onChange={(e) => setCreateFormData({ ...createFormData, subscription_plan: e.target.value as 'FREE' | 'PREMIUM' })}
+                  className="w-full p-2 border rounded-lg"
+                >
+                  <option value="FREE">FREE</option>
+                  <option value="PREMIUM">PREMIUM</option>
+                </select>
+              </div>
+
+            </div>
+          )}
+        </DialogBody>
+
+        <DialogFooter className="space-x-2">
+          <Button variant="outlined" color="red" onClick={() => setIsCreateModalOpen(false)}>
+            Cancel
+          </Button>
+          <Button color="teal" onClick={handleCreateSubmit}>
+            Create
+          </Button>
+        </DialogFooter>
+
+      </Dialog> */}
+
+
+
+     </Card>
+    
+
+
+
   );
 }

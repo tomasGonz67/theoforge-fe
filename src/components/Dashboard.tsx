@@ -730,7 +730,7 @@ export function Dashboard() {
                     size="sm" 
                     className="flex items-center gap-1"
                   >
-                    <HomeIcon className="h-4 w-4" /> Add Guest
+                    <HomeIcon className="h-4 w-4" /> (FALSE)Add Guest
                   </Button>
                 </div>
                 <GuestsTable />
