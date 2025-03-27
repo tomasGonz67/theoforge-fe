@@ -191,7 +191,6 @@ export function AuthForm({ type }: AuthFormProps) {
                       className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-300"
                       value={nickname}
                       onChange={(e) => setNickname(e.target.value)}
-                      required
                     />
                   </div>
                   
@@ -206,7 +205,6 @@ export function AuthForm({ type }: AuthFormProps) {
                         className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-300"
                         value={firstName}
                         onChange={(e) => setFirstName(e.target.value)}
-                        required
                       />
                     </div>
                     <div className="relative">
@@ -219,7 +217,6 @@ export function AuthForm({ type }: AuthFormProps) {
                         className="w-full p-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-300"
                         value={lastName}
                         onChange={(e) => setLastName(e.target.value)}
-                        required
                       />
                     </div>
                   </div>
