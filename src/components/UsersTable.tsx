@@ -258,7 +258,7 @@ export function UsersTable() {
       <div className="px-6 py-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
         <div>
           <Typography variant="h5" color="blue-gray">
-            Guest Management
+            Users Management
           </Typography>
           <Typography variant="small" color="gray">
             View and manage guest accounts in your system
@@ -569,7 +569,7 @@ export function UsersTable() {
         open={isCreateModalOpen}
         handler={() => setIsCreateModalOpen(false)}
       >
-        <DialogHeader>Create Guest</DialogHeader>
+        <DialogHeader>Create User</DialogHeader>
 
         <DialogBody>
           {createFormData && (
