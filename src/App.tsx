@@ -28,6 +28,7 @@ import {
   Chip
 } from "@material-tailwind/react";
 import axios from 'axios';
+import { Chat } from './components/ChatApp';
 
 const BASE_URL = 'https://dev.theoforge.com/API';
 
@@ -915,6 +916,7 @@ function App() {
           <Route path="/login" element={<AuthForm type="login" />} />
           <Route path="/register" element={<AuthForm type="register" />} />
           <Route path="/learn-more" element={<LearnMore />} />
+          <Route path="/chat" element={<Chat />} />
           <Route
             path="/dashboard/*"
             element={

@@ -340,3 +340,4 @@ export function Chat(){
   {/* export default ChatApp */}
 
 } 
+export default Chat;
