@@ -251,7 +251,7 @@ export function UsersTable() {
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
 
   //This I think should be changed to the api call key's such as email, nickname, etc..
-  const TABLE_HEAD = ["Nick Name", "Email", "Role", "Status", "Last Login", "Actions"];
+  const TABLE_HEAD = ["Nick Name", "Email", "First Name", "Last Name", "Role", "Actions"];
 
   return (
     <Card className="border border-gray-100 overflow-hidden">
@@ -341,11 +341,26 @@ export function UsersTable() {
                         {user.email}
                       </Typography>
                     </td>
+
+                    <td className={classes}>
+                      <Typography variant="small" color="blue-gray" className="font-normal">
+                        {user.first_name}
+                      </Typography>
+                    </td>
+
+                    <td className={classes}>
+                      <Typography variant="small" color="blue-gray" className="font-normal">
+                        {user.last_name}
+                      </Typography>
+                    </td>
+
                     <td className={classes}>
                       <Typography variant="small" color="blue-gray" className="font-normal">
                         {user.role}
                       </Typography>
                     </td>
+
+                  {/*
                     <td className={classes}>
                       <div className="w-max">
                         <Chip
@@ -355,12 +370,14 @@ export function UsersTable() {
                           color={status === 'active' ? 'green' : 'red'}
                         />
                       </div>
-                    </td>
-                    <td className={classes}>
+                    </td> */}
+
+                    {/* <td className={classes}>
                       <Typography variant="small" color="blue-gray" className="font-normal">
                         {new Date(user.lastLogin).toLocaleDateString()}
                       </Typography>
-                    </td>
+                    </td> */}
+
                     <td className={classes}>
                       <div className="flex gap-2">
                         <IconButton
