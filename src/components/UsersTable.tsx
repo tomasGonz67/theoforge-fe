@@ -261,7 +261,7 @@ export function UsersTable() {
             Users Management
           </Typography>
           <Typography variant="small" color="gray">
-            View and manage guest accounts in your system
+            View and manage user accounts in your system
           </Typography>
         </div>
         <Button 
