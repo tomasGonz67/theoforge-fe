@@ -16,6 +16,7 @@ import {
   DialogFooter,
 } from "@material-tailwind/react";
 import { cn } from '../lib/utils';
+import { User } from 'lucide-react';
 
 interface User {
   id: number;
@@ -137,7 +138,7 @@ export function UsersTable() {
     setIsViewModalOpen(true);
   }
 
-  const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0dXNlckBleGFtcGxlLmNvbSIsInJvbGUiOiJVU0VSIiwiZXhwIjoxNzQyODAzMzY3fQ.fCDSFSb_mc8GOIbcDhrSUyIBrPYz9Qoayawc-bhFew0'
+  const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJqb2hubnkuYXBwbGVzZWVkQGV4YW1wbGUuY29tIiwicm9sZSI6IlVTRVIiLCJleHAiOjE3NDMwNzcwNjJ9.QUXcK2XpfWEZeq709pKmjJTcMaSE1RiyC2mbGcKQALo'
 
   const Authorize = async() => {
     try {
@@ -194,6 +195,47 @@ export function UsersTable() {
       // Handle error (show error message to user)
     }
   };
+
+  const handleEditSubmitProfile = async () => {
+    if (!editFormData) return;
+
+    try { 
+      Authorize()
+      // In a real application, this would be an API call
+      await axios.put('http://localhost:8000/auth/update-profile', 
+        {
+          "phone_number": "123-456-7890",
+          "address": "123 Main St",
+          "city": "New York",
+          "state": "NY",
+          "zip_code": "10001",
+          "card_number": "4111111111111111",
+          "ccv": "123",
+          "security_code": "999",
+          "subscription_plan": "PREMIUM"
+        },
+        {
+          headers: { 'Authorization' : `Bearer ${token}` }
+        }).then(result => {
+          console.log(result)
+        }).catch(err => {
+          console.log(err)
+        }
+      );
+
+      // Update the local state
+      setUsers(users.map(user => 
+        user.id === editFormData.id ? editFormData : user
+      ));
+      
+      setIsEditModalOpen(false);
+      setEditFormData(null);
+    } catch (error) {
+      console.error('Error updating user:', error);
+      // Handle error (show error message to user)
+    }
+  };
+
 
   const handleDeleteConfirm = async () => {
     if (!selectedUser) return;
@@ -258,7 +300,7 @@ export function UsersTable() {
       <div className="px-6 py-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
         <div>
           <Typography variant="h5" color="blue-gray">
-            Users Management
+            User Management
           </Typography>
           <Typography variant="small" color="gray">
             View and manage user accounts in your system
@@ -344,7 +386,7 @@ export function UsersTable() {
 
                     <td className={classes}>
                       <Typography variant="small" color="blue-gray" className="font-normal">
-                        {user.first_name}
+                        {user.city}
                       </Typography>
                     </td>
 
@@ -534,12 +576,16 @@ export function UsersTable() {
           )}
         </DialogBody>
         <DialogFooter className="space-x-2">
+          <Button color="gray" className='mr-40' onClick={handleEditSubmitProfile}>
+            Edit Profile
+          </Button>
           <Button variant="outlined" color="red" onClick={() => setIsEditModalOpen(false)}>
             Cancel
           </Button>
           <Button color="teal" onClick={handleEditSubmit}>
             Save Changes
           </Button>
+          
         </DialogFooter>
       </Dialog>
 
