@@ -17,6 +17,7 @@ import {
 } from "@material-tailwind/react";
 import { cn } from '../lib/utils';
 import { User } from 'lucide-react';
+import { API_URL } from '../utils/axiosConfig'
 
 interface User {
   id: number;
@@ -69,7 +70,7 @@ export function UsersTable() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:8000/auth/users'); // URL as per backend configuration
+      const response = await axios.get(`${API_URL}/auth/users`); // URL as per backend configuration
       console.log(response.data)
       setUsers(response.data); // Assuming the API returns a list of users
     } catch (error) {
@@ -142,7 +143,7 @@ export function UsersTable() {
 
   const Authorize = async() => {
     try {
-      await axios.get('http://localhost:8000/auth/auth', {
+      await axios.get(`${API_URL}/auth/auth`, {
       headers: { 'Authorization' : `Bearer ${token}` },
      }).then(result => {
       console.log(result.data)
@@ -166,7 +167,7 @@ export function UsersTable() {
     try { 
       Authorize()
       // In a real application, this would be an API call
-      await axios.put('http://localhost:8000/auth/update', 
+      await axios.put(`${API_URL}/auth/update`, 
         {
           "first_name": "Johnny",
           "last_name": "Appleseed",
@@ -202,7 +203,7 @@ export function UsersTable() {
     try { 
       Authorize()
       // In a real application, this would be an API call
-      await axios.put('http://localhost:8000/auth/update-profile', 
+      await axios.put(`${API_URL}/auth/update-profile`, 
         {
           "phone_number": "123-456-7890",
           "address": "123 Main St",
@@ -243,7 +244,7 @@ export function UsersTable() {
     try {
       Authorize()
       // In a real application, this would be an API call
-      await axios.delete('http://localhost:8000/auth/delete', {
+      await axios.delete(`${API_URL}/auth/delete`, {
         headers: {'Authorization' : `Bearer ${token}`},
       }).then(result => {
         console.log(result)
@@ -267,7 +268,7 @@ export function UsersTable() {
     if (!createFormData) return;
 
     try {
-      const res = await axios.post('http://localhost:8000/auth/register', createFormData);
+      const res = await axios.post(`${API_URL}/auth/register`, createFormData);
 
       // Update the local state
       setUsers(users.concat(res.data as User));
