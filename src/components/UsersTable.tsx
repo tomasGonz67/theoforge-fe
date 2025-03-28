@@ -7,7 +7,6 @@ import {
   CardBody,
   Typography,
   Input,
-  Chip,
   IconButton,
   Button,
   Dialog,
@@ -15,7 +14,6 @@ import {
   DialogBody,
   DialogFooter,
 } from "@material-tailwind/react";
-import { cn } from '../lib/utils';
 import { User } from 'lucide-react';
 import { API_URL } from '../utils/axiosConfig'
 
