@@ -2753,26 +2753,7 @@ export function Dashboard() {
 
             {/* Users Table Section - Only shown in Admin view */}
             {currentPage === 'users' && isAdminView && (
-              <Card className="border border-gray-100 overflow-hidden">
-                <div className="px-6 py-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
-                  <div>
-                    <Typography variant="h5" color="blue-gray">
-                      Users Management
-                    </Typography>
-                    <Typography variant="small" color="gray">
-                      Manage your system users and their permissions
-                    </Typography>
-                  </div>
-                  <Button 
-                    color="teal" 
-                    size="sm" 
-                    className="flex items-center gap-1"
-                  >
-                    <UsersIcon className="h-4 w-4" /> 
-                  </Button>
-                </div>
                 <UsersTable />
-              </Card>
             )}
             
             {/* Guests Table Section - Only shown in Admin view */}
