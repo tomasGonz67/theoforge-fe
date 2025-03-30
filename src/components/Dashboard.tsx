@@ -2782,21 +2782,7 @@ export function Dashboard() {
 
             {/* Profile Settings Section - Available to both roles */}
             {currentPage === 'profile' && (
-              <Card className="border border-gray-100 overflow-hidden">
-                <div className="px-6 py-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
-                  <div>
-                    <Typography variant="h5" color="blue-gray">
-                      Profile Settings
-                    </Typography>
-                    <Typography variant="small" color="gray">
-                      Manage your profile information
-                    </Typography>
-                  </div>
-                </div>
-                <div className="p-4">
-                  <ProfileSettings />
-                </div>
-              </Card>
+              <ProfileSettings />
             )}
 
             {/* Knowledge Graph Integration */}

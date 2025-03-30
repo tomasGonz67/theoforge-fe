@@ -20,9 +20,9 @@ import { AuthContext } from '../App';
 
 interface User {
   email: string;
-  nickname: string;
-  first_name: string | null;
-  last_name: string | null;
+  nickname?: string;
+  first_name?: string;
+  last_name?: string;
   role: "ADMIN" | "USER";
   id: number;
   email_verified: boolean;
@@ -32,8 +32,8 @@ interface User {
 
 interface UserForm {
   token?: string;
-  first_name?: string | null;
-  last_name?: string | null;
+  first_name?: string;
+  last_name?: string;
   email?: string;
   nickname?: string;
   password?: string;
@@ -91,11 +91,10 @@ export function UsersTable() {
   };
 
   const handleCreate = () => {
-    setCreateFormData(createFormData);
     setIsCreateModalOpen(true);
   };
 
-  const viewField = (field: string | boolean, value: string | null) => {
+  const viewField = (field: string | boolean, value: string | undefined) => {
       return (
         <div className="inline-flex flex-row gap-2 w-full">
           <Typography variant="small" color="blue-gray" className="font-normal w-24">
@@ -105,7 +104,7 @@ export function UsersTable() {
           "overscroll-x-contain overflow-auto border-black border-2 w-full" :
           "overscroll-x-contain overflow-auto w-full"}>
             <Typography variant="small" color="blue-gray" className="font-normal overscroll-x-contain overflow-auto p-2">
-              {value}
+              {value ? value : ''}
             </Typography>
           </Card>
         </div>
@@ -139,29 +138,34 @@ export function UsersTable() {
   const handleEditSubmit = async () => {
     if (!editFormData) return;
     try{
+      let alert = '';
       if(!await Authorize()) return;
       // Validate fields
       if(!editFormData.email || !editFormData.password) {
-        window.alert('Please fill out all fields');
+        window.alert('Please fill out all required fields');
         return;
       }
-      if(!/^[\w-.]{1,64}@([\w-]{1,63}\.)+[\w-]{2,63}$/.test(editFormData.email)) window.alert('Invalid email');
-      else if(editFormData.nickname && !/^[a-zA-Z0-9]*$/.test(editFormData.nickname)) window.alert('Nickname may not include special characters');
-      else if(editFormData.password.length < 8) window.alert('Password must be at least 8 characters');
-      else if(!/[A-Z]/.test(editFormData.password)) window.alert('Password must contain at least 1 uppercase character');
-      else if(!/[a-z]/.test(editFormData.password)) window.alert('Password must contain at least 1 lowercase character');
-      else if(!/[0-9]/.test(editFormData.password)) window.alert('Password must contain at least 1 number');
-      else if(!/[!@#$%^&*()_+\-=[\]{}|;:,.<>?]/.test(editFormData.password)) window.alert('Password must contain at least 1 special character');
-      else if (editFormData.first_name && editFormData.first_name.length > 100) window.alert('First name must not be more than 100 characters');
-      else if (editFormData.last_name && editFormData.last_name.length > 100) window.alert('Last name must not be more than 100 characters');
-      else if (editFormData.nickname && editFormData.nickname.length > 50) window.alert('Nickname must not be more than 50 characters');
+      if(!/^[\w-.]{1,64}@([\w-]{1,63}\.)+[\w-]{2,63}$/.test(editFormData.email)) alert = 'Invalid email';
+      else if(editFormData.nickname && !/^[a-zA-Z0-9]*$/.test(editFormData.nickname)) alert = 'Nickname may not include special characters';
+      else if(editFormData.password.length < 8) alert = 'Password must be at least 8 characters';
+      else if(!/[A-Z]/.test(editFormData.password)) alert = 'Password must contain at least 1 uppercase character';
+      else if(!/[a-z]/.test(editFormData.password)) alert = 'Password must contain at least 1 lowercase character';
+      else if(!/[0-9]/.test(editFormData.password)) alert = 'Password must contain at least 1 number';
+      else if(!/[!@#$%^&*()_+\-=[\]{}|;:,.<>?]/.test(editFormData.password)) alert = 'Password must contain at least 1 special character';
+      else if (editFormData.first_name && editFormData.first_name.length > 100) alert = 'First name must not be more than 100 characters';
+      else if (editFormData.last_name && editFormData.last_name.length > 100) alert = 'Last name must not be more than 100 characters';
+      else if (editFormData.nickname && editFormData.nickname.length > 50) alert = 'Nickname must not be more than 50 characters';
       // Prevent sql injection by invalidating " and \
       else if (/["\\]/.test(editFormData.email.concat(
         editFormData.first_name ? editFormData.first_name : '',
         editFormData.last_name ? editFormData.last_name : '',
         editFormData.nickname ? editFormData.nickname : '',
         editFormData.password
-      ))) window.alert('Invalid character " or \\ used');
+      ))) alert = 'Invalid character " or \\ used';
+      if (alert !== '') {
+        window.alert(alert);
+        return;
+      }
       // Call backend API
       await axios.put(`${API_URL}/auth/update`, 
         {
@@ -226,8 +230,8 @@ export function UsersTable() {
         headers: {'Authorization' : `Bearer ${editFormData.token}`},
       });
       
-      // Update the local state
-      setUsers(users.filter(user => user.id !== selectedUser.id));
+      // Update guests
+      fetchUsers();
       
       setIsDeleteModalOpen(false);
       setSelectedUser(null);
@@ -242,7 +246,7 @@ export function UsersTable() {
 
     try {
       if(!createFormData.email || !createFormData.password) {
-        window.alert('Please fill out all fields');
+        window.alert('Please fill out all required fields');
         return;
       }
       const res = await register(createFormData.email, createFormData.password,
@@ -385,7 +389,7 @@ export function UsersTable() {
                   <tr key={user.id}>
                     <td className={classes}>
                       <Typography variant="small" color="blue-gray" className="font-normal">
-                        {user.nickname}
+                        {user.nickname ? user.nickname : ''}
                       </Typography>
                     </td>
                     <td className={classes}>
@@ -396,13 +400,13 @@ export function UsersTable() {
 
                     <td className={classes}>
                       <Typography variant="small" color="blue-gray" className="font-normal">
-                        {user.first_name}
+                        {user.first_name ? user.first_name : ''}
                       </Typography>
                     </td>
 
                     <td className={classes}>
                       <Typography variant="small" color="blue-gray" className="font-normal">
-                        {user.last_name}
+                        {user.last_name ? user.last_name : ''}
                       </Typography>
                     </td>
 
@@ -509,103 +513,100 @@ export function UsersTable() {
       >
         <DialogHeader>Edit User</DialogHeader>
         <DialogBody>
-          <div>{/*Fix jest detecting no children in DialogBody error*/}</div>
-          {editFormData && (
-            <div className="grid gap-6 overscroll-y-contain overflow-auto h-96">
-              <Input
-                label="Access Token"
-                value={editFormData.token}
-                onChange={(e) => setEditFormData({ ...editFormData, token: e.target.value })}
-                crossOrigin={undefined}
-                required
-              />
-              <Input
-                label="Nick Name"
-                value={editFormData.nickname}
-                onChange={(e) => setEditFormData({ ...editFormData, nickname: e.target.value })}
-                crossOrigin={undefined}
-              />
-              <Input
-                label="First Name"
-                value={editFormData.first_name ? editFormData.first_name : undefined}
-                onChange={(e) => setEditFormData({ ...editFormData, first_name: e.target.value })}
-                crossOrigin={undefined}
-              />
-              <Input
-                label="Last Name"
-                value={editFormData.last_name ? editFormData.last_name : undefined}
-                onChange={(e) => setEditFormData({ ...editFormData, last_name: e.target.value })}
-                crossOrigin={undefined}
-              />
-              <Input
-                label="Email"
-                value={editFormData.email}
-                onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
-                crossOrigin={undefined}
-                required
-              />
-              <Input
-                label="Password"
-                onChange={(e) => setEditFormData({ ...editFormData, password: e.target.value })}
-                crossOrigin={undefined}
-                required
-              />
-              <Input
-                label="Phone Number"
-                onChange={(e) => setEditFormData({ ...editFormData, phone_number: e.target.value })}
-                crossOrigin={undefined}
-              />
-              <Input
-                label="Address"
-                onChange={(e) => setEditFormData({ ...editFormData, address: e.target.value })}
-                crossOrigin={undefined}
-              />
-              <Input
-                label="City"
-                onChange={(e) => setEditFormData({ ...editFormData, city: e.target.value })}
-                crossOrigin={undefined}
-              />
-              <Input
-                label="State"
-                onChange={(e) => setEditFormData({ ...editFormData, state: e.target.value })}
-                crossOrigin={undefined}
-              />
-              <Input
-                label="Zip Code"
-                onChange={(e) => setEditFormData({ ...editFormData, zip_code: e.target.value })}
-                crossOrigin={undefined}
-              />
-              <Input
-                label="Card Number"
-                onChange={(e) => setEditFormData({ ...editFormData, card_number: e.target.value })}
-                crossOrigin={undefined}
-              />
-              <Input
-                label="CCV"
-                onChange={(e) => setEditFormData({ ...editFormData, ccv: e.target.value })}
-                crossOrigin={undefined}
-              />
-              <Input
-                label="Security Code"
-                onChange={(e) => setEditFormData({ ...editFormData, security_code: e.target.value })}
-                crossOrigin={undefined}
-              />
-              <div>
-                <Typography variant="small" color="blue-gray" className="mb-2">
-                  Subscription Plan
-                </Typography>
-                <select
-                  value={editFormData.subscription_plan}
-                  onChange={(e) => setEditFormData({ ...editFormData, subscription_plan: e.target.value as 'PREMIUM' | 'BASIC' | 'FREE' })}
-                  className="w-full p-2 border rounded-lg"
-                >
-                  <option value="PREMIUM">Premium</option>
-                  <option value="BASIC">Basic</option>
-                  <option value="FREE">Free</option>
-                </select>
-              </div>
+          <div className="grid gap-6 overscroll-y-contain overflow-auto h-96">
+            <Input
+              label="Access Token"
+              value={editFormData.token ? editFormData.token : ''}
+              onChange={(e) => setEditFormData({ ...editFormData, token: e.target.value })}
+              crossOrigin={undefined}
+              required
+            />
+            <Input
+              label="Nick Name"
+              value={editFormData.nickname ? editFormData.nickname : ''}
+              onChange={(e) => setEditFormData({ ...editFormData, nickname: e.target.value })}
+              crossOrigin={undefined}
+            />
+            <Input
+              label="First Name"
+              value={editFormData.first_name ? editFormData.first_name : ''}
+              onChange={(e) => setEditFormData({ ...editFormData, first_name: e.target.value })}
+              crossOrigin={undefined}
+            />
+            <Input
+              label="Last Name"
+              value={editFormData.last_name ? editFormData.last_name : ''}
+              onChange={(e) => setEditFormData({ ...editFormData, last_name: e.target.value })}
+              crossOrigin={undefined}
+            />
+            <Input
+              label="Email"
+              value={editFormData.email ? editFormData.email : ''}
+              onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+              crossOrigin={undefined}
+              required
+            />
+            <Input
+              label="Password"
+              onChange={(e) => setEditFormData({ ...editFormData, password: e.target.value })}
+              crossOrigin={undefined}
+              required
+            />
+            <Input
+              label="Phone Number"
+              onChange={(e) => setEditFormData({ ...editFormData, phone_number: e.target.value })}
+              crossOrigin={undefined}
+            />
+            <Input
+              label="Address"
+              onChange={(e) => setEditFormData({ ...editFormData, address: e.target.value })}
+              crossOrigin={undefined}
+            />
+            <Input
+              label="City"
+              onChange={(e) => setEditFormData({ ...editFormData, city: e.target.value })}
+              crossOrigin={undefined}
+            />
+            <Input
+              label="State"
+              onChange={(e) => setEditFormData({ ...editFormData, state: e.target.value })}
+              crossOrigin={undefined}
+            />
+            <Input
+              label="Zip Code"
+              onChange={(e) => setEditFormData({ ...editFormData, zip_code: e.target.value })}
+              crossOrigin={undefined}
+            />
+            <Input
+              label="Card Number"
+              onChange={(e) => setEditFormData({ ...editFormData, card_number: e.target.value })}
+              crossOrigin={undefined}
+            />
+            <Input
+              label="CCV"
+              onChange={(e) => setEditFormData({ ...editFormData, ccv: e.target.value })}
+              crossOrigin={undefined}
+            />
+            <Input
+              label="Security Code"
+              onChange={(e) => setEditFormData({ ...editFormData, security_code: e.target.value })}
+              crossOrigin={undefined}
+            />
+            <div>
+              <Typography variant="small" color="blue-gray" className="mb-2">
+                Subscription Plan
+              </Typography>
+              <select
+                value={editFormData.subscription_plan}
+                onChange={(e) => setEditFormData({ ...editFormData, subscription_plan: e.target.value as 'PREMIUM' | 'BASIC' | 'FREE' })}
+                className="w-full p-2 border rounded-lg"
+              >
+                <option value="PREMIUM">Premium</option>
+                <option value="BASIC">Basic</option>
+                <option value="FREE">Free</option>
+              </select>
             </div>
-          )}
+          </div>
         </DialogBody>
         <DialogFooter className="space-x-2">
           <Button variant="outlined" color="red" onClick={() => setIsEditModalOpen(false)}>
@@ -627,13 +628,23 @@ export function UsersTable() {
         <DialogHeader>Confirm Deletion</DialogHeader>
         <DialogBody>
           Are you sure you want to delete {selectedUser?.nickname}? This action cannot be undone.
-          <Input
-            label="Access Token"
-            value={editFormData.token}
-            onChange={(e) => setEditFormData({ ...editFormData, token: e.target.value })}
-            crossOrigin={undefined}
-            required
-          />
+          {editFormData.token ? (
+            <Input
+              label="Access Token"
+              value={editFormData.token}
+              onChange={(e) => setEditFormData({ ...editFormData, token: e.target.value })}
+              crossOrigin={undefined}
+              required
+            />
+          ) : (
+            <Input
+              label="Access Token"
+              value=""
+              onChange={(e) => setEditFormData({ ...editFormData, token: e.target.value })}
+              crossOrigin={undefined}
+              required
+            />
+          )}
         </DialogBody>
         <DialogFooter className="space-x-2">
           <Button variant="outlined" color="blue-gray" onClick={() => setIsDeleteModalOpen(false)}>
@@ -654,44 +665,40 @@ export function UsersTable() {
         <DialogHeader>Create User</DialogHeader>
 
         <DialogBody>
-          <div>{/*Fix jest detecting no children in DialogBody error*/}</div>
-          {createFormData && (
-            <div className="grid gap-6 overscroll-y-contain overflow-auto h-96">
-              <div></div>
-              <Input
-                label="Nick Name"
-                value={createFormData.nickname ? createFormData.nickname : undefined}
-                onChange={(e) => setCreateFormData({ ...createFormData, nickname: e.target.value })}
-                crossOrigin={undefined}
-              />
-              <Input
-                label="Email"
-                value={createFormData.email ? createFormData.email : undefined}
-                onChange={(e) => setCreateFormData({ ...createFormData, email: e.target.value })}
-                crossOrigin={undefined}
-                required
-              />
-              <Input
-                label="Password"
-                value={createFormData.password ? createFormData.password : undefined}
-                onChange={(e) => setCreateFormData({ ...createFormData, password: e.target.value })}
-                crossOrigin={undefined}
-                required
-              />
-              <Input
-                label="First Name"
-                value={createFormData.first_name ? createFormData.first_name : undefined}
-                onChange={(e) => setCreateFormData({ ...createFormData, first_name: e.target.value })}
-                crossOrigin={undefined}
-              />
-              <Input
-                label="Last Name"
-                value={createFormData.last_name ? createFormData.last_name : undefined}
-                onChange={(e) => setCreateFormData({ ...createFormData, last_name: e.target.value })}
-                crossOrigin={undefined}
-              />
-            </div>
-          )}
+          <div className="grid gap-6 overscroll-y-contain overflow-auto h-96">
+            <Input
+              label="Nick Name"
+              value={createFormData.nickname ? createFormData.nickname : ''}
+              onChange={(e) => setCreateFormData({ ...createFormData, nickname: e.target.value })}
+              crossOrigin={undefined}
+            />
+            <Input
+              label="Email"
+              value={createFormData.email ? createFormData.email : ''}
+              onChange={(e) => setCreateFormData({ ...createFormData, email: e.target.value })}
+              crossOrigin={undefined}
+              required
+            />
+            <Input
+              label="Password"
+              value={createFormData.password ? createFormData.password : ''}
+              onChange={(e) => setCreateFormData({ ...createFormData, password: e.target.value })}
+              crossOrigin={undefined}
+              required
+            />
+            <Input
+              label="First Name"
+              value={createFormData.first_name ? createFormData.first_name : ''}
+              onChange={(e) => setCreateFormData({ ...createFormData, first_name: e.target.value })}
+              crossOrigin={undefined}
+            />
+            <Input
+              label="Last Name"
+              value={createFormData.last_name ? createFormData.last_name : ''}
+              onChange={(e) => setCreateFormData({ ...createFormData, last_name: e.target.value })}
+              crossOrigin={undefined}
+            />
+          </div>
         </DialogBody>
 
         <DialogFooter className="space-x-2">
