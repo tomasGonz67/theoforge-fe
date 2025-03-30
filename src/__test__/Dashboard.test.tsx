@@ -41,7 +41,7 @@ describe('When rendering the dashboard as an admin', () => {
         // User profile pic
         expect(images[1]).toHaveAttribute('src', '/api/placeholder/40/40');
     });
-    it('contains a users list button', () => {
+    it('contains a users list button', async () => {
         renderAdminDashboard();
         const usersButtonText = screen.queryAllByText('Users');
         // A users button for collapsed and uncollapsed sidebar
@@ -51,24 +51,27 @@ describe('When rendering the dashboard as an admin', () => {
         // Clicking should render a table of users
         if(usersButton) fireEvent.click(usersButton);
         else fail('No users button found');
-        expect(screen.queryByText('Users list')).not.toBeNull();
-        expect(screen.queryByText('See information about all users')).not.toBeNull();
-        const searchForm = screen.getByText('Search');
-        expect(searchForm).toBeDefined();
-        const table = screen.queryByRole('table');
-        expect(table).not.toBeNull();
-        const tableColumns = screen.queryAllByRole('columnheader');
-        const expectedColumns = ['Name', 'Email', 'Role', 'Status', 'Last Login', 'Actions'];
-        expect(tableColumns).toHaveLength(6);
-        for(let i = 0; i < tableColumns.length;i ++) {
-            expect(tableColumns[i]).toHaveTextContent(expectedColumns[i]);
-        }
-        const pagination = screen.queryByText(/Page [0-9]+ of [0-9]+/);
-        expect(pagination).not.toBeNull();
-        const prevPageButton = screen.queryByRole('button', {name: 'Previous'});
-        const nextPageButton = screen.queryByRole('button', {name: 'Next'});
-        expect(prevPageButton).not.toBeNull();
-        expect(nextPageButton).not.toBeNull();
+        await waitFor(() => {
+            expect(axios.get).toHaveBeenCalledTimes(1);
+            expect(screen.queryByText('Users list')).not.toBeNull();
+            expect(screen.queryByText('See information about all users')).not.toBeNull();
+            const searchForm = screen.getByText('Search');
+            expect(searchForm).toBeDefined();
+            const table = screen.queryByRole('table');
+            expect(table).not.toBeNull();
+            const tableColumns = screen.queryAllByRole('columnheader');
+            const expectedColumns = ['Nick Name', 'Email', 'First Name', 'Last Name', 'Role', 'Actions'];
+            expect(tableColumns).toHaveLength(6);
+            for(let i = 0; i < tableColumns.length;i ++) {
+                expect(tableColumns[i]).toHaveTextContent(expectedColumns[i]);
+            }
+            const pagination = screen.queryByText(/Page [0-9]+ of [0-9]+/);
+            expect(pagination).not.toBeNull();
+            const prevPageButton = screen.queryByRole('button', {name: 'Previous'});
+            const nextPageButton = screen.queryByRole('button', {name: 'Next'});
+            expect(prevPageButton).not.toBeNull();
+            expect(nextPageButton).not.toBeNull();
+        });
     });
     it('contains a guests list button', async () => {
         renderAdminDashboard();
@@ -78,6 +81,7 @@ describe('When rendering the dashboard as an admin', () => {
         const guestsButton = screen.getAllByRole('button').find(div => div.innerHTML.includes('Guests'));
         expect(screen.queryByText('Guests list')).toBeNull();
         // Clicking should render a table of guests
+        jest.clearAllMocks();
         if(guestsButton) fireEvent.click(guestsButton);
         else fail('No guests button found');
         await waitFor(() => {

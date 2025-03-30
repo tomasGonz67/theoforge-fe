@@ -17,6 +17,7 @@ import {
   Alert,
 } from "@material-tailwind/react";
 import { API_URL } from '../utils/axiosConfig'
+import { v4 as uuidv4 } from 'uuid';
 
 interface Interaction {
   event: string,
@@ -113,7 +114,7 @@ export function GuestsTable() {
     if (!createFormData) return;
 
     try {
-      createFormData.session_id = 'test';
+      createFormData.session_id = uuidv4();
       const res = await axios.post(`${API_URL}/guests/`, createFormData);
 
       // Update the local state
