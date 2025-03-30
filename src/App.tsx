@@ -38,16 +38,16 @@ export const AuthContext = React.createContext<{
   isAuthenticated: boolean;
   accessToken: string | null;
   role: Role;
-  login: (email: string, password: string) => Promise<number>;
-  register: (email: string, passsword: string, firstName?: string, lastName?: string, nickname?: string) => Promise<number>;
+  login: (email: string, password: string) => Promise<string>;
+  register: (email: string, passsword: string, firstName?: string, lastName?: string, nickname?: string) => Promise<string>;
   logout: () => void;
   accessTokenLogin: (accessToken: string) => Promise<boolean>;
 }>({
   isAuthenticated: false,
   accessToken: null,
   role: 'USER',
-  login: async () => -1,
-  register: async () => -1,
+  login: async () => '',
+  register: async () => '',
   logout: () => {},
   accessTokenLogin: async () => false
 });
@@ -59,12 +59,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string) => {
     // Remove once backend API is released
-    let response = -1;
     if (email === 'test@test.com' && password === 'test123') {
       setRole("ADMIN");
       setIsAuthenticated(true);
-      return 200;
+      return 'OK';
     }
+    // Reduce backend calls by validating fields first
+    if(
+      !/^[\w-.]{1,64}@([\w-]{1,63}\.)+[\w-]{2,63}$/.test(email) || 
+      password.length < 8 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) ||
+      !/[0-9]/.test(password) || !/[!@#$%^&*()_+\-=[\]{}|;:,.<>?]/.test(password) ||
+      /["\\]/.test(email.concat(password))
+    ) return 'Invalid credentials';
+    // Call backend API
+    let response = '';
     const params = new URLSearchParams();
     params.append('username', email);
     params.append('password', password);
@@ -82,27 +90,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setAccessToken(res.data.access_token);
         setRole(json.role);
         setIsAuthenticated(true);
-        response = 200;
+        response = 'OK';
       } catch {
-        response = 1;
+        response = 'Invalid credentials';
       }
     }).catch (err => {
-      console.log(err);
       if (err.response && err.response.data && err.response.data.detail) {
-        if(err.response.data.detail.includes('Invalid username/password')) {
-          response = 500;
-        } else {
-          response = -1;
-        }
+        response = 'Invalid credentials';
       } else {
-        response = 0;
+        response = 'Failed to contact server. Please try again later.';
       }
     });
     return response;
   };
 
   const register = async (email: string, password: string, firstName?: string, lastName?: string, nickname?: string) => {
-    let response = -1;
+    // Reduce backend calls by validating fields first
+    if(!/^[\w-.]{1,64}@([\w-]{1,63}\.)+[\w-]{2,63}$/.test(email)) return 'Invalid email';
+    else if(nickname && !/^[a-zA-Z0-9]*$/.test(nickname)) return 'Nickname may not include special characters';
+    else if(password.length < 8) return 'Password must be at least 8 characters';
+    else if(!/[A-Z]/.test(password)) return 'Password must contain at least 1 uppercase character';
+    else if(!/[a-z]/.test(password)) return 'Password must contain at least 1 lowercase character';
+    else if(!/[0-9]/.test(password)) return 'Password must contain at least 1 number';
+    else if(!/[!@#$%^&*()_+\-=[\]{}|;:,.<>?]/.test(password)) return 'Password must contain at least 1 special character';
+    else if (firstName && firstName.length > 100) return 'First name must not be more than 100 characters';
+    else if (lastName && lastName.length > 100) return 'Last name must not be more than 100 characters';
+    else if (nickname && nickname.length > 50) return 'Nickname must not be more than 50 characters';
+    // Prevent sql injection by invalidating " and \
+    else if (/["\\]/.test(email.concat(
+      firstName ? firstName : '',
+      lastName ? lastName : '',
+      nickname ? nickname : '',
+      password
+    ))) return 'Invalid character " or \\ used';
+    // Call backend API
+    let response = '';
     const params: {email: string, password: string, first_name?: string, last_name?: string, nickname?: string} = {
       "email": email,
       "password": password
@@ -111,20 +133,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (lastName) params["last_name"] = lastName;
     if (nickname) params["nickname"] = nickname
     await axios.post(`${API_URL}/auth/register`, params).then(() => {
-      response = 200;
+      response = 'OK';
     }).catch(err => {
       if (err.response && err.response.data && err.response.data.detail) {
         if (/User with email [\w-.]{1,64}@([\w-]{1,63}\.)+[\w-]{2,63} already exists/.test(err.response.data.detail)) {
-          response = 400;
+          response = 'Email already taken';
         } else if (err.response.data.detail === 'Not Found') {
-          response = 404;
+          response = 'The server has encountered an error. Please try again later.';
         } else if (/Key \(nickname\)=\([a-zA-Z0-9]+\) already exists/.test(err.response.data.detail)) {
-          response = 500;
+          response = 'Nickname already taken';
         } else {
-          response = -1;
+          response = 'An unknown error encountered. Please try again later.';
         }
       } else {
-        response = 0;
+        response = 'Failed to contact server. Please try again later.';
       }
     });
     return response;

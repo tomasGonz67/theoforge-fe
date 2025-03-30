@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { EyeIcon, MagnifyingGlassIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import axios from 'axios';
 import {
@@ -16,6 +16,7 @@ import {
   Alert,
 } from "@material-tailwind/react";
 import { API_URL } from '../utils/axiosConfig'
+import { AuthContext } from '../App';
 
 interface User {
   email: string;
@@ -44,7 +45,7 @@ interface UserForm {
   card_number?: string;
   ccv?: string;
   security_code?: string;
-  subscription_plan?: "PREMIUM" | "FREE";
+  subscription_plan?: "PREMIUM" | "BASIC" | "FREE";
 }
 
 export function UsersTable() {
@@ -60,6 +61,7 @@ export function UsersTable() {
   const [editFormData, setEditFormData] = useState<UserForm>({});
   const [createFormData, setCreateFormData] = useState<UserForm>({});
   const [showError, setShowError] = useState(false);
+  const { register } = useContext(AuthContext);
   const itemsPerPage = 10;
 
   useEffect(() => {
@@ -115,14 +117,18 @@ export function UsersTable() {
     setIsViewModalOpen(true);
   }
 
-  const Authorize = async() => {
-    try {
-      await axios.get(`${API_URL}/auth/auth`, {
-        headers: { 'Authorization' : `Bearer ${editFormData.token}` },
-      });
-    } catch (error) {
-      console.error('Error updating user:', error);
-    };
+  const Authorize = async(): Promise<boolean> => {
+    let result = true;
+    await axios.get(`${API_URL}/auth/auth`, {
+      headers: { 'Authorization' : `Bearer ${editFormData.token}` },
+    }).catch((err) => {
+      console.log(err);
+      if (err.response && err.response.data && err.response.data.detail) {
+        window.alert('Invalid token');
+      }
+      result = false;
+    });
+    return result;
   }
 
   const handleDelete = (user: User) => {
@@ -130,13 +136,33 @@ export function UsersTable() {
     setIsDeleteModalOpen(true);
   };
 
-  
   const handleEditSubmit = async () => {
     if (!editFormData) return;
-
-    try { 
-      Authorize();
-      // In a real application, this would be an API call
+    try{
+      if(!await Authorize()) return;
+      // Validate fields
+      if(!editFormData.email || !editFormData.password) {
+        window.alert('Please fill out all fields');
+        return;
+      }
+      if(!/^[\w-.]{1,64}@([\w-]{1,63}\.)+[\w-]{2,63}$/.test(editFormData.email)) window.alert('Invalid email');
+      else if(editFormData.nickname && !/^[a-zA-Z0-9]*$/.test(editFormData.nickname)) window.alert('Nickname may not include special characters');
+      else if(editFormData.password.length < 8) window.alert('Password must be at least 8 characters');
+      else if(!/[A-Z]/.test(editFormData.password)) window.alert('Password must contain at least 1 uppercase character');
+      else if(!/[a-z]/.test(editFormData.password)) window.alert('Password must contain at least 1 lowercase character');
+      else if(!/[0-9]/.test(editFormData.password)) window.alert('Password must contain at least 1 number');
+      else if(!/[!@#$%^&*()_+\-=[\]{}|;:,.<>?]/.test(editFormData.password)) window.alert('Password must contain at least 1 special character');
+      else if (editFormData.first_name && editFormData.first_name.length > 100) window.alert('First name must not be more than 100 characters');
+      else if (editFormData.last_name && editFormData.last_name.length > 100) window.alert('Last name must not be more than 100 characters');
+      else if (editFormData.nickname && editFormData.nickname.length > 50) window.alert('Nickname must not be more than 50 characters');
+      // Prevent sql injection by invalidating " and \
+      else if (/["\\]/.test(editFormData.email.concat(
+        editFormData.first_name ? editFormData.first_name : '',
+        editFormData.last_name ? editFormData.last_name : '',
+        editFormData.nickname ? editFormData.nickname : '',
+        editFormData.password
+      ))) window.alert('Invalid character " or \\ used');
+      // Call backend API
       await axios.put(`${API_URL}/auth/update`, 
         {
           "first_name": editFormData.first_name,
@@ -149,7 +175,17 @@ export function UsersTable() {
           headers: { 'Authorization' : `Bearer ${editFormData.token}` }
         }
       );
-
+      
+      // Make sure user credentials updated and get new access token
+      const params = new URLSearchParams();
+      params.append('username', editFormData.email);
+      params.append('password', editFormData.password);
+      const res = await axios.post(`${API_URL}/auth/login`, params);
+      if(!res.data || !res.data.access_token) {
+        window.alert('Failed to update profile');
+        return;
+      }
+      
       await axios.put(`${API_URL}/auth/update-profile`, 
         {
           "phone_number": editFormData.phone_number,
@@ -163,14 +199,19 @@ export function UsersTable() {
           "subscription_plan": editFormData.subscription_plan
         },
         {
-          headers: { 'Authorization' : `Bearer ${editFormData.token}` }
+          headers: { 'Authorization' : `Bearer ${res.data.access_token}` }
         }
       );
+      // Update users
       fetchUsers();
       
       setIsEditModalOpen(false);
       setEditFormData({});
-    } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      if(error.response && error.response.data && error.response.data.detail) {
+        window.alert(error.response.data.detail);
+      }
       console.error('Error updating user:', error);
       // Handle error (show error message to user)
     }
@@ -180,12 +221,10 @@ export function UsersTable() {
     if (!selectedUser) return;
 
     try {
-      Authorize();
-      // In a real application, this would be an API call
+      if(!await Authorize()) return;
       await axios.delete(`${API_URL}/auth/delete`, {
         headers: {'Authorization' : `Bearer ${editFormData.token}`},
       });
-      
       
       // Update the local state
       setUsers(users.filter(user => user.id !== selectedUser.id));
@@ -202,11 +241,18 @@ export function UsersTable() {
     if (!createFormData) return;
 
     try {
-      const res = await axios.post(`${API_URL}/auth/register`, createFormData);
+      if(!createFormData.email || !createFormData.password) {
+        window.alert('Please fill out all fields');
+        return;
+      }
+      const res = await register(createFormData.email, createFormData.password,
+        createFormData.first_name ? createFormData.first_name : undefined,
+        createFormData.last_name ? createFormData.last_name : undefined,
+        createFormData.nickname ? createFormData.nickname : undefined);
+      if (res !== 'OK') window.alert(res);
 
-      // Update the local state
-      setUsers(users.concat(res.data as User));
-      console.log(res);
+      // Update users
+      fetchUsers()
       
       setIsCreateModalOpen(false);
       setCreateFormData({});
@@ -471,6 +517,7 @@ export function UsersTable() {
                 value={editFormData.token}
                 onChange={(e) => setEditFormData({ ...editFormData, token: e.target.value })}
                 crossOrigin={undefined}
+                required
               />
               <Input
                 label="Nick Name"
@@ -495,11 +542,13 @@ export function UsersTable() {
                 value={editFormData.email}
                 onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
                 crossOrigin={undefined}
+                required
               />
               <Input
                 label="Password"
                 onChange={(e) => setEditFormData({ ...editFormData, password: e.target.value })}
                 crossOrigin={undefined}
+                required
               />
               <Input
                 label="Phone Number"
@@ -547,10 +596,11 @@ export function UsersTable() {
                 </Typography>
                 <select
                   value={editFormData.subscription_plan}
-                  onChange={(e) => setEditFormData({ ...editFormData, subscription_plan: e.target.value as 'PREMIUM' | 'FREE' })}
+                  onChange={(e) => setEditFormData({ ...editFormData, subscription_plan: e.target.value as 'PREMIUM' | 'BASIC' | 'FREE' })}
                   className="w-full p-2 border rounded-lg"
                 >
                   <option value="PREMIUM">Premium</option>
+                  <option value="BASIC">Basic</option>
                   <option value="FREE">Free</option>
                 </select>
               </div>
@@ -582,6 +632,7 @@ export function UsersTable() {
             value={editFormData.token}
             onChange={(e) => setEditFormData({ ...editFormData, token: e.target.value })}
             crossOrigin={undefined}
+            required
           />
         </DialogBody>
         <DialogFooter className="space-x-2">
@@ -618,12 +669,14 @@ export function UsersTable() {
                 value={createFormData.email ? createFormData.email : undefined}
                 onChange={(e) => setCreateFormData({ ...createFormData, email: e.target.value })}
                 crossOrigin={undefined}
+                required
               />
               <Input
                 label="Password"
                 value={createFormData.password ? createFormData.password : undefined}
                 onChange={(e) => setCreateFormData({ ...createFormData, password: e.target.value })}
                 crossOrigin={undefined}
+                required
               />
               <Input
                 label="First Name"

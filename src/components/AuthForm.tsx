@@ -50,58 +50,20 @@ export function AuthForm({ type }: AuthFormProps) {
       setError('Please fill out all fields');
       return;
     }
-    let errorMessage = '';
-    if(!/^[\w-.]{1,64}@([\w-]{1,63}\.)+[\w-]{2,63}$/.test(email)) errorMessage = 'Invalid email';
-    else if(type === 'register' && !/^[a-zA-Z0-9]*$/.test(nickname)) errorMessage = 'Nickname may not include special characters';
-    else if(password.length < 8) errorMessage = 'Password must be at least 8 characters';
-    else if(!/[A-Z]/.test(password)) errorMessage = 'Password must contain at least 1 uppercase character';
-    else if(!/[`!@#$%^&*()_+\-=[\]{};':|,.<>/?~]/.test(password)) errorMessage = 'Password must contain at least 1 special character';
-    else if (firstName.length > 100) errorMessage = 'First name must not be more than 100 characters';
-    else if (lastName.length > 100) errorMessage = 'Last name must not be more than 100 characters';
-    else if (nickname.length > 50) errorMessage = 'Nickname must not be more than 50 characters';
-    // Prevent sql injection by invalidating " and \
-    else if (/["\\]/.test(email.concat(firstName, lastName, nickname, password))) errorMessage = 'Invalid character " or \\ used';
-    if (errorMessage !== ''){
-      setError(errorMessage);
-      return;
-    }
-
     if (type === 'login') {
       const response = await login(email, password);
-      if ( response === 200) {
-        navigate('/dashboard');
-      } else if (response === 500) {
-        setError('Invalid credentials');
-      } else if (response === 1) {
-        setError('Failed to authenticate');
-      } else if (response === 0) {
-        setError('Failed to contact server. Please try again later.');
-      } else {
-        setError('An unknown error encountered. Please try again later.');
-      }
-    } else {
+      if (response === 'OK') navigate('/dashboard');
+      else setError(response);
+    } else {//type === 'register'
       const response = await register(email, password,
         firstName.length > 0 ? firstName : undefined,
         lastName.length > 0 ? lastName : undefined,
         nickname.length > 0 ? nickname : undefined);
-      if (response === 200) {
-        const loginResponse = await login(email, password);
-        if ( loginResponse === 200) {
-          navigate('/dashboard');
-        } else {
-          setError('Failed to automatically login');
-        }
-      } else if (response === 400) {
-        setError('Email already taken');
-      } else if (response === 404) {
-        setError('The server has encountered an error. Please try again later.');//Invalid API endpoint
-      } else if (response === 500) {
-        setError('Nickname already taken');
-      } else if (response === 0) {
-        setError('Failed to contact server. Please try again later.');
-      } else {
-        setError('An unknown error encountered. Please try again later.');
-      }
+      if (response === 'OK') {
+        // Add email verification here
+        setError('Account created');
+        navigate('/login');
+      } else setError(response);
     }
   };
 
