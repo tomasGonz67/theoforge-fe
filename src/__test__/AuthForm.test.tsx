@@ -78,51 +78,69 @@ async function validateForm(authType: AuthFormType) {
     // email must contain a . followed by domain name
     fireEvent.change(emailInput, { target: { value: 'test@test' } });
     fireEvent.click(submitButton);
-    expect(screen.queryByRole('alert')).not.toBeNull();
-    expect(screen.queryByText('Invalid email')).not.toBeNull();
+    await waitFor(() => {
+      expect(screen.queryByRole('alert')).not.toBeNull();
+      expect(screen.queryByText(authType.type === 'login' ? 'Invalid credentials' : 'Invalid email')).not.toBeNull();
+    });
     // email does not contain special characters
     // change error message (to invalid password) each time to check if it changes back to invalid email instead of rerendering entire page
     fireEvent.change(emailInput, { target: { value: 'test@test.com' } });
     fireEvent.click(submitButton);
     fireEvent.change(emailInput, { target: { value: '!@a-a.com' } });
     fireEvent.click(submitButton);
-    expect(screen.queryByText('Invalid email')).not.toBeNull();
+    await waitFor(() => {
+      expect(screen.queryByText(authType.type === 'login' ? 'Invalid credentials' : 'Invalid email')).not.toBeNull();
+    });
     // email domain must be at least 2 characters
     fireEvent.change(emailInput, { target: { value: 'test@test.com' } });
     fireEvent.click(submitButton);
     fireEvent.change(emailInput, { target: { value: 'test@test.c' } });
     fireEvent.click(submitButton);
-    expect(screen.queryByText('Invalid email')).not.toBeNull();
+    await waitFor(() => {
+      expect(screen.queryByText(authType.type === 'login' ? 'Invalid credentials' : 'Invalid email')).not.toBeNull();
+    });
     // email username section must not be over 64 characters
     fireEvent.change(emailInput, { target: { value: 'test@test.com' } });
     fireEvent.click(submitButton);
     fireEvent.change(emailInput, { target: { value: 'a'.repeat(65).concat('@test.com') } });
     fireEvent.click(submitButton);
-    expect(screen.queryByText('Invalid email')).not.toBeNull();
+    await waitFor(() => {
+      expect(screen.queryByText(authType.type === 'login' ? 'Invalid credentials' : 'Invalid email')).not.toBeNull();
+    });
     // password must be at least 8 characters
     fireEvent.change(emailInput, { target: { value: 'test@test.com' } });
     fireEvent.change(passwordInput, { target: { value: 'test123' } });
     fireEvent.click(submitButton);
-    expect(screen.queryByText('Password must be at least 8 characters')).not.toBeNull();
+    await waitFor(() => {
+      expect(screen.queryByText(authType.type === 'login' ? 'Invalid credentials' : 'Password must be at least 8 characters')).not.toBeNull();
+    });
     // password must contain an uppercase letter
     fireEvent.change(passwordInput, { target: { value: 'test1234' } });
     fireEvent.click(submitButton);
-    expect(screen.queryByText('Password must contain at least 1 uppercase character')).not.toBeNull();
+    await waitFor(() => {
+      expect(screen.queryByText(authType.type === 'login' ? 'Invalid credentials' : 'Password must contain at least 1 uppercase character')).not.toBeNull();
+    });
     // password must contain a special character
     fireEvent.change(passwordInput, { target: { value: 'Test1234' } });
     fireEvent.click(submitButton);
-    expect(screen.queryByText('Password must contain at least 1 special character')).not.toBeNull();
+    await waitFor(() => {
+      expect(screen.queryByText(authType.type === 'login' ? 'Invalid credentials' : 'Password must contain at least 1 special character')).not.toBeNull();
+    });
     // no invalid characters " or / for sql injection
     fireEvent.change(emailInput, { target: { value: 'test@test.com' } });
     fireEvent.change(passwordInput, { target: { value: 'Test1"234!' } });
     fireEvent.click(submitButton);
-    expect(screen.queryByText('Invalid character " or \\ used')).not.toBeNull();
+    await waitFor(() => {
+      expect(screen.queryByText(authType.type === 'login' ? 'Invalid credentials' : 'Invalid character " or \\ used')).not.toBeNull();
+    });
     fireEvent.change(passwordInput, { target: { value: 't' } });
     fireEvent.click(submitButton); // reset error message
     fireEvent.change(emailInput, { target: { value: 'test@test.com' } });
     fireEvent.change(passwordInput, { target: { value: 'Test\\1234!' } });
     fireEvent.click(submitButton);
-    expect(screen.queryByText('Invalid character " or \\ used')).not.toBeNull();
+    await waitFor(() => {
+      expect(screen.queryByText(authType.type === 'login' ? 'Invalid credentials' : 'Invalid character " or \\ used')).not.toBeNull();
+    });
     // set valid email and password
     fireEvent.change(emailInput, { target: { value: 'test@test.com' } });
     fireEvent.change(passwordInput, { target: { value: 'Test1234!' } });
@@ -157,22 +175,30 @@ async function validateForm(authType: AuthFormType) {
         // nickname may not include special characters
         fireEvent.change(nicknameInput, { target: { value: 'test!' } });
         fireEvent.click(submitButton);
-        expect(screen.queryByText('Nickname may not include special characters')).not.toBeNull();
+        await waitFor(() => {
+          expect(screen.queryByText('Nickname may not include special characters')).not.toBeNull();
+        });
         // first name must not be more than 100 characters
         fireEvent.change(nicknameInput, { target: { value: 'test' } });
         fireEvent.change(firstNameInput, {target: {value: 'a'.repeat(101)}});
         fireEvent.click(submitButton);
-        expect(screen.queryByText('First name must not be more than 100 characters')).not.toBeNull();
+        await waitFor(() => {
+          expect(screen.queryByText('First name must not be more than 100 characters')).not.toBeNull();
+        });
         // last name must not be more than 100 characters
         fireEvent.change(firstNameInput, { target: { value: 'test' } });
         fireEvent.change(lastNameInput, {target: {value: 'a'.repeat(101)}});
         fireEvent.click(submitButton);
-        expect(screen.queryByText('Last name must not be more than 100 characters')).not.toBeNull();
+        await waitFor(() => {
+          expect(screen.queryByText('Last name must not be more than 100 characters')).not.toBeNull();
+        });
         // nickname must not be more than 50 characters
         fireEvent.change(lastNameInput, {target: {value: 'test'}});
         fireEvent.change(nicknameInput, { target: { value: 'a'.repeat(51) } });
         fireEvent.click(submitButton);
-        expect(screen.queryByText('Nickname must not be more than 50 characters')).not.toBeNull();
+        await waitFor(() => {
+          expect(screen.queryByText('Nickname must not be more than 50 characters')).not.toBeNull();
+        });
         // set valid nickname for next tests
         fireEvent.change(nicknameInput, { target: { value: 'test' } });
       }
@@ -216,9 +242,8 @@ async function validateForm(authType: AuthFormType) {
       fireEvent.change(passwordInput, { target: { value: 'Test1234!' } });
       fireEvent.click(submitButton);
       await waitFor(() => {
-        // Create account, then automatically login with that account
-        expect(axios.post).toHaveBeenCalledTimes(2);
-        expect(mockUseNavigate).toHaveBeenCalledWith('/dashboard');
+        expect(axios.post).toHaveBeenCalledTimes(1);
+        expect(mockUseNavigate).toHaveBeenCalledWith('/login');
       });
     }
   } else fail('Invalid authentication form type');

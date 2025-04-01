@@ -33,6 +33,32 @@ module.exports = {
                     "updated_at": "2025-03-17T03:08:14.656178Z"
                   }]
             });
+        } else if (url.includes('/auth/auth')){
+            return Promise.resolve({
+                data: {username: {
+                    "nickname":"test",
+                    "role":"ADMIN",
+                    "address":"Address",
+                    "subscription_plan":"PREMIUM",
+                    "id":"c405b07d-e6c9-4fa4-963f-93bbb7a26f9d",
+                    "email_verified":true,
+                    "city":"City",
+                    "verification_token":null,
+                    "state":"State",
+                    "email":"test@test.com",
+                    "created_at":"2025-03-30T10:39:05.945476+00:00",
+                    "zip_code":"Zip","hashed_password":"$2b$12$CIMiLrX6MazfjJcfOeapK.RBA9KKbov/1N8yp3iv.KiX6MUEP/U8K",
+                    "updated_at":"2025-04-01T00:19:14.435473+00:00",
+                    "card_number":"Card",
+                    "first_name":"First",
+                    "failed_login_attempts":0,
+                    "ccv":"CCV",
+                    "last_name":"Last",
+                    "is_locked":false,
+                    "security_code":"Sec",
+                    "phone_number":"Phone"
+                  }}
+            });
         } else {
             return Promise.resolve({
                 data: 'data'

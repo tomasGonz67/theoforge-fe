@@ -1,4 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useContext, useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { AuthContext } from '../App';
@@ -7,7 +8,6 @@ import {
   HomeIcon,
   ShoppingBagIcon,
   UserCircleIcon,
-  Cog6ToothIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   Bars3Icon as MenuIcon,
@@ -28,12 +28,10 @@ import {
   DocumentDuplicateIcon,
   BookOpenIcon,
   ArrowRightStartOnRectangleIcon,
-  CircleStackIcon
 } from '@heroicons/react/24/outline';
 import {
   Card,
   Typography,
-  List,
   ListItem,
   ListItemPrefix,
   Drawer,
@@ -63,18 +61,18 @@ import {
   Textarea,
   Tooltip,
   Alert,
-  CardHeader
 } from "@material-tailwind/react";
 import { UsersTable } from './UsersTable';
 import { GuestsTable } from './GuestsTable';
 import { Resources } from './Resources';
 import { ProfileSettings } from './ProfileSettings';
-import { LogoutModal } from './LogoutModal';
 import { ChatBox } from './ChatBox';
 import { cn } from '../lib/utils';
 import { RealTimeDashboard } from './RealTimeDashboard';
 import { KnowledgeGraphPage } from './KnowledgeGraphPage';
 import { colors } from '@material-tailwind/react/types/generic';
+import axios from 'axios';
+import { API_URL } from '../utils/axiosConfig';
 
 // User navigation - restricted options (no Analytics)
 const userNavigation = [
@@ -691,7 +689,7 @@ const AnalyticsDashboard = () => {
   );
 };
 
-interface project {
+interface Project {
   id: number,
   name: string,
   description: string,
@@ -704,7 +702,7 @@ interface project {
 
 // Project Management Component
 const ProjectManagement = () => {
-  const [projects, setProjects] = useState<project[]>([
+  const [projects, setProjects] = useState<Project[]>([
     {
       id: 1,
       name: 'AI Customer Service Bot',
@@ -758,7 +756,7 @@ const ProjectManagement = () => {
   ]);
     
   const [showModal, setShowModal] = useState(false);
-  const [currentProject, setCurrentProject] = useState<project | null>(null);
+  const [currentProject, setCurrentProject] = useState<Project | null>(null);
   const [modalType, setModalType] = useState('');
   const [showAlert, setShowAlert] = useState({ show: false, message: '', color: 'green' });
   const [projectForm, setProjectForm] = useState({
@@ -770,7 +768,7 @@ const ProjectManagement = () => {
     team: ''
   });
     
-  const openModal = (type: string, project: project | null = null) => {
+  const openModal = (type: string, project: Project | null = null) => {
     setModalType(type);
     setCurrentProject(project);
     
@@ -1984,22 +1982,91 @@ const UserDashboard = () => {
     </div>
   );
 };
+interface User {
+  address: string | null;
+  card_number: string | null;
+  ccv: string | null;
+  city: string | null;
+  created_at: string;
+  email: string;
+  email_verified: boolean;
+  failed_login_attempts: number;
+  first_name: string | null;
+  hashed_password: string;
+  id: string;
+  is_locked: boolean;
+  last_name: string | null;
+  nickname: string | null;
+  phone_number: string | null;
+  role: "ADMIN" | "USER";
+  security_code: string | null;
+  state: string | null;
+  subscription_plan: "PREMIUM" | "BASIC" | "FREE";
+  updated_at: string;
+  verification_token: string | null;
+  zip_code: string | null
+}
+interface AccountInfo {
+  nickname: string | null;
+  email: string;
+  first_name: string | null;
+  last_name: string | null;
+}
 // Main Dashboard Component
 export function Dashboard() {
-  const { role, logout } = useContext(AuthContext);
+  const { role, logout, accessToken } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("personal");
   const [isVisible, setIsVisible] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isAdminView, setIsAdminView] = useState(role === "ADMIN"); // Default to admin view
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [accountInfo, setAccountInfo] = useState<AccountInfo>({
+    email: '',
+    nickname: null,
+    first_name: null,
+    last_name: null,
+  });
+  const [avatarUrl, setAvatarUrl] = useState('');
+  
+  const loadAccount = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/auth/auth`, {
+        headers: { 'Authorization' : `Bearer ${accessToken}` },
+      });
+      const user: User = response.data.username;
+      if(user) {
+        const localAvatarUrl = localStorage.getItem('Avatar:'+user.email);
+        if(localAvatarUrl) setAvatarUrl(localAvatarUrl);
+        setAccountInfo({
+          email: user.email,
+          nickname: user.nickname,
+          first_name: user.first_name,
+          last_name: user.last_name
+        });
+      } else console.error("User not found");
+    } catch {
+      console.error("User not found");
+    }
+  }
+
+  useEffect(() => {
+    loadAccount();
+    addEventListener('profileChange', function(event: any) {
+      setAccountInfo({...accountInfo,
+        email: event.detail.email,
+        first_name: event.detail.first_name,
+        last_name: event.detail.last_name,
+        nickname: event.detail.nickname
+      })
+    });
+  }, []);
   
   // Sample notifications
-  const [notifications, setNotifications] = useState([
+  const [notifications, setNotifications] = useState<Notification[]>([
     {
       id: 1,
       title: "New User Registration",
@@ -2044,23 +2111,6 @@ export function Dashboard() {
     }
   }, [location.pathname]);
 
-  const [userData, setUserData] = useState({
-    firstName: "John",
-    lastName: "Doe",
-    email: "john.doe@example.com",
-    phone: "+1 (555) 123-4567",
-    company: "Theoforge",
-    role: isAdminView ? "Administrator" : "Standard User",
-    address: "123 Main St",
-    city: "Newark",
-    state: "NJ",
-    zipCode: "07102",
-    country: "United States",
-    timezone: "America/New_York",
-    language: "English",
-    notifications: true
-  });
-
   // States for support and report modals
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
@@ -2069,13 +2119,6 @@ export function Dashboard() {
     message: "",
     color: "green"
   });
-  // Update user role when admin view changes
-  useEffect(() => {
-    setUserData(prev => ({
-      ...prev,
-      role: isAdminView ? "Administrator" : "Standard User"
-    }));
-  }, [isAdminView]);
   
   // Function to show toast notifications
   const showNotification = (message: string, color = "green") => {
@@ -2452,17 +2495,19 @@ export function Dashboard() {
                   className="flex items-center gap-2 normal-case shadow-none px-2"
                 >
                   <Avatar 
-                    src="/api/placeholder/40/40" 
+                    src={avatarUrl}
                     alt="User" 
                     size="sm" 
                     className="border border-gray-200" 
                   />
                   <div className="hidden sm:block text-left">
                     <Typography variant="small" className="font-medium">
-                      {userData.firstName} {userData.lastName}
+                      {accountInfo.nickname ? accountInfo.nickname :
+                      (accountInfo.first_name && accountInfo.last_name) ? (accountInfo.first_name + ' ' + accountInfo.last_name) :
+                      accountInfo.email ? accountInfo.email : ''}
                     </Typography>
                     <Typography variant="small" className="text-xs text-gray-500">
-                      {userData.role}
+                      {role}
                     </Typography>
                   </div>
                 </Button>
@@ -2572,7 +2617,7 @@ export function Dashboard() {
                               <span className="text-sm font-medium">Admin Dashboard</span>
                             </div>
                             <Typography variant="h3" color="blue-gray" className="mb-2">
-                              Welcome back, {userData.firstName}!
+                              Welcome back, {accountInfo.first_name}!
                             </Typography>
                             <Typography color="gray">
                               Here's what's happening with your projects today.
@@ -2753,7 +2798,7 @@ export function Dashboard() {
 
             {/* Users Table Section - Only shown in Admin view */}
             {currentPage === 'users' && isAdminView && (
-                <UsersTable />
+              <UsersTable />
             )}
             
             {/* Guests Table Section - Only shown in Admin view */}
@@ -2782,21 +2827,7 @@ export function Dashboard() {
 
             {/* Profile Settings Section - Available to both roles */}
             {currentPage === 'profile' && (
-              <Card className="border border-gray-100 overflow-hidden">
-                <div className="px-6 py-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between">
-                  <div>
-                    <Typography variant="h5" color="blue-gray">
-                      Profile Settings
-                    </Typography>
-                    <Typography variant="small" color="gray">
-                      Manage your profile information
-                    </Typography>
-                  </div>
-                </div>
-                <div className="p-4">
-                  <ProfileSettings />
-                </div>
-              </Card>
+              <ProfileSettings />
             )}
 
             {/* Knowledge Graph Integration */}

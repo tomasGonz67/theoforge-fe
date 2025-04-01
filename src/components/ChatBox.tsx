@@ -8,7 +8,6 @@ import {
   ArrowsPointingInIcon,
   ChatBubbleLeftRightIcon,
   SparklesIcon,
-  StopIcon,
   TrashIcon,
   UserCircleIcon,
   LockClosedIcon,

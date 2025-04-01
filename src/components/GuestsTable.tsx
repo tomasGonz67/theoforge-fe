@@ -17,6 +17,7 @@ import {
   Alert,
 } from "@material-tailwind/react";
 import { API_URL } from '../utils/axiosConfig'
+import { v4 as uuidv4 } from 'uuid';
 
 interface Interaction {
   event: string,
@@ -24,25 +25,25 @@ interface Interaction {
 }
 
 interface Guest {
-  additional_notes: string | null;
-  budget: string | null;
-  company: string | null;
-  contact_info: string | null;
-  created_at: string;
-  current_tech: string[] | null;
-  first_visit_timestamp: string;
-  id: string;
-  industry: string | null;
-  interaction_events: string[] | null;
-  interaction_history: Interaction[] | null;
-  name: string | null;
-  page_views: string[] | null;
-  pain_points: string[] | null;
-  project_type: string[] | null;
-  session_id: string;
-  status: 'NEW' | 'CONTACTED' | 'CONVERTED';
-  timeline: string | null;
-  updated_at: string;
+  additional_notes?: string;
+  budget?: string;
+  company?: string;
+  contact_info?: string;
+  created_at?: string;
+  current_tech?: string[];
+  first_visit_timestamp?: string;
+  id?: string;
+  industry?: string;
+  interaction_events?: string[];
+  interaction_history?: Interaction[];
+  name?: string;
+  page_views?: string[];
+  pain_points?: string[];
+  project_type?: string[];
+  session_id?: string;
+  status?: 'NEW' | 'CONTACTED' | 'CONVERTED';
+  timeline?: string;
+  updated_at?: string;
 }
 
 export function GuestsTable() {
@@ -55,11 +56,11 @@ export function GuestsTable() {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [createFormData, setCreateFormData] = useState<Guest | null>(null);
+  const [createFormData, setCreateFormData] = useState<Guest>({});
   const [numProjectTypeFields, setNumProjectTypeFields] = useState(1);
   const [numPainPointFields, setNumPainPointFields] = useState(1);
   const [numCurrentTechFields, setNumCurrentTechFields] = useState(1);
-  const [editFormData, setEditFormData] = useState<Guest | null>(null);
+  const [editFormData, setEditFormData] = useState<Guest>({});
   const [showError, setShowError] = useState(false);
   const itemsPerPage = 10;
 
@@ -91,7 +92,6 @@ export function GuestsTable() {
     setNumProjectTypeFields(1);
     setNumPainPointFields(1);
     setNumCurrentTechFields(1);
-    setCreateFormData(createFormData ? createFormData : {} as Guest);
     setIsCreateModalOpen(true);
   };
 
@@ -113,14 +113,14 @@ export function GuestsTable() {
     if (!createFormData) return;
 
     try {
-      createFormData.session_id = 'test';
-      const res = await axios.post(`${API_URL}/guests/`, createFormData);
+      createFormData.session_id = uuidv4();
+      await axios.post(`${API_URL}/guests/`, createFormData);
 
-      // Update the local state
-      setGuests(guests.concat(res.data as Guest));
+      // Update guests
+      fetchGuests();
       
       setIsCreateModalOpen(false);
-      setCreateFormData(null);
+      setCreateFormData({});
     } catch (error) {
       console.error('Error updating guest:', error);
       // Handle error (show error message to user)
@@ -133,13 +133,11 @@ export function GuestsTable() {
     try {
       await axios.put(`${API_URL}/guests/${editFormData.id}`, editFormData);
 
-      // Update the local state
-      setGuests(guests.map(guest => 
-        guest.id === editFormData.id ? editFormData : guest
-      ));
+      // Update guests
+      fetchGuests();
       
       setIsEditModalOpen(false);
-      setEditFormData(null);
+      setEditFormData({});
     } catch (error) {
       console.error('Error updating guest:', error);
       // Handle error (show error message to user)
@@ -152,8 +150,8 @@ export function GuestsTable() {
     try {
       await axios.delete(`${API_URL}/guests/${selectedGuest.id}`);
       
-      // Update the local state
-      setGuests(guests.filter(guest => guest.id !== selectedGuest.id));
+      // Update guests
+      fetchGuests();
       
       setIsDeleteModalOpen(false);
       setSelectedGuest(null);
@@ -195,7 +193,7 @@ export function GuestsTable() {
 
   const TABLE_HEAD = ["Name", "Company", "Industry", "Budget", "Contact", "Status", "Last Interaction", "Actions"];
 
-  const viewField = (field: string, value: string | null) => {
+  const viewField = (field: string, value: string | undefined) => {
     return (
       <div className="inline-flex flex-row gap-2 w-full">
         <Typography variant="small" color="blue-gray" className="font-normal w-24">
@@ -414,178 +412,175 @@ export function GuestsTable() {
       >
         <DialogHeader>Create Guest</DialogHeader>
         <DialogBody>
-          <div>{/*Fix jest detecting no children in DialogBody error*/}</div>
-          {createFormData && (
-            <div className="grid gap-6 overscroll-y-contain overflow-auto h-96">
+          <div className="grid gap-6 overscroll-y-contain overflow-auto h-96">
+            <Input
+              label="Name"
+              value={createFormData.name ? createFormData.name : ''}
+              onChange={(e) => setCreateFormData({ ...createFormData, name: e.target.value })}
+              crossOrigin={undefined}
+            />
+            <Input
+              label="Company"
+              value={createFormData.company ? createFormData.company : ''}
+              onChange={(e) => setCreateFormData({ ...createFormData, company: e.target.value })}
+              crossOrigin={undefined}
+            />
+            <Input
+              label="Industry"
+              value={createFormData.industry ? createFormData.industry : ''}
+              onChange={(e) => setCreateFormData({ ...createFormData, industry: e.target.value })}
+              crossOrigin={undefined}
+            />
+            <Input
+              label="Budget"
+              value={createFormData.budget ? createFormData.budget : ''}
+              onChange={(e) => setCreateFormData({ ...createFormData, budget: e.target.value })}
+              crossOrigin={undefined}
+            />
+            <Input
+              label="Timeline"
+              value={createFormData.timeline ? createFormData.timeline : ''}
+              onChange={(e) => setCreateFormData({ ...createFormData, timeline: e.target.value })}
+              crossOrigin={undefined}
+            />
+            <Input
+              label="Contact Info"
+              value={createFormData.contact_info ? createFormData.contact_info : ''}
+              onChange={(e) => setCreateFormData({ ...createFormData, contact_info: e.target.value })}
+              crossOrigin={undefined}
+            />
+            <Input
+              label="Additional Notes"
+              value={createFormData.additional_notes ? createFormData.additional_notes : ''}
+              onChange={(e) => setCreateFormData({ ...createFormData, additional_notes: e.target.value })}
+              crossOrigin={undefined}
+            />
+            {
+              // Create project type fields based on numProjectTypeFields
+              Array.from({length: numProjectTypeFields}, (_, num) => num+1 && 
               <Input
-                label="Name"
-                value={createFormData.name ? createFormData.name : undefined}
-                onChange={(e) => setCreateFormData({ ...createFormData, name: e.target.value })}
+                key={"Project Type "+(num+1)}
+                label={"Project Type "+(num+1)}
+                value={createFormData.project_type ? createFormData.project_type[num] : ''}
+                onChange={(e) => setCreateFormData({ ...createFormData, project_type: createFormData.project_type ? createFormData.project_type.map((value, i) => (i === num ? e.target.value : value)) : [e.target.value] })}
                 crossOrigin={undefined}
-              />
-              <Input
-                label="Company"
-                value={createFormData.company ? createFormData.company : undefined}
-                onChange={(e) => setCreateFormData({ ...createFormData, company: e.target.value })}
-                crossOrigin={undefined}
-              />
-              <Input
-                label="Industry"
-                value={createFormData.industry ? createFormData.industry : undefined}
-                onChange={(e) => setCreateFormData({ ...createFormData, industry: e.target.value })}
-                crossOrigin={undefined}
-              />
-              <Input
-                label="Budget"
-                value={createFormData.budget ? createFormData.budget : undefined}
-                onChange={(e) => setCreateFormData({ ...createFormData, budget: e.target.value })}
-                crossOrigin={undefined}
-              />
-              <Input
-                label="Timeline"
-                value={createFormData.timeline ? createFormData.timeline : undefined}
-                onChange={(e) => setCreateFormData({ ...createFormData, timeline: e.target.value })}
-                crossOrigin={undefined}
-              />
-              <Input
-                label="Contact Info"
-                value={createFormData.contact_info ? createFormData.contact_info : undefined}
-                onChange={(e) => setCreateFormData({ ...createFormData, contact_info: e.target.value })}
-                crossOrigin={undefined}
-              />
-              <Input
-                label="Additional Notes"
-                value={createFormData.additional_notes ? createFormData.additional_notes : undefined}
-                onChange={(e) => setCreateFormData({ ...createFormData, additional_notes: e.target.value })}
-                crossOrigin={undefined}
-              />
-              {
-                // Create project type fields based on numProjectTypeFields
-                Array.from({length: numProjectTypeFields}, (_, num) => num+1 && 
-                <Input
-                  key={"Project Type "+(num+1)}
-                  label={"Project Type "+(num+1)}
-                  value={createFormData.project_type ? createFormData.project_type[num] : undefined}
-                  onChange={(e) => setCreateFormData({ ...createFormData, project_type: createFormData.project_type ? createFormData.project_type.map((value, i) => (i === num ? e.target.value : value)) : [e.target.value] })}
-                  crossOrigin={undefined}
-                />)
-              }
-              <div className="inline-flex flex-row gap-6">
-                <Button
-                  color="green"
-                  size="sm"
-                  className="w-max h-max flex items-center gap-1"
-                  onClick={() => {
-                    setNumProjectTypeFields((x)=> x+1);
-                    // Add empty project type to form data
-                    setCreateFormData({ ...createFormData, project_type: createFormData.project_type ? createFormData.project_type.concat(['']) : ['']})
-                  }}>
-                  Add Project Type<PlusIcon className="h-4 w-4" />
-                </Button>
-                <Button
-                  color="red"
-                  size="sm"
-                  className="w-max h-max flex items-center gap-1"
-                  disabled={numProjectTypeFields === 0 ? true : false}
-                  onClick={() => {
-                    // Remove last project type from form data
-                    setCreateFormData({ ...createFormData, project_type: createFormData.project_type ? (numProjectTypeFields === 1 ? null : createFormData.project_type.slice(0, -1)) : null})
-                    // There can be 0 fields, meaning project type is null
-                    setNumProjectTypeFields((x)=> Math.max(x-1, 0));
-                  }}>
-                  Remove Project Type<MinusIcon className="h-4 w-4" />
-                </Button>
-              </div>
-              {
-                // Create pain point fields based on numPainPointFields
-                Array.from({length: numPainPointFields}, (_, num) => num+1 && 
-                <Input
-                  key={"Pain Point "+(num+1)}
-                  label={"Pain Point "+(num+1)}
-                  value={createFormData.pain_points ? createFormData.pain_points[num] : undefined}
-                  onChange={(e) => setCreateFormData({ ...createFormData, pain_points: createFormData.pain_points ? createFormData.pain_points.map((value, i) => (i === num ? e.target.value : value)) : [e.target.value] })}
-                  crossOrigin={undefined}
-                />)
-              }
-              <div className="inline-flex flex-row gap-6">
-                <Button
-                  color="green"
-                  size="sm"
-                  className="w-max h-max flex items-center gap-1"
-                  onClick={() => {
-                    setNumPainPointFields((x)=> x+1);
-                    // Add empty pain point to form data
-                    setCreateFormData({ ...createFormData, pain_points: createFormData.pain_points? createFormData.pain_points.concat(['']) : ['']})
-                  }}>
-                  Add Pain Point<PlusIcon className="h-4 w-4" />
-                </Button>
-                <Button
-                  color="red"
-                  size="sm"
-                  className="w-max h-max flex items-center gap-1"
-                  disabled={numPainPointFields === 0 ? true : false}
-                  onClick={() => {
-                    // Remove last pain point from form data
-                    setCreateFormData({ ...createFormData, pain_points: createFormData.pain_points ? (numPainPointFields === 1 ? null : createFormData.pain_points.slice(0, -1)) : null})
-                    // There can be 0 fields, meaning pain point is null
-                    setNumPainPointFields((x)=> Math.max(x-1, 0));
-                  }}>
-                  Remove Pain Point<MinusIcon className="h-4 w-4" />
-                </Button>
-              </div>
-              {
-                // Create current tech fields based on numCurrentTechFields
-                Array.from({length: numCurrentTechFields}, (_, num) => num+1 && 
-                <Input
-                  key={"Current Tech "+(num+1)}
-                  label={"Current Tech "+(num+1)}
-                  value={createFormData.current_tech? createFormData.current_tech[num] : undefined}
-                  onChange={(e) => setCreateFormData({ ...createFormData, current_tech: createFormData.current_tech ? createFormData.current_tech.map((value, i) => (i === num ? e.target.value : value)) : [e.target.value] })}
-                  crossOrigin={undefined}
-                />)
-              }
-              <div className="inline-flex flex-row gap-6">
-                <Button
-                  color="green"
-                  size="sm"
-                  className="w-max h-max flex items-center gap-1"
-                  onClick={() => {
-                    setNumCurrentTechFields((x)=> x+1);
-                    // Add empty current tech to form data
-                    setCreateFormData({ ...createFormData, current_tech: createFormData.current_tech ? createFormData.current_tech.concat(['']) : ['']})
-                  }}>
-                  Add Current Tech<PlusIcon className="h-4 w-4" />
-                </Button>
-                <Button
-                  color="red"
-                  size="sm"
-                  className="w-max h-max flex items-center gap-1"
-                  disabled={numCurrentTechFields === 0 ? true : false}
-                  onClick={() => {
-                    // Remove last current tech from form data
-                    setCreateFormData({ ...createFormData, current_tech: createFormData.current_tech ? (numCurrentTechFields === 1 ? null : createFormData.current_tech.slice(0, -1)) : null})
-                    // There can be 0 fields, meaning current tech is null
-                    setNumCurrentTechFields((x)=> Math.max(x-1, 0));
-                  }}>
-                  Remove Current Tech<MinusIcon className="h-4 w-4" />
-                </Button>
-              </div>
-              <div>
-                <Typography variant="small" color="blue-gray" className="mb-2">
-                  Status
-                </Typography>
-                <select
-                  value={createFormData.status}
-                  onChange={(e) => setCreateFormData({ ...createFormData, status: e.target.value as 'NEW' | 'CONTACTED' | 'CONVERTED' })}
-                  className="w-full p-2 border rounded-lg"
-                >
-                  <option value="NEW">New</option>
-                  <option value="CONTACTED">Contacted</option>
-                  <option value="CONVERTED">Converted</option>
-                </select>
-              </div>
+              />)
+            }
+            <div className="inline-flex flex-row gap-6">
+              <Button
+                color="green"
+                size="sm"
+                className="w-max h-max flex items-center gap-1"
+                onClick={() => {
+                  setNumProjectTypeFields((x)=> x+1);
+                  // Add empty project type to form data
+                  setCreateFormData({ ...createFormData, project_type: createFormData.project_type ? createFormData.project_type.concat(['']) : ['']})
+                }}>
+                Add Project Type<PlusIcon className="h-4 w-4" />
+              </Button>
+              <Button
+                color="red"
+                size="sm"
+                className="w-max h-max flex items-center gap-1"
+                disabled={numProjectTypeFields === 0 ? true : false}
+                onClick={() => {
+                  // Remove last project type from form data
+                  setCreateFormData({ ...createFormData, project_type: createFormData.project_type ? (numProjectTypeFields === 1 ? undefined : createFormData.project_type.slice(0, -1)) : undefined})
+                  // There can be 0 fields, meaning project type is null
+                  setNumProjectTypeFields((x)=> Math.max(x-1, 0));
+                }}>
+                Remove Project Type<MinusIcon className="h-4 w-4" />
+              </Button>
             </div>
-          )}
+            {
+              // Create pain point fields based on numPainPointFields
+              Array.from({length: numPainPointFields}, (_, num) => num+1 && 
+              <Input
+                key={"Pain Point "+(num+1)}
+                label={"Pain Point "+(num+1)}
+                value={createFormData.pain_points ? createFormData.pain_points[num] : ''}
+                onChange={(e) => setCreateFormData({ ...createFormData, pain_points: createFormData.pain_points ? createFormData.pain_points.map((value, i) => (i === num ? e.target.value : value)) : [e.target.value] })}
+                crossOrigin={undefined}
+              />)
+            }
+            <div className="inline-flex flex-row gap-6">
+              <Button
+                color="green"
+                size="sm"
+                className="w-max h-max flex items-center gap-1"
+                onClick={() => {
+                  setNumPainPointFields((x)=> x+1);
+                  // Add empty pain point to form data
+                  setCreateFormData({ ...createFormData, pain_points: createFormData.pain_points? createFormData.pain_points.concat(['']) : ['']})
+                }}>
+                Add Pain Point<PlusIcon className="h-4 w-4" />
+              </Button>
+              <Button
+                color="red"
+                size="sm"
+                className="w-max h-max flex items-center gap-1"
+                disabled={numPainPointFields === 0 ? true : false}
+                onClick={() => {
+                  // Remove last pain point from form data
+                  setCreateFormData({ ...createFormData, pain_points: createFormData.pain_points ? (numPainPointFields === 1 ? undefined : createFormData.pain_points.slice(0, -1)) : undefined})
+                  // There can be 0 fields, meaning pain point is null
+                  setNumPainPointFields((x)=> Math.max(x-1, 0));
+                }}>
+                Remove Pain Point<MinusIcon className="h-4 w-4" />
+              </Button>
+            </div>
+            {
+              // Create current tech fields based on numCurrentTechFields
+              Array.from({length: numCurrentTechFields}, (_, num) => num+1 && 
+              <Input
+                key={"Current Tech "+(num+1)}
+                label={"Current Tech "+(num+1)}
+                value={createFormData.current_tech ? createFormData.current_tech[num] : ''}
+                onChange={(e) => setCreateFormData({ ...createFormData, current_tech: createFormData.current_tech ? createFormData.current_tech.map((value, i) => (i === num ? e.target.value : value)) : [e.target.value] })}
+                crossOrigin={undefined}
+              />)
+            }
+            <div className="inline-flex flex-row gap-6">
+              <Button
+                color="green"
+                size="sm"
+                className="w-max h-max flex items-center gap-1"
+                onClick={() => {
+                  setNumCurrentTechFields((x)=> x+1);
+                  // Add empty current tech to form data
+                  setCreateFormData({ ...createFormData, current_tech: createFormData.current_tech ? createFormData.current_tech.concat(['']) : ['']})
+                }}>
+                Add Current Tech<PlusIcon className="h-4 w-4" />
+              </Button>
+              <Button
+                color="red"
+                size="sm"
+                className="w-max h-max flex items-center gap-1"
+                disabled={numCurrentTechFields === 0 ? true : false}
+                onClick={() => {
+                  // Remove last current tech from form data
+                  setCreateFormData({ ...createFormData, current_tech: createFormData.current_tech ? (numCurrentTechFields === 1 ? undefined : createFormData.current_tech.slice(0, -1)) : undefined})
+                  // There can be 0 fields, meaning current tech is null
+                  setNumCurrentTechFields((x)=> Math.max(x-1, 0));
+                }}>
+                Remove Current Tech<MinusIcon className="h-4 w-4" />
+              </Button>
+            </div>
+            <div>
+              <Typography variant="small" color="blue-gray" className="mb-2">
+                Status
+              </Typography>
+              <select
+                value={createFormData.status}
+                onChange={(e) => setCreateFormData({ ...createFormData, status: e.target.value as 'NEW' | 'CONTACTED' | 'CONVERTED' })}
+                className="w-full p-2 border rounded-lg"
+              >
+                <option value="NEW">New</option>
+                <option value="CONTACTED">Contacted</option>
+                <option value="CONVERTED">Converted</option>
+              </select>
+            </div>
+          </div>
         </DialogBody>
         <DialogFooter className="space-x-2">
           <Button variant="outlined" color="red" onClick={() => setIsCreateModalOpen(false)}>
@@ -621,12 +616,12 @@ export function GuestsTable() {
               {viewField('Created At:', selectedGuest.created_at)}
               {viewField('Updated At:', selectedGuest.updated_at)}
               {viewField('First Visit Time:', selectedGuest.first_visit_timestamp)}
-              {viewField('Interaction History:', selectedGuest.interaction_history ? selectedGuest.interaction_history.map(obj => `${obj.event} at ${obj.timestamp}`).join(', ') : null)}
-              {viewField('Interaction Events:', selectedGuest.interaction_events ? selectedGuest.interaction_events.join(', ') : null)}
-              {viewField('Project Types:', selectedGuest.project_type ? selectedGuest.project_type.join(', ') : null)}
-              {viewField('Pain Points:', selectedGuest.pain_points? selectedGuest.pain_points.join(', ') : null)}
-              {viewField('Current Tech:', selectedGuest.current_tech ? selectedGuest.current_tech.join(', ') : null)}
-              {viewField('Page Views:', selectedGuest.page_views ? selectedGuest.page_views.join(', ') : null)}
+              {viewField('Interaction History:', selectedGuest.interaction_history ? selectedGuest.interaction_history.map(obj => `${obj.event} at ${obj.timestamp}`).join(', ') : undefined)}
+              {viewField('Interaction Events:', selectedGuest.interaction_events ? selectedGuest.interaction_events.join(', ') : undefined)}
+              {viewField('Project Types:', selectedGuest.project_type ? selectedGuest.project_type.join(', ') : undefined)}
+              {viewField('Pain Points:', selectedGuest.pain_points? selectedGuest.pain_points.join(', ') : undefined)}
+              {viewField('Current Tech:', selectedGuest.current_tech ? selectedGuest.current_tech.join(', ') : undefined)}
+              {viewField('Page Views:', selectedGuest.page_views ? selectedGuest.page_views.join(', ') : undefined)}
             </div>
           )}
         </DialogBody>
@@ -645,179 +640,175 @@ export function GuestsTable() {
       >
         <DialogHeader>Edit Guest</DialogHeader>
         <DialogBody>
-          <div>{/*Fix jest detecting no children in DialogBody error*/}</div>
-          {editFormData && (
-            <div className="grid gap-6 overscroll-y-contain overflow-auto h-96">
-              <div></div>
+          <div className="grid gap-6 overscroll-y-contain overflow-auto h-96">
+            <Input
+              label="Name"
+              value={editFormData.name ? editFormData.name : ''}
+              onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+              crossOrigin={undefined}
+            />
+            <Input
+              label="Company"
+              value={editFormData.company ? editFormData.company : ''}
+              onChange={(e) => setEditFormData({ ...editFormData, company: e.target.value })}
+              crossOrigin={undefined}
+            />
+            <Input
+              label="Industry"
+              value={editFormData.industry ? editFormData.industry : ''}
+              onChange={(e) => setEditFormData({ ...editFormData, industry: e.target.value })}
+              crossOrigin={undefined}
+            />
+            <Input
+              label="Budget"
+              value={editFormData.budget ? editFormData.budget : ''}
+              onChange={(e) => setEditFormData({ ...editFormData, budget: e.target.value })}
+              crossOrigin={undefined}
+            />
+            <Input
+              label="Timeline"
+              value={editFormData.timeline ? editFormData.timeline : ''}
+              onChange={(e) => setEditFormData({ ...editFormData, timeline: e.target.value })}
+              crossOrigin={undefined}
+            />
+            <Input
+              label="Contact Info"
+              value={editFormData.contact_info ? editFormData.contact_info : ''}
+              onChange={(e) => setEditFormData({ ...editFormData, contact_info: e.target.value })}
+              crossOrigin={undefined}
+            />
+            <Input
+              label="Additional Notes"
+              value={editFormData.additional_notes ? editFormData.additional_notes : ''}
+              onChange={(e) => setEditFormData({ ...editFormData, additional_notes: e.target.value })}
+              crossOrigin={undefined}
+            />
+            {
+              // Create project type fields based on numProjectTypeFields
+              Array.from({length: numProjectTypeFields}, (_, num) => num+1 && 
               <Input
-                label="Name"
-                value={editFormData.name ? editFormData.name : undefined}
-                onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                key={"Project Type "+(num+1)}
+                label={"Project Type "+(num+1)}
+                value={editFormData.project_type ? editFormData.project_type[num] : ''}
+                onChange={(e) => setEditFormData({ ...editFormData, project_type: editFormData.project_type ? editFormData.project_type.map((value, i) => (i === num ? e.target.value : value)) : [e.target.value] })}
                 crossOrigin={undefined}
-              />
-              <Input
-                label="Company"
-                value={editFormData.company ? editFormData.company : undefined}
-                onChange={(e) => setEditFormData({ ...editFormData, company: e.target.value })}
-                crossOrigin={undefined}
-              />
-              <Input
-                label="Industry"
-                value={editFormData.industry ? editFormData.industry : undefined}
-                onChange={(e) => setEditFormData({ ...editFormData, industry: e.target.value })}
-                crossOrigin={undefined}
-              />
-              <Input
-                label="Budget"
-                value={editFormData.budget ? editFormData.budget : undefined}
-                onChange={(e) => setEditFormData({ ...editFormData, budget: e.target.value })}
-                crossOrigin={undefined}
-              />
-              <Input
-                label="Timeline"
-                value={editFormData.timeline ? editFormData.timeline : undefined}
-                onChange={(e) => setEditFormData({ ...editFormData, timeline: e.target.value })}
-                crossOrigin={undefined}
-              />
-              <Input
-                label="Contact Info"
-                value={editFormData.contact_info ? editFormData.contact_info : undefined}
-                onChange={(e) => setEditFormData({ ...editFormData, contact_info: e.target.value })}
-                crossOrigin={undefined}
-              />
-              <Input
-                label="Additional Notes"
-                value={editFormData.additional_notes ? editFormData.additional_notes : undefined}
-                onChange={(e) => setEditFormData({ ...editFormData, additional_notes: e.target.value })}
-                crossOrigin={undefined}
-              />
-              {
-                // Create project type fields based on numProjectTypeFields
-                Array.from({length: numProjectTypeFields}, (_, num) => num+1 && 
-                <Input
-                  key={"Project Type "+(num+1)}
-                  label={"Project Type "+(num+1)}
-                  value={editFormData.project_type ? editFormData.project_type[num] : undefined}
-                  onChange={(e) => setEditFormData({ ...editFormData, project_type: editFormData.project_type ? editFormData.project_type.map((value, i) => (i === num ? e.target.value : value)) : [e.target.value] })}
-                  crossOrigin={undefined}
-                />)
-              }
-              <div className="inline-flex flex-row gap-6">
-                <Button
-                  color="green"
-                  size="sm"
-                  className="w-max h-max flex items-center gap-1"
-                  onClick={() => {
-                    setNumProjectTypeFields((x)=> x+1);
-                    // Add empty project type to form data
-                    setEditFormData({ ...editFormData, project_type: editFormData.project_type ? editFormData.project_type.concat(['']) : ['']})
-                  }}>
-                  Add Project Type<PlusIcon className="h-4 w-4" />
-                </Button>
-                <Button
-                  color="red"
-                  size="sm"
-                  className="w-max h-max flex items-center gap-1"
-                  disabled={numProjectTypeFields === 0 ? true : false}
-                  onClick={() => {
-                    // Remove last project type from form data
-                    setEditFormData({ ...editFormData, project_type: editFormData.project_type ? (numProjectTypeFields === 1 ? null : editFormData.project_type.slice(0, -1)) : null})
-                    // There can be 0 fields, meaning project type is null
-                    setNumProjectTypeFields((x)=> Math.max(x-1, 0));
-                  }}>
-                  Remove Project Type<MinusIcon className="h-4 w-4" />
-                </Button>
-              </div>
-              {
-                // Create pain point fields based on numPainPointFields
-                Array.from({length: numPainPointFields}, (_, num) => num+1 && 
-                <Input
-                  key={"Pain Point "+(num+1)}
-                  label={"Pain Point "+(num+1)}
-                  value={editFormData.pain_points ? editFormData.pain_points[num] : undefined}
-                  onChange={(e) => setEditFormData({ ...editFormData, pain_points: editFormData.pain_points ? editFormData.pain_points.map((value, i) => (i === num ? e.target.value : value)) : [e.target.value] })}
-                  crossOrigin={undefined}
-                />)
-              }
-              <div className="inline-flex flex-row gap-6">
-                <Button
-                  color="green"
-                  size="sm"
-                  className="w-max h-max flex items-center gap-1"
-                  onClick={() => {
-                    setNumPainPointFields((x)=> x+1);
-                    // Add empty pain point to form data
-                    setEditFormData({ ...editFormData, pain_points: editFormData.pain_points? editFormData.pain_points.concat(['']) : ['']})
-                  }}>
-                  Add Pain Point<PlusIcon className="h-4 w-4" />
-                </Button>
-                <Button
-                  color="red"
-                  size="sm"
-                  className="w-max h-max flex items-center gap-1"
-                  disabled={numPainPointFields === 0 ? true : false}
-                  onClick={() => {
-                    // Remove last pain point from form data
-                    setEditFormData({ ...editFormData, pain_points: editFormData.pain_points ? (numPainPointFields === 1 ? null : editFormData.pain_points.slice(0, -1)) : null})
-                    // There can be 0 fields, meaning pain point is null
-                    setNumPainPointFields((x)=> Math.max(x-1, 0));
-                  }}>
-                  Remove Pain Point<MinusIcon className="h-4 w-4" />
-                </Button>
-              </div>
-              {
-                // Create current tech fields based on numCurrentTechFields
-                Array.from({length: numCurrentTechFields}, (_, num) => num+1 && 
-                <Input
-                  key={"Current Tech "+(num+1)}
-                  label={"Current Tech "+(num+1)}
-                  value={editFormData.current_tech? editFormData.current_tech[num] : undefined}
-                  onChange={(e) => setEditFormData({ ...editFormData, current_tech: editFormData.current_tech ? editFormData.current_tech.map((value, i) => (i === num ? e.target.value : value)) : [e.target.value] })}
-                  crossOrigin={undefined}
-                />)
-              }
-              <div className="inline-flex flex-row gap-6">
-                <Button
-                  color="green"
-                  size="sm"
-                  className="w-max h-max flex items-center gap-1"
-                  onClick={() => {
-                    setNumCurrentTechFields((x)=> x+1);
-                    // Add empty current tech to form data
-                    setEditFormData({ ...editFormData, current_tech: editFormData.current_tech ? editFormData.current_tech.concat(['']) : ['']})
-                  }}>
-                  Add Current Tech<PlusIcon className="h-4 w-4" />
-                </Button>
-                <Button
-                  color="red"
-                  size="sm"
-                  className="w-max h-max flex items-center gap-1"
-                  disabled={numCurrentTechFields === 0 ? true : false}
-                  onClick={() => {
-                    // Remove last current tech from form data
-                    setEditFormData({ ...editFormData, current_tech: editFormData.current_tech ? (numCurrentTechFields === 1 ? null : editFormData.current_tech.slice(0, -1)) : null})
-                    // There can be 0 fields, meaning current tech is null
-                    setNumCurrentTechFields((x)=> Math.max(x-1, 0));
-                  }}>
-                  Remove Current Tech<MinusIcon className="h-4 w-4" />
-                </Button>
-              </div>
-              <div>
-                <Typography variant="small" color="blue-gray" className="mb-2">
-                  Status
-                </Typography>
-                <select
-                  value={editFormData.status}
-                  onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value as 'NEW' | 'CONTACTED' | 'CONVERTED' })}
-                  className="w-full p-2 border rounded-lg"
-                >
-                  <option value="NEW">New</option>
-                  <option value="CONTACTED">Contacted</option>
-                  <option value="CONVERTED">Converted</option>
-                </select>
-              </div>
+              />)
+            }
+            <div className="inline-flex flex-row gap-6">
+              <Button
+                color="green"
+                size="sm"
+                className="w-max h-max flex items-center gap-1"
+                onClick={() => {
+                  setNumProjectTypeFields((x)=> x+1);
+                  // Add empty project type to form data
+                  setEditFormData({ ...editFormData, project_type: editFormData.project_type ? editFormData.project_type.concat(['']) : ['']})
+                }}>
+                Add Project Type<PlusIcon className="h-4 w-4" />
+              </Button>
+              <Button
+                color="red"
+                size="sm"
+                className="w-max h-max flex items-center gap-1"
+                disabled={numProjectTypeFields === 0 ? true : false}
+                onClick={() => {
+                  // Remove last project type from form data
+                  setEditFormData({ ...editFormData, project_type: editFormData.project_type ? (numProjectTypeFields === 1 ? undefined : editFormData.project_type.slice(0, -1)) : undefined})
+                  // There can be 0 fields, meaning project type is null
+                  setNumProjectTypeFields((x)=> Math.max(x-1, 0));
+                }}>
+                Remove Project Type<MinusIcon className="h-4 w-4" />
+              </Button>
             </div>
-          )}
+            {
+              // Create pain point fields based on numPainPointFields
+              Array.from({length: numPainPointFields}, (_, num) => num+1 && 
+              <Input
+                key={"Pain Point "+(num+1)}
+                label={"Pain Point "+(num+1)}
+                value={editFormData.pain_points ? editFormData.pain_points[num] : ''}
+                onChange={(e) => setEditFormData({ ...editFormData, pain_points: editFormData.pain_points ? editFormData.pain_points.map((value, i) => (i === num ? e.target.value : value)) : [e.target.value] })}
+                crossOrigin={undefined}
+              />)
+            }
+            <div className="inline-flex flex-row gap-6">
+              <Button
+                color="green"
+                size="sm"
+                className="w-max h-max flex items-center gap-1"
+                onClick={() => {
+                  setNumPainPointFields((x)=> x+1);
+                  // Add empty pain point to form data
+                  setEditFormData({ ...editFormData, pain_points: editFormData.pain_points? editFormData.pain_points.concat(['']) : ['']})
+                }}>
+                Add Pain Point<PlusIcon className="h-4 w-4" />
+              </Button>
+              <Button
+                color="red"
+                size="sm"
+                className="w-max h-max flex items-center gap-1"
+                disabled={numPainPointFields === 0 ? true : false}
+                onClick={() => {
+                  // Remove last pain point from form data
+                  setEditFormData({ ...editFormData, pain_points: editFormData.pain_points ? (numPainPointFields === 1 ? undefined : editFormData.pain_points.slice(0, -1)) : undefined})
+                  // There can be 0 fields, meaning pain point is null
+                  setNumPainPointFields((x)=> Math.max(x-1, 0));
+                }}>
+                Remove Pain Point<MinusIcon className="h-4 w-4" />
+              </Button>
+            </div>
+            {
+              // Create current tech fields based on numCurrentTechFields
+              Array.from({length: numCurrentTechFields}, (_, num) => num+1 && 
+              <Input
+                key={"Current Tech "+(num+1)}
+                label={"Current Tech "+(num+1)}
+                value={editFormData.current_tech? editFormData.current_tech[num] : ''}
+                onChange={(e) => setEditFormData({ ...editFormData, current_tech: editFormData.current_tech ? editFormData.current_tech.map((value, i) => (i === num ? e.target.value : value)) : [e.target.value] })}
+                crossOrigin={undefined}
+              />)
+            }
+            <div className="inline-flex flex-row gap-6">
+              <Button
+                color="green"
+                size="sm"
+                className="w-max h-max flex items-center gap-1"
+                onClick={() => {
+                  setNumCurrentTechFields((x)=> x+1);
+                  // Add empty current tech to form data
+                  setEditFormData({ ...editFormData, current_tech: editFormData.current_tech ? editFormData.current_tech.concat(['']) : ['']})
+                }}>
+                Add Current Tech<PlusIcon className="h-4 w-4" />
+              </Button>
+              <Button
+                color="red"
+                size="sm"
+                className="w-max h-max flex items-center gap-1"
+                disabled={numCurrentTechFields === 0 ? true : false}
+                onClick={() => {
+                  // Remove last current tech from form data
+                  setEditFormData({ ...editFormData, current_tech: editFormData.current_tech ? (numCurrentTechFields === 1 ? undefined : editFormData.current_tech.slice(0, -1)) : undefined})
+                  // There can be 0 fields, meaning current tech is null
+                  setNumCurrentTechFields((x)=> Math.max(x-1, 0));
+                }}>
+                Remove Current Tech<MinusIcon className="h-4 w-4" />
+              </Button>
+            </div>
+            <div>
+              <Typography variant="small" color="blue-gray" className="mb-2">
+                Status
+              </Typography>
+              <select
+                value={editFormData.status}
+                onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value as 'NEW' | 'CONTACTED' | 'CONVERTED' })}
+                className="w-full p-2 border rounded-lg"
+              >
+                <option value="NEW">New</option>
+                <option value="CONTACTED">Contacted</option>
+                <option value="CONVERTED">Converted</option>
+              </select>
+            </div>
+          </div>
         </DialogBody>
         <DialogFooter className="space-x-2">
           <Button variant="outlined" color="red" onClick={() => setIsEditModalOpen(false)}>
