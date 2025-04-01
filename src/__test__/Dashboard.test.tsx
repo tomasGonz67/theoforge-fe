@@ -11,27 +11,31 @@ jest.mock('react-router-dom', () => ({
     useNavigate: () => mockUseNavigate,
 }));
 
-function renderAdminDashboard() {
+async function renderAdminDashboard() {
     render(<AuthContext.Provider value={{isAuthenticated: false, accessToken: null, role: 'ADMIN', login: jest.fn(), register: jest.fn(), logout: jest.fn(), accessTokenLogin: jest.fn()}}>
-    <Router future={{v7_relativeSplatPath: true, v7_startTransition: true}}><Dashboard></Dashboard></Router>
-</AuthContext.Provider>);
+        <Router future={{v7_relativeSplatPath: true, v7_startTransition: true}}><Dashboard></Dashboard></Router>
+    </AuthContext.Provider>);
+    // Wait for user account info to load
+    await waitFor(() => {expect(screen.getAllByText('test@test.com')).toBeInTheDocument()});
 }
 
-function renderUserDashboard() {
+async function renderUserDashboard() {
     render(<AuthContext.Provider value={{isAuthenticated: false, accessToken: null, role: 'USER', login: jest.fn(), register: jest.fn(), logout: jest.fn(), accessTokenLogin: jest.fn()}}>
         <Router future={{v7_relativeSplatPath: true, v7_startTransition: true}}><Dashboard></Dashboard></Router>
     </AuthContext.Provider>);
+    // Wait for user account info to load
+    await waitFor(() => {expect(screen.getAllByText('test@test.com')).toBeInTheDocument()});
 }
 
 describe('When rendering the dashboard as an admin', () => {
-    it('displays appropriate text', () => {
+    it('displays appropriate text', async () => {
         renderAdminDashboard();
         // Theoforge text for sidebar and drawer
         expect(screen.getAllByText('Theoforge')).toHaveLength(2);
         expect(screen.getByText(/Welcome back, .+/)).toBeInTheDocument();
         expect(screen.getByText("Here's what's happening with your projects today.")).toBeInTheDocument();
     });
-    it('displays the appropriate images', () => {
+    it('displays the appropriate images', async () => {
         renderAdminDashboard();
         const images = screen.queryAllByRole('img');
         expect(images).toHaveLength(3);
@@ -39,7 +43,7 @@ describe('When rendering the dashboard as an admin', () => {
         expect(images[0]).toHaveAttribute('src', '/logo.png');
         expect(images[2]).toHaveAttribute('src', '/logo.png');
         // User profile pic
-        expect(images[1]).toHaveAttribute('src', '/api/placeholder/40/40');
+        expect(images[1]).toHaveAttribute('alt', 'User');
     });
     it('contains a users list button', async () => {
         renderAdminDashboard();
@@ -49,6 +53,7 @@ describe('When rendering the dashboard as an admin', () => {
         const usersButton = screen.getAllByRole('button').find(div => div.innerHTML.includes('Users'));
         expect(screen.queryByText('Users list')).toBeNull();
         // Clicking should render a table of users
+        jest.clearAllMocks();
         if(usersButton) fireEvent.click(usersButton);
         else fail('No users button found');
         await waitFor(() => {
@@ -106,7 +111,7 @@ describe('When rendering the dashboard as an admin', () => {
             expect(nextPageButton).not.toBeNull();
           });
     });
-    it('contains a marketplace button', () => {
+    it('contains a marketplace button', async () => {
         renderAdminDashboard();
         const marketplaceButtonText = screen.queryAllByText('Marketplace');
         // A marketplace button for collapsed and uncollapsed sidebar and dashboard card
@@ -121,14 +126,14 @@ describe('When rendering the dashboard as an admin', () => {
 });
 
 describe('When rendering the dashboard as a user', () => {
-    it('displays appropriate text', () => {
+    it('displays appropriate text', async () => {
         renderUserDashboard();
         // Theoforge text for sidebar and drawer
         expect(screen.getAllByText('Theoforge')).toHaveLength(2);
         expect(screen.getByText('Welcome to Theoforge')).toBeInTheDocument();
         expect(screen.getByText("Access your AI services and explore new capabilities for your business")).toBeInTheDocument();
     });
-    it('displays the appropriate images', () => {
+    it('displays the appropriate images', async () => {
         renderUserDashboard();
         const images = screen.queryAllByRole('img');
         expect(images).toHaveLength(3);
@@ -136,9 +141,9 @@ describe('When rendering the dashboard as a user', () => {
         expect(images[0]).toHaveAttribute('src', '/logo.png');
         expect(images[2]).toHaveAttribute('src', '/logo.png');
         // User profile pic
-        expect(images[1]).toHaveAttribute('src', '/api/placeholder/40/40');
+        expect(images[1]).toHaveAttribute('alt', 'User');
     });
-    it('does not contains a users list or guest button', () => {
+    it('does not contains a users list or guest button', async () => {
         renderUserDashboard();
         const usersButtonText = screen.queryAllByText('Users');
         expect(usersButtonText).toHaveLength(0);
@@ -149,7 +154,7 @@ describe('When rendering the dashboard as a user', () => {
         const guestsButton = screen.getAllByRole('button').find(div => div.innerHTML.includes('Guests'));
         expect(guestsButton).toBeUndefined();
     });
-    it('contains a marketplace button', () => {
+    it('contains a marketplace button', async () => {
         renderUserDashboard();
         const marketplaceButtonText = screen.queryAllByText('Marketplace');
         // A marketplace button for collapsed and uncollapsed sidebar

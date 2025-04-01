@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useRef, useEffect, useContext } from 'react';
 import {
@@ -88,7 +89,7 @@ export function ProfileSettings() {
     first_name: 'First Name',
     last_name: 'Last Name',
     password: ''
-  })
+  });
   const [profileInfo, setProfileInfo] = useState<ProfileInfo>({
     phone_number: '',
     address: '',
@@ -100,6 +101,7 @@ export function ProfileSettings() {
     security_code: '',
     subscription_plan: "FREE"
   });
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [additionalInfo, setAdditionalInfo] = useState<AdditionalInfo>({
     email_verified: false,
     failed_login_attempts: 0,
@@ -110,28 +112,32 @@ export function ProfileSettings() {
     updated_at: '',
     created_at: '',
     verification_token: ''
-  })
+  });
   
   const [isEditingAccount, setIsEditingAccount] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
   const [dragActive, setDragActive] = useState(false);
-  const [tempAvatarUrl, setTempAvatarUrl] = useState<string | null>(null);
+  const [avatar, setAvatar] = useState<string>('');
+  const [editAvatar, setEditAvatar] = useState<string | null>(null);
+  const [avatarOwner, setAvatarOwner] = useState('');
   const [showAlert, setShowAlert] = useState({ show: false, message: "", type: "success" });
   const [isLoading, setIsLoading] = useState(false);
-  const { accessToken, role } = useContext(AuthContext);
+  const { accessToken, role, login } = useContext(AuthContext);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadUser = async () => {
     setIsLoading(true);
     try {
-      // Search through users for the user
       const response = await axios.get(`${API_URL}/auth/auth`, {
         headers: { 'Authorization' : `Bearer ${accessToken}` },
       });
       const user: User = response.data.username;
       if(user) {
+        const localAvatarUrl = localStorage.getItem('Avatar:'+user.email);
+        if(localAvatarUrl) setAvatar(localAvatarUrl);
+        setAvatarOwner(user.email);
         setShowAlert({ show: false, message: "", type: "success" });
         setAccountInfo({
           email: user.email,
@@ -139,7 +145,7 @@ export function ProfileSettings() {
           first_name: user.first_name ? user.first_name : '',
           last_name: user.last_name ? user.last_name : '',
           password: ''
-        }); // Assuming the API returns a list of users
+        });
         setProfileInfo({
           phone_number: user.phone_number ? user.phone_number : '',
           address: user.address ? user.address : '',
@@ -195,28 +201,34 @@ export function ProfileSettings() {
     setIsLoading(true);
     // Send the update to the API
     try {
+      let alert = ''
       // Validate field
       if(!accountInfo.email || !accountInfo.password) {
         showErrorAlert('Please fill out all fields');
         return;
       }
-      if(!/^[\w-.]{1,64}@([\w-]{1,63}\.)+[\w-]{2,63}$/.test(accountInfo.email)) showErrorAlert('Invalid email');
-      else if(accountInfo.nickname && !/^[a-zA-Z0-9]*$/.test(accountInfo.nickname)) showErrorAlert('Nickname may not include special characters');
-      else if(accountInfo.password.length < 8) showErrorAlert('Password must be at least 8 characters');
-      else if(!/[A-Z]/.test(accountInfo.password)) showErrorAlert('Password must contain at least 1 uppercase character');
-      else if(!/[a-z]/.test(accountInfo.password)) showErrorAlert('Password must contain at least 1 lowercase character');
-      else if(!/[0-9]/.test(accountInfo.password)) showErrorAlert('Password must contain at least 1 number');
-      else if(!/[!@#$%^&*()_+\-=[\]{}|;:,.<>?]/.test(accountInfo.password)) showErrorAlert('Password must contain at least 1 special character');
-      else if (accountInfo.first_name && accountInfo.first_name.length > 100) showErrorAlert('First name must not be more than 100 characters');
-      else if (accountInfo.last_name && accountInfo.last_name.length > 100) showErrorAlert('Last name must not be more than 100 characters');
-      else if (accountInfo.nickname && accountInfo.nickname.length > 50) showErrorAlert('Nickname must not be more than 50 characters');
+      if(!/^[\w-.]{1,64}@([\w-]{1,63}\.)+[\w-]{2,63}$/.test(accountInfo.email)) alert = 'Invalid email';
+      else if(accountInfo.nickname && !/^[a-zA-Z0-9]*$/.test(accountInfo.nickname)) alert = 'Nickname may not include special characters';
+      else if(accountInfo.password.length < 8) alert = 'Password must be at least 8 characters';
+      else if(!/[A-Z]/.test(accountInfo.password)) alert = 'Password must contain at least 1 uppercase character';
+      else if(!/[a-z]/.test(accountInfo.password)) alert = 'Password must contain at least 1 lowercase character';
+      else if(!/[0-9]/.test(accountInfo.password)) alert = 'Password must contain at least 1 number';
+      else if(!/[!@#$%^&*()_+\-=[\]{}|;:,.<>?]/.test(accountInfo.password)) alert = 'Password must contain at least 1 special character';
+      else if (accountInfo.first_name && accountInfo.first_name.length > 100) alert = 'First name must not be more than 100 characters';
+      else if (accountInfo.last_name && accountInfo.last_name.length > 100) alert = 'Last name must not be more than 100 characters';
+      else if (accountInfo.nickname && accountInfo.nickname.length > 50) alert = 'Nickname must not be more than 50 characters';
       // Prevent sql injection by invalidating " and \
       else if (/["\\]/.test(accountInfo.email.concat(
         accountInfo.first_name ? accountInfo.first_name : '',
         accountInfo.last_name ? accountInfo.last_name : '',
         accountInfo.nickname ? accountInfo.nickname : '',
         accountInfo.password
-      ))) showErrorAlert('Invalid character " or \\ used');
+      ))) alert = 'Invalid character " or \\ used';
+      if (alert !== '') {
+        showErrorAlert(alert);
+        return;
+      }
+      // Call backend API
       await axios.put(`${API_URL}/auth/update`, 
         {
           "first_name": accountInfo.first_name,
@@ -229,10 +241,29 @@ export function ProfileSettings() {
           headers: { 'Authorization' : `Bearer ${accessToken}` }
         }
       );
+      
+      // Login to update access token
+      const response = await login(accountInfo.email, accountInfo.password);
+      if (response !== 'OK') {
+        showErrorAlert(response);
+        return;
+      }
+      
+      // Update local storage avatar owner
+      const prevAvatar = localStorage.getItem('Avatar:'+avatarOwner);
+      if (prevAvatar) {
+        localStorage.setItem('Avatar:'+accountInfo.email, prevAvatar);
+        localStorage.removeItem('Avatar:'+avatarOwner);
+        setAvatarOwner(accountInfo.email);
+      }
       showSuccessAlert("Account information updated successfully!");
+      // Tell dashboard to update profile
+      dispatchEvent(new CustomEvent('profileChange', {detail: accountInfo}));
     } catch (error: any) {
       if(error.response && error.response.data && error.response.data.detail) {
-        showErrorAlert(error.response.data.detail);
+        if(error.response.data.detail === 'Invalid token'){
+          showErrorAlert('Authentication expired. Please log back in');
+        } else showErrorAlert(error.response.data.detail);
       }
       console.error('Error updating account settings:', error);
       // Handle error (show error message to user)
@@ -263,7 +294,9 @@ export function ProfileSettings() {
       showSuccessAlert("Profile information updated successfully!");
     } catch (error: any) {
       if(error.response && error.response.data && error.response.data.detail) {
-        showErrorAlert(error.response.data.detail);
+        if(error.response.data.detail === 'Invalid token'){
+          showErrorAlert('Authentication expired. Please log back in');
+        } else showErrorAlert(error.response.data.detail);
       }
       console.error('Error updating profile settings:', error);
       // Handle error (show error message to user)
@@ -315,8 +348,17 @@ export function ProfileSettings() {
   // Handle avatar upload via input
   const handleAvatarInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setTempAvatarUrl(URL.createObjectURL(file));
+      const image = e.target.files[0];
+      const reader = new FileReader();
+      reader.addEventListener('load', () => {
+        if (reader.result) {
+          setEditAvatar(typeof reader.result === 'string' ?
+          reader.result : Buffer.from(reader.result).toString());
+        } else setEditAvatar(null);
+      });
+      if(image) {
+        reader.readAsDataURL(image)
+      }
       setIsAvatarModalOpen(true);
     }
   };
@@ -340,36 +382,29 @@ export function ProfileSettings() {
     setDragActive(false);
     
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      const file = e.dataTransfer.files[0];
-      setTempAvatarUrl(URL.createObjectURL(file));
+      const image = e.dataTransfer.files[0];
+      const reader = new FileReader();
+      reader.addEventListener('load', () => {
+        if (reader.result) {
+          setEditAvatar(typeof reader.result === 'string' ?
+          reader.result : Buffer.from(reader.result).toString());
+        } else setEditAvatar(null);
+      });
+      if(image) {
+        reader.readAsDataURL(image)
+      }
       setIsAvatarModalOpen(true);
     }
   };
 
   // Apply new avatar
   const applyNewAvatar = async () => {
-    if (tempAvatarUrl) {
+    if (editAvatar) {
       setIsLoading(true);
       try {
-        // In a real implementation, you would upload the image to the server
-        // and get back the URL to the uploaded image
-        
-        // For this example, we'll just update the avatar URL locally
-        setProfileInfo(prev => ({
-          ...prev,
-          avatarUrl: tempAvatarUrl
-        }));
-        
-        // Update the user data in localStorage
-        const userStr = localStorage.getItem('user');
-        if (userStr) {
-          const userData = JSON.parse(userStr);
-          const updatedUserData = {
-            ...userData,
-            avatarUrl: tempAvatarUrl
-          };
-          localStorage.setItem('user', JSON.stringify(updatedUserData));
-        }
+        // Update the user avatar in localStorage
+        localStorage.setItem('Avatar:'+accountInfo.email, editAvatar);
+        setAvatar(editAvatar);
         
         // Close the modal and show success message
         setIsAvatarModalOpen(false);
@@ -379,13 +414,14 @@ export function ProfileSettings() {
         showErrorAlert("Failed to update profile picture. Please try again.");
       } finally {
         setIsLoading(false);
+        dispatchEvent(new CustomEvent('profileChange'));
       }
     }
   };
 
   // Cancel avatar update
   const cancelAvatarUpdate = () => {
-    setTempAvatarUrl(null);
+    setEditAvatar(null);
     setIsAvatarModalOpen(false);
   };
 
@@ -430,7 +466,7 @@ export function ProfileSettings() {
                 <div className="flex items-center gap-4">
                   <div className="relative group">
                     <Avatar
-                      src={tempAvatarUrl ? tempAvatarUrl : undefined}
+                      src={avatar ? avatar : undefined}
                       alt="Avatar"
                       withBorder={true}
                       className="p-0.5 w-24 h-24"
@@ -588,10 +624,10 @@ export function ProfileSettings() {
               <DialogHeader>Update Profile Picture</DialogHeader>
               <DialogBody divider>
                 <div className="flex flex-col items-center">
-                  {tempAvatarUrl ? (
+                  {editAvatar ? (
                     <div className="mb-4">
                       <Avatar
-                        src={tempAvatarUrl}
+                        src={editAvatar}
                         alt="New profile picture"
                         size="xxl"
                         className="h-40 w-40"
@@ -638,7 +674,7 @@ export function ProfileSettings() {
                 >
                   Cancel
                 </Button>
-                {tempAvatarUrl && (
+                {editAvatar && (
                   <Button
                     color="teal"
                     onClick={applyNewAvatar}
