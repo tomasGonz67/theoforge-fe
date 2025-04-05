@@ -1,6 +1,6 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeftIcon, EnvelopeIcon, LockClosedIcon, SparklesIcon, UserIcon, IdentificationIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, EnvelopeIcon, LockClosedIcon, SparklesIcon, UserIcon, IdentificationIcon, CheckIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import { AuthContext } from '../App';
 import { Typography, Alert, Button } from "@material-tailwind/react";
 
@@ -14,7 +14,7 @@ export function AuthForm({ type }: AuthFormProps) {
   const [nickname, setNickname] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [error, setError] = useState('');
+  const [showAlert, setShowAlert] = useState({ show: false, message: "", type: "success" });
   const navigate = useNavigate();
   const { login, isAuthenticated, register, accessTokenLogin } = useContext(AuthContext);
 
@@ -22,6 +22,32 @@ export function AuthForm({ type }: AuthFormProps) {
     if (isAuthenticated) navigate('/dashboard');
   }, [isAuthenticated, navigate]);
 
+  // Show success alert
+  const showSuccessAlert = (message: string) => {
+    setShowAlert({
+      show: true,
+      message,
+      type: "success"
+    });
+    
+    setTimeout(() => {
+      setShowAlert(prev => ({ ...prev, show: false }));
+    }, 3000);
+  };
+
+  // Show error alert
+  const showErrorAlert = (message: string) => {
+    setShowAlert({
+      show: true,
+      message,
+      type: "error"
+    });
+    
+    setTimeout(() => {
+      setShowAlert(prev => ({ ...prev, show: false }));
+    }, 3000);
+  };
+  
   useEffect(() => {
     // If the user's cookie contains a valid access token, redirect to dashboard
     const authenticate = async (accessToken: string) => {
@@ -47,13 +73,13 @@ export function AuthForm({ type }: AuthFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if(!email || !password) {
-      setError('Please fill out all fields');
+      showErrorAlert('Please fill out all fields');
       return;
     }
     if (type === 'login') {
       const response = await login(email, password);
       if (response === 'OK') navigate('/dashboard');
-      else setError(response);
+      else showErrorAlert(response);
     } else {//type === 'register'
       const response = await register(email, password,
         firstName.length > 0 ? firstName : undefined,
@@ -61,9 +87,9 @@ export function AuthForm({ type }: AuthFormProps) {
         nickname.length > 0 ? nickname : undefined);
       if (response === 'OK') {
         // Add email verification here
-        setError('Account created');
+        showSuccessAlert('Account created');
         navigate('/login');
-      } else setError(response);
+      } else showErrorAlert(response);
     }
   };
 
@@ -101,14 +127,19 @@ export function AuthForm({ type }: AuthFormProps) {
                 ? 'Sign in to access your account' 
                 : 'Join us and start your journey'}
             </Typography>
-
-            {error && (
-              <Alert 
-                color="red" 
-                className="mb-6 bg-red-50 border-l-4 border-red-500 text-red-700 p-4"
-                icon={<span className="font-bold">!</span>}
+            
+            {showAlert.show && (
+              <Alert
+                open={showAlert.show}
+                onClose={() => setShowAlert(prev => ({ ...prev, show: false }))}
+                animate={{
+                  mount: { y: 0 },
+                  unmount: { y: -100 },
+                }}
+                className={showAlert.type === "success" ? "mb-6 bg-green-50 border-l-4 border-green-500 text-green-700 p-4" : "mb-6 bg-red-50 border-l-4 border-red-500 text-red-700 p-4"}
+                icon={showAlert.type === "success" ? <CheckIcon className="h-6 w-6" /> : <ExclamationCircleIcon className="h-6 w-6" />}
               >
-                {error}
+                {showAlert.message}
               </Alert>
             )}
 
