@@ -1,20 +1,18 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useContext } from 'react';
 import {
   DocumentTextIcon,
   DocumentIcon,
-  TableCellsIcon,
-  DocumentChartBarIcon,
   CheckIcon,
   CloudArrowUpIcon,
   ExclamationCircleIcon,
-  ArrowDownTrayIcon,
-  ShareIcon,
   TrashIcon,
   FolderIcon,
-  StarIcon
+  PhotoIcon,
+  PencilIcon,
+  ArrowPathIcon
 } from '@heroicons/react/24/outline';
-import { StarIcon as StarSolid } from '@heroicons/react/24/solid';
 import {
   Typography,
   Card,
@@ -34,211 +32,230 @@ import {
   DialogFooter,
   Chip,
   Spinner,
-  Alert,
-  Progress
+  Alert
 } from "@material-tailwind/react";
+import { API_URL } from '../utils/axiosConfig';
+import axios from 'axios';
+import { AuthContext } from '../App';
+import { cn } from '../lib/utils'
 
-// Simple utility function for class names
-const cn = (...classes: string[]) => classes.filter(Boolean).join(' ');
-
-// Define types for resources
+// Define resources with the same fields as the backend
 interface Resource {
-  id: string;
   name: string;
-  type: string;
-  size: number;
-  lastModified: string;
-  url: string;
-  shared: boolean;
-  favorite: boolean;
+  description?: string;
+  category?: string;
+  resource_type: string;
+  tags?: string;
+  profile_picture?: string;
+  source_url?: string;
+  file_path?: string;
+  user_id: string;
+  is_public: string;
+  id: string;
+  related_resources?: string[];
 }
 
 export function Resources() {
-  // Basic state
   const [activeTab, setActiveTab] = useState("all");
   const [resources, setResources] = useState<Resource[]>([]);
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
+  const [uploadFile, setUploadFile] = useState<any>(null)
+  const [fileDescription, setFileDescription] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [showAlert, setShowAlert] = useState({ show: false, message: "", type: "success" });
+  const { accessToken } = useContext(AuthContext);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Load sample data on component mount
-  useEffect(() => {
-    loadInitialResources();
-  }, []);
-
-  // Simulated API call to load resources
-  const loadInitialResources = () => {
-    const mockResources = [
-      {
-        id: "1",
-        name: "Annual Report.pdf",
-        type: "pdf",
-        size: 2500000,
-        lastModified: new Date(Date.now() - 86400000 * 2).toISOString(),
-        url: "#",
-        shared: true,
-        favorite: true
-      },
-      {
-        id: "2",
-        name: "Sales Data.csv",
-        type: "csv",
-        size: 1200000,
-        lastModified: new Date(Date.now() - 86400000 * 5).toISOString(),
-        url: "#",
-        shared: false,
-        favorite: true
-      },
-      {
-        id: "3",
-        name: "Project Documentation.docx",
-        type: "doc",
-        size: 1800000,
-        lastModified: new Date(Date.now() - 86400000 * 10).toISOString(),
-        url: "#",
-        shared: true,
-        favorite: false
-      },
-      {
-        id: "4",
-        name: "Meeting Notes.txt",
-        type: "txt",
-        size: 50000,
-        lastModified: new Date(Date.now() - 86400000 * 1).toISOString(),
-        url: "#",
-        shared: false,
-        favorite: false
-      },
-      {
-        id: "5",
-        name: "Product Roadmap.pdf",
-        type: "pdf",
-        size: 3200000,
-        lastModified: new Date(Date.now() - 86400000 * 7).toISOString(),
-        url: "#",
-        shared: true,
-        favorite: false
-      }
-    ];
-
-    setResources(mockResources);
+  // Show success alert
+  const showSuccessAlert = (message: string) => {
+    setShowAlert({
+      show: true,
+      message,
+      type: "success"
+    });
+    
+    setTimeout(() => {
+      setShowAlert(prev => ({ ...prev, show: false }));
+    }, 3000);
   };
+  
+  // Show error alert
+  const showErrorAlert = (message: string) => {
+    setShowAlert({
+      show: true,
+      message,
+      type: "error"
+    });
+    
+    setTimeout(() => {
+      setShowAlert(prev => ({ ...prev, show: false }));
+    }, 3000);
+  };
+  
+  const loadResources = async () => {
+    // Ideally we have a router to get only user's files instead of all files
+    try {
+      await axios.get(`${API_URL}/resources/`);
+    } catch {
+      showErrorAlert('Failed to load resources');
+    }
+    setResources(resources);
+    
+    try {
+      const res = await axios.get(`${API_URL}/resources/`);
+      if(!(Array.isArray(res.data) && res.data.every(resource => typeof resource === 'object'))) {
+        showErrorAlert("Failed to load resources");
+        return;
+      }
+      setResources(res.data);
+    } catch {
+      showErrorAlert("Failed to load resources");
+    }
+  };
+  
+  // Load resources on component mount
+  useEffect(() => {
+    loadResources();
+  }, []);
 
   // Filter resources based on active tab and search query
   const filteredResources = resources.filter(resource => {
     const matchesSearch = resource.name.toLowerCase().includes(searchQuery.toLowerCase());
     
     if (activeTab === "all") return matchesSearch;
-    if (activeTab === "documents") return ["pdf", "doc", "txt"].includes(resource.type) && matchesSearch;
-    if (activeTab === "spreadsheets") return resource.type === "csv" && matchesSearch;
-    if (activeTab === "favorites") return resource.favorite && matchesSearch;
-    if (activeTab === "shared") return resource.shared && matchesSearch;
+    if (activeTab === "documents") return resource.resource_type === "PDF" && matchesSearch;
+    if (activeTab === "images") return resource.resource_type === "IMAGE" && matchesSearch;
+    if (activeTab === "other") return resource.resource_type === "OTHER" && matchesSearch;
     
     return matchesSearch;
   });
 
-  // Format file size from bytes to readable format
-  const formatFileSize = (bytes: number) => {
-    if (bytes < 1024) return bytes + " B";
-    else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + " KB";
-    else if (bytes < 1073741824) return (bytes / 1048576).toFixed(1) + " MB";
-    else return (bytes / 1073741824).toFixed(1) + " GB";
-  };
-
-  // Format date to readable format
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric"
-    });
-  };
-
-  // Handle file upload
-  const handleFileUpload = (files: any[]) => {
+  // Upload resource
+  const handleFileUpload = async () => {
     setIsUploading(true);
-    setUploadProgress(0);
-    
-    // Simulate upload progress
-    const interval = setInterval(() => {
-      setUploadProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          return 100;
+    try {
+      const formdata = new FormData();
+      formdata.append("title", uploadFile.name);
+      if (fileDescription.length > 0) formdata.append("description", fileDescription);
+      formdata.append("file", uploadFile);
+      await axios.post(`${API_URL}/resources/`, formdata,
+        {
+          headers: { 'Authorization' : `Bearer ${accessToken}` }
         }
-        return prev + 10;
-      });
-    }, 300);
-
-    // Simulate API upload with delay
-    setTimeout(() => {
-      clearInterval(interval);
-      setUploadProgress(100);
+      );
       
-      // Process each file
-      Array.from(files).forEach(file => {
-        // Get file extension
-        const fileExtension = file.name.split('.').pop()?.toLowerCase() || "";
-        let fileType = "other";
-        
-        if (["pdf"].includes(fileExtension)) fileType = "pdf";
-        else if (["doc", "docx"].includes(fileExtension)) fileType = "doc";
-        else if (["xls", "xlsx", "csv"].includes(fileExtension)) fileType = "csv";
-        else if (["txt"].includes(fileExtension)) fileType = "txt";
-        
-        // Create new resource
-        const newResource = {
-          id: Date.now().toString() + Math.random().toString(36).substring(2, 9),
-          name: file.name,
-          type: fileType,
-          size: file.size,
-          lastModified: new Date().toISOString(),
-          url: URL.createObjectURL(file),
-          shared: false,
-          favorite: false
-        };
-        
-        // Add to resources
-        setResources(prev => [newResource, ...prev]);
-      });
+      // Fetch updated resources
+      loadResources();
       
+      showSuccessAlert("File uploaded successfully!");
+    } catch (error: any) {
+      if(error.response && error.response.data && error.response.data.detail) {
+        if(error.response.data.detail === 'Invalid token'){
+          showErrorAlert('Authentication expired. Please log back in');
+          return;
+        }
+      }
+      showErrorAlert("Failed to upload file")
+    } finally {
       // Reset states
+      setFileDescription('');
+      setUploadFile(null);
       setIsUploading(false);
       setIsUploadModalOpen(false);
-      
-      // Show success alert
-      setShowAlert({
-        show: true,
-        message: files.length > 1 
-          ? `${files.length} files uploaded successfully!` 
-          : "File uploaded successfully!",
-        type: "success"
-      });
-      
-      // Hide alert after 3 seconds
-      setTimeout(() => {
-        setShowAlert(prev => ({ ...prev, show: false }));
-      }, 3000);
-    }, 2000);
-  };
-
-  // Handle file input change
-  const handleFileInputChange = (event: any) => {
-    if (event.target.files && event.target.files.length > 0) {
-      handleFileUpload(event.target.files);
     }
   };
 
+  // Edit resource
+  const editResource = async () => {
+    setIsUploading(true);
+    if (selectedResource) {
+      try {
+        const formdata = new FormData();
+        if (uploadFile && uploadFile.name) formdata.append("title", uploadFile.name);
+        else formdata.append("title", '');
+        if (fileDescription.length > 0) formdata.append("description", fileDescription);
+        if (uploadFile) formdata.append("file", uploadFile);
+        console.log([...formdata.entries()]);
+        await axios.put(`${API_URL}/resources/${selectedResource.id}`, formdata,
+          {
+            headers: { 'Authorization' : `Bearer ${accessToken}` }
+          }
+        );
+        
+        // Fetch updated resources
+        loadResources();
+        
+        showSuccessAlert("File edited successfully!")
+      } catch (error: any) {
+        if(error.response && error.response.data && error.response.data.detail) {
+          if(error.response.data.detail === 'Invalid token'){
+            showErrorAlert('Authentication expired. Please log back in');
+            return;
+          }
+        } showErrorAlert("Failed to edit file");
+      } finally {
+        // Reset states
+        setFileDescription('');
+        setUploadFile(null);
+        setIsUploading(false);
+        setIsEditModalOpen(false);
+        setSelectedResource(null);
+      }
+    }
+  }
+  
+  // Delete resource
+  const deleteResource = async () => {
+    if (selectedResource) {
+      try {
+        await axios.delete(`${API_URL}/resources/${selectedResource.id}`,
+          {
+            headers: { 'Authorization' : `Bearer ${accessToken}` }
+          }
+        );
+        
+        // Fetch updated resources
+        loadResources();
+        
+        showSuccessAlert("File deleted successfully!");
+      } catch (error: any) {
+        if(error.response && error.response.data && error.response.data.detail) {
+          if(error.response.data.detail === 'Invalid token'){
+            showErrorAlert('Authentication expired. Please log back in');
+            return;
+          }
+        }
+        showErrorAlert("Failed to delete file")
+      } finally {
+        setIsDeleteModalOpen(false);
+        setSelectedResource(null);
+      }
+    }
+  };
+  
+  // Handle file input change
+  const handleFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      setUploadFile(event.target.files[0]);
+    }
+  };
+
+  // Cancel resource upload
+  const cancelFileUpload = () => {
+    setUploadFile(null);
+    setFileDescription('');
+    setIsUploadModalOpen(false);
+    setIsEditModalOpen(false);
+  };
+  
   // Handle drag events
-  const handleDragEnter = (e: any) => {
+  const handleDragOver = (e: any) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(true);
@@ -250,87 +267,43 @@ export function Resources() {
     setIsDragging(false);
   };
 
-  const handleDragOver = (e: any) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
-
   const handleDrop = (e: any) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
     
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      handleFileUpload(e.dataTransfer.files);
-    }
-  };
-
-  // Toggle favorite status
-  const toggleFavorite = (resourceId: any) => {
-    setResources(resources.map(resource => 
-      resource.id === resourceId 
-        ? { ...resource, favorite: !resource.favorite } 
-        : resource
-    ));
-  };
-
-  // Toggle shared status
-  const toggleShared = (resourceId: any) => {
-    setResources(resources.map(resource => 
-      resource.id === resourceId 
-        ? { ...resource, shared: !resource.shared } 
-        : resource
-    ));
-  };
-
-  // Delete resource
-  const deleteResource = () => {
-    if (selectedResource) {
-      setResources(resources.filter(resource => resource.id !== selectedResource.id));
-      setIsDeleteModalOpen(false);
-      setSelectedResource(null);
-      
-      // Show success alert
-      setShowAlert({
-        show: true,
-        message: "File deleted successfully!",
-        type: "success"
-      });
-      
-      // Hide alert after 3 seconds
-      setTimeout(() => {
-        setShowAlert(prev => ({ ...prev, show: false }));
-      }, 3000);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      setUploadFile(e.dataTransfer.files[0]);
     }
   };
 
   // Get icon based on file type
   const getFileIcon = (type: string) => {
     switch (type) {
-      case 'pdf':
+      case 'PDF':
         return <DocumentTextIcon className="h-6 w-6 text-red-500" />;
-      case 'doc':
-        return <DocumentIcon className="h-6 w-6 text-blue-500" />;
-      case 'csv':
-        return <TableCellsIcon className="h-6 w-6 text-green-500" />;
-      case 'txt':
-        return <DocumentChartBarIcon className="h-6 w-6 text-gray-500" />;
+      case 'IMAGE':
+        return <PhotoIcon className="h-6 w-6 text-blue-500" />;
       default:
         return <DocumentIcon className="h-6 w-6 text-gray-500" />;
     }
   };
 
+  // Get icon based on file name
+  const getFileNameIcon = (name: string) => {
+    const extention = name.split(".").pop()?.toLowerCase();
+    if (extention === 'pdf') return <DocumentTextIcon className="h-6 w-6 text-red-500" />;
+    if (extention && ["jpg", "jpeg", "png", "gif"].includes(extention)) return <PhotoIcon className="h-6 w-6 text-blue-500" />;
+    return <DocumentIcon className="h-6 w-6 text-gray-500" />;
+  }
+  
   // Get color based on file type
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'pdf':
+      case 'PDF':
         return 'red';
-      case 'doc':
+      case 'IMAGE':
         return 'blue';
-      case 'csv':
-        return 'green';
-      case 'txt':
-        return 'gray';
       default:
         return 'blue-gray';
     }
@@ -374,6 +347,17 @@ export function Resources() {
               </Typography>
             </div>
             <div className="flex flex-wrap items-center gap-3">
+              <div>
+                <IconButton
+                  onClick={loadResources}
+                  variant="text"
+                  color="teal"
+                  className="h-8 w-8 rounded-full hover:bg-white/20 transition-all"
+                  size="sm"
+                >
+                  <ArrowPathIcon className="h-4 w-4" />
+                </IconButton>
+              </div>
               <div className="w-full md:w-auto">
                 <Input
                   label="Search files"
@@ -414,29 +398,22 @@ export function Resources() {
                 Documents
               </Tab>
               <Tab 
-                value="spreadsheets" 
-                onClick={() => setActiveTab("spreadsheets")}
-                className={activeTab === "spreadsheets" ? "font-medium" : ""}
+                value="images" 
+                onClick={() => setActiveTab("images")}
+                className={activeTab === "images" ? "font-medium" : ""}
               >
-                Spreadsheets
+                Images
               </Tab>
               <Tab 
-                value="favorites" 
-                onClick={() => setActiveTab("favorites")}
-                className={activeTab === "favorites" ? "font-medium" : ""}
+                value="other" 
+                onClick={() => setActiveTab("other")}
+                className={activeTab === "other" ? "font-medium" : ""}
               >
-                Favorites
-              </Tab>
-              <Tab 
-                value="shared" 
-                onClick={() => setActiveTab("shared")}
-                className={activeTab === "shared" ? "font-medium" : ""}
-              >
-                Shared
+                Other
               </Tab>
             </TabsHeader>
             <TabsBody animate={{ initial: { y: 250 }, mount: { y: 0 }, unmount: { y: 250 } }}>
-              {["all", "documents", "spreadsheets", "favorites", "shared"].map((value) => (
+              {["all", "documents", "images", "other"].map((value) => (
                 <TabPanel key={value} value={value} className="p-0">
                   {filteredResources.length > 0 ? (
                     <div className="overflow-x-auto">
@@ -467,16 +444,7 @@ export function Resources() {
                                 color="blue-gray"
                                 className="font-normal leading-none opacity-70"
                               >
-                                Size
-                              </Typography>
-                            </th>
-                            <th className="border-b border-blue-gray-100 bg-blue-gray-50/50 p-4">
-                              <Typography
-                                variant="small"
-                                color="blue-gray"
-                                className="font-normal leading-none opacity-70"
-                              >
-                                Last Modified
+                                Description
                               </Typography>
                             </th>
                             <th className="border-b border-blue-gray-100 bg-blue-gray-50/50 p-4">
@@ -499,20 +467,11 @@ export function Resources() {
                               <tr key={resource.id} className="hover:bg-blue-gray-50/30">
                                 <td className={classes}>
                                   <div className="flex items-center gap-3">
-                                    {getFileIcon(resource.type)}
+                                    {getFileIcon(resource.resource_type)}
                                     <div>
-                                      <Typography variant="small" color="blue-gray" className="font-medium">
+                                      <Typography variant="small" color="blue-gray" className="font-medium w-32 overscroll-x-contain overflow-auto">
                                         {resource.name}
                                       </Typography>
-                                      {resource.favorite && (
-                                        <Chip
-                                          size="sm"
-                                          variant="ghost"
-                                          value="Favorite"
-                                          color="amber"
-                                          className="text-xs px-1 py-0.5 rounded"
-                                        />
-                                      )}
                                     </div>
                                   </div>
                                 </td>
@@ -520,46 +479,27 @@ export function Resources() {
                                   <Chip
                                     size="sm"
                                     variant="ghost"
-                                    value={resource.type.toUpperCase()}
-                                    color={getTypeColor(resource.type)}
+                                    value={resource.resource_type.toUpperCase()}
+                                    color={getTypeColor(resource.resource_type)}
                                   />
                                 </td>
                                 <td className={classes}>
-                                  <Typography variant="small" color="blue-gray">
-                                    {formatFileSize(resource.size)}
-                                  </Typography>
-                                </td>
-                                <td className={classes}>
-                                  <Typography variant="small" color="blue-gray">
-                                    {formatDate(resource.lastModified)}
+                                  <Typography variant="small" color="blue-gray" className="font-medium w-32 overscroll-x-contain overflow-auto">
+                                    {resource.description ? resource.description : ''}
                                   </Typography>
                                 </td>
                                 <td className={classes}>
                                   <div className="flex items-center gap-2">
-                                    {/* Download button */}
-                                    <IconButton variant="text" color="blue-gray">
-                                      <ArrowDownTrayIcon className="h-4 w-4" />
-                                    </IconButton>
-                                    
-                                    {/* Favorite toggle */}
+                                    {/* Edit button */}
                                     <IconButton
                                       variant="text"
-                                      color={resource.favorite ? "amber" : "blue-gray"}
-                                      onClick={() => toggleFavorite(resource.id)}
+                                      color="blue-gray"
+                                      onClick={() => {
+                                        setSelectedResource(resource);
+                                        setIsEditModalOpen(true);
+                                      }}
                                     >
-                                      {resource.favorite ? 
-                                        <StarSolid className="h-4 w-4" /> : 
-                                        <StarIcon className="h-4 w-4" />
-                                      }
-                                    </IconButton>
-                                    
-                                    {/* Share toggle */}
-                                    <IconButton
-                                      variant="text"
-                                      color={resource.shared ? "blue" : "blue-gray"}
-                                      onClick={() => toggleShared(resource.id)}
-                                    >
-                                      <ShareIcon className="h-4 w-4" />
+                                      <PencilIcon className="h-4 w-4" />
                                     </IconButton>
                                     
                                     {/* Delete button */}
@@ -592,7 +532,11 @@ export function Resources() {
                           ? `No files matching "${searchQuery}" were found. Try a different search term.`
                           : activeTab === "all"
                           ? "You haven't uploaded any files yet. Click the 'Upload File' button to get started."
-                          : `You don't have any ${activeTab === "favorites" ? "favorite" : activeTab} files yet.`}
+                          : activeTab === "documents"
+                          ? "You haven't uploaded any documents yet. Click the 'Upload File' button to get started."
+                          : activeTab === "images"
+                          ? "You haven't uploaded any images yet. Click the 'Upload File' button to get started."
+                          : ""}
                       </Typography>
                       <Button
                         variant="text"
@@ -614,19 +558,19 @@ export function Resources() {
       {/* Upload Modal */}
       <Dialog
         open={isUploadModalOpen}
-        handler={() => !isUploading && setIsUploadModalOpen(false)}
+        handler={() => !isUploading && cancelFileUpload()}
         size="md"
       >
         <DialogHeader>Upload Files</DialogHeader>
         <DialogBody divider>
           <div
             className={cn(
-              "border-2 border-dashed rounded-lg p-8 transition-colors cursor-pointer text-center",
+              uploadFile ? "border-black" : "border-dashed",
+              "border-2 rounded-lg p-8 transition-colors cursor-pointer text-center",
               isDragging
                 ? "border-teal-500 bg-teal-50"
                 : "border-blue-gray-200 hover:border-teal-500 hover:bg-teal-50/30"
             )}
-            onDragEnter={handleDragEnter}
             onDragLeave={handleDragLeave}
             onDragOver={handleDragOver}
             onDrop={handleDrop}
@@ -638,24 +582,25 @@ export function Resources() {
                 <Typography color="teal" className="font-medium">
                   Uploading...
                 </Typography>
-                <div className="w-full max-w-xs">
-                  <Progress value={uploadProgress} label=" " color="teal" />
-                  <Typography variant="small" className="text-center mt-1">
-                    {uploadProgress}%
+              </div>
+            ) : uploadFile ? (
+              <div className="flex items-center gap-3">
+                  <div>{getFileNameIcon(uploadFile.name)}</div>
+                  <Typography variant="small" color="blue-gray" className="font-medium overscroll-x-contain overflow-auto">
+                    {uploadFile.name}
                   </Typography>
-                </div>
               </div>
             ) : (
               <>
                 <CloudArrowUpIcon className="h-12 w-12 text-blue-gray-300 mx-auto mb-4" />
                 <Typography color="blue-gray" className="font-medium mb-1">
-                  Drag and drop files here
+                  Drag and drop a file here
                 </Typography>
                 <Typography color="gray" className="text-sm">
                   or <span className="text-teal-500 font-medium">browse</span> to upload
                 </Typography>
                 <Typography color="gray" className="text-xs mt-4">
-                  Supported formats: PDF, DOC, CSV, TXT
+                  Supported formats: PDF, JPG, JPEG, PNG, GIF
                 </Typography>
               </>
             )}
@@ -663,10 +608,17 @@ export function Resources() {
               type="file"
               ref={fileInputRef}
               className="hidden"
-              multiple
               onChange={handleFileInputChange}
-              accept=".pdf,.doc,.docx,.csv,.txt,.xls,.xlsx"
+              accept=".pdf,.jpg,.jpeg,.png,.gif"
               disabled={isUploading}
+            />
+          </div>
+          <div className='mt-4'>
+            <Input
+              label="Description"
+              value={fileDescription}
+              onChange={(e) => {setFileDescription(e.target.value);}}
+              crossOrigin={undefined}
             />
           </div>
         </DialogBody>
@@ -674,10 +626,94 @@ export function Resources() {
           <Button
             variant="text"
             color="red"
-            onClick={() => !isUploading && setIsUploadModalOpen(false)}
+            onClick={() => !isUploading && cancelFileUpload()}
             disabled={isUploading}
           >
             Cancel
+          </Button>
+          {uploadFile && (
+            <Button
+              color="teal"
+              onClick={handleFileUpload}
+            >Upload</Button>
+          )}
+        </DialogFooter>
+      </Dialog>
+      
+      {/* Edit Modal */}
+      <Dialog
+        open={isEditModalOpen}
+        handler={() => !isUploading && cancelFileUpload()}
+        size="md"
+      >
+        <DialogHeader>Edit Files</DialogHeader>
+        <DialogBody divider>
+          <div
+            className={cn(
+              "border-2 border-black rounded-lg p-8 transition-colors cursor-pointer text-center",
+              isDragging
+                ? "border-teal-500 bg-teal-50"
+                : "border-blue-gray-200 hover:border-teal-500 hover:bg-teal-50/30"
+            )}
+            onDragLeave={handleDragLeave}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            {isUploading ? (
+              <div className="flex flex-col items-center justify-center gap-4">
+                <Spinner className="h-12 w-12 text-teal-500" />
+                <Typography color="teal" className="font-medium">
+                  Uploading...
+                </Typography>
+              </div>
+            ) : uploadFile ? (
+              <div className="flex items-center gap-3">
+                  <div>{getFileNameIcon(uploadFile.name)}</div>
+                  <Typography variant="small" color="blue-gray" className="font-medium overscroll-x-contain overflow-auto">
+                    {uploadFile.name}
+                  </Typography>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3">
+                  <div>{getFileIcon(selectedResource ? selectedResource.resource_type : '')}</div>
+                  <Typography variant="small" color="blue-gray" className="font-medium overscroll-x-contain overflow-auto">
+                    {selectedResource ? selectedResource.name : ''}
+                  </Typography>
+              </div>
+            )}
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              onChange={handleFileInputChange}
+              accept=".pdf,.jpg,.jpeg,.png,.gif"
+              disabled={isUploading}
+            />
+          </div>
+          <div className='mt-4'>
+            <Input
+              label="Description"
+              value={fileDescription}
+              onChange={(e) => {setFileDescription(e.target.value);}}
+              crossOrigin={undefined}
+            />
+          </div>
+        </DialogBody>
+        <DialogFooter>
+          <Button
+            variant="text"
+            color="red"
+            onClick={() => !isUploading && cancelFileUpload()}
+            disabled={isUploading}
+          >
+            Cancel
+          </Button>
+          <Button
+            color="teal"
+            onClick={editResource}
+          >
+            Edit
           </Button>
         </DialogFooter>
       </Dialog>
