@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { EyeIcon, MagnifyingGlassIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { ArrowPathIcon, EyeIcon, MagnifyingGlassIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import axios from 'axios';
 import {
   Card,
@@ -342,6 +342,17 @@ export function UsersTable() {
             </Typography>
           </div>
           <div className="flex shrink-0 gap-2 sm:flex-row">
+            <div>
+              <IconButton
+                onClick={fetchUsers}
+                variant="text"
+                color="teal"
+                className="h-8 w-8 rounded-full hover:bg-white/20 transition-all"
+                size="sm"
+              >
+                <ArrowPathIcon className="h-4 w-4" />
+              </IconButton>
+            </div>
             <div className="w-full md:w-72">
               <Input
                 label="Search"

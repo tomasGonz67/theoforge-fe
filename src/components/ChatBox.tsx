@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect, useRef, KeyboardEvent } from 'react';
 import {
@@ -23,23 +24,62 @@ import {
   IconButton,
   Button,
   Tooltip,
-  Spinner,
   Chip,
   Badge
 } from "@material-tailwind/react";
-import { getGuestId, getStorageKeyForGuest } from '../lib/guestIdentifier';
+import { getGuestId } from '../lib/guestIdentifier';
+import { API_URL } from '../utils/axiosConfig';
+import axios from 'axios';
 
-// Enhanced guest identification
-interface GuestInfo {
+interface Question {
   id: string;
+  question: string;
+}
+
+// Guest info collected
+interface GuestInfo {
+  id: string | null;
   name?: string;
-  email?: string;
   company?: string;
-  interests?: string[];
-  firstVisit: string;
-  lastVisit: string;
-  sessionCount: number;
-  questionsAnswered: string[];
+  industry?: string;
+  project_type?: string[];
+  budget?: string;
+  timeline?: string;
+  contact_info?: string;
+  pain_points?: string[];
+  current_tech?: string[];
+  additional_notes?: string;
+  // Additional info not in database
+  sessionCount: number,
+  questionsAnswered: Question[]
+}
+
+interface Interaction {
+  event: string,
+  timestamp: string,
+}
+
+// Guest stored in database
+interface Guest {
+  additional_notes?: string;
+  budget?: string;
+  company?: string;
+  contact_info?: string;
+  created_at?: string;
+  current_tech?: string[];
+  first_visit_timestamp?: string;
+  id: string | null;
+  industry?: string;
+  interaction_events?: string[];
+  interaction_history?: Interaction[];
+  name?: string;
+  page_views?: string[];
+  pain_points?: string[];
+  project_type?: string[];
+  session_id?: string;
+  status?: 'NEW' | 'CONTACTED' | 'CONVERTED';
+  timeline?: string;
+  updated_at?: string;
 }
 
 interface Message {
@@ -56,20 +96,26 @@ type Theme = 'light' | 'dark';
 interface ChatBoxProps {
   isOpen: boolean;
   onClose: () => void;
-  initialPrompt?: string;
-  onGuestIdentified?: (guestInfo: GuestInfo) => void;
 }
 
-// Constants
+// AI setup
 const AI_ENDPOINT = "https://api.openai.com/v1/chat/completions";
 const SYSTEM_PROMPT = "You are a helpful, friendly AI assistant for Theoforge, a company that specializes in ETL Solutions, Knowledge Graphs, and Custom LLM Training. Your goal is to be helpful, gather information about the guest to better assist them, and ultimately help convert them to customers. Ask questions one at a time to learn about their needs. Be concise but friendly.";
+const apiKey = process.env.VITE_OPENAI_API_KEY || '';
 
-// Questions to ask guests (in sequence)
-const GUEST_QUESTIONS = [
+// Questions to ask guests
+const GUEST_QUESTIONS: Question[] = [
+  { id: 'intro', question: "Hello! I'm your AI assistant from Theoforge. Before we get started, could you tell me about you and your company?"},
   { id: 'name', question: "Before we continue, may I know your name?" },
-  { id: 'company', question: "Thanks! What company are you with?" },
-  { id: 'interests', question: "What specific data or AI challenges is your company facing that brought you here today?" },
-  { id: 'email', question: "Would you like to receive a detailed resource about how Theoforge can help with your challenges? If so, I'd be happy to have someone send it to your email." }
+  { id: 'company', question: "Could you tell me what company are you with?" },
+  { id: 'industry', question: "What industry are you in?"},
+  { id: 'project_type', question: "What type of projects are you interested in?"},
+  { id: 'budget', question: "What is your current budget?"},
+  { id: 'timeline', question: "Please tell me more about the timeline of your project."},
+  { id: 'contact_info', question: "May I get your contact info?"},
+  { id: 'pain_points', question: "What specific data or AI challenges is your company facing that brought you here today?" },
+  { id: 'current_tech', question: "What tech is your company into?" },
+  { id: 'additional_notes', question: "Is there any additional info that might be helpful to know about you or your company?"}
 ];
 
 // Generate a unique ID for messages
@@ -91,48 +137,32 @@ const INITIAL_MESSAGES: Message[] = [
   {
     id: generateId(),
     role: 'assistant',
-    content: `Hello! I'm your AI assistant from Theoforge. How can I help you with your data and AI needs today?`,
+    content: GUEST_QUESTIONS[0].question,
     timestamp: new Date().toISOString()
   }
 ];
 
-const INITIAL_GUEST_INFO: GuestInfo = {
-  id: getGuestId(),
-  firstVisit: new Date().toISOString(),
-  lastVisit: new Date().toISOString(),
-  sessionCount: 0,
-  questionsAnswered: []
-}
-
 export function ChatBox({ 
   isOpen, 
-  onClose, 
-  initialPrompt, 
-  onGuestIdentified,
+  onClose,
 }: ChatBoxProps) {
   // Guest identification
-  const guestId = useRef<string>(getGuestId());
-  const CHAT_STORAGE_KEY = useRef<string>(getStorageKeyForGuest('theoforge_chat', guestId.current));
-  const GUEST_INFO_KEY = useRef<string>(getStorageKeyForGuest('theoforge_guest_info', guestId.current));
+  const guestId = useRef<string | null>(null);
+  const CHAT_STORAGE_KEY = useRef<string | null>(null);
+  const GUEST_INFO_KEY = useRef<string | null>(null);
+  const initialized = useRef(false);
+  const [isStorageLoaded, setIsStorageLoaded] = useState(false);
   
   // Guest info state
-  const [guestInfo, setGuestInfo] = useState<GuestInfo>(INITIAL_GUEST_INFO);
-  
-  // Current question being asked
-  const [currentQuestion, setCurrentQuestion] = useState<string | null>(null);
+  const [guestInfo, setGuestInfo] = useState<GuestInfo>({id: '', sessionCount: 0, questionsAnswered: []});
 
   // Chat state management
   const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
   const [visibleMessages, setVisibleMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState(initialPrompt || '');
+  const [input, setInput] = useState('');
   const [isThinking, setIsThinking] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [typingEffect, setTypingEffect] = useState(false);
-  const [currentTypingMessage, setCurrentTypingMessage] = useState<string>('');
-  const [fullMessageContent, setFullMessageContent] = useState<string>('');
-  const [isAwaitingAnswer, setIsAwaitingAnswer] = useState(false);
   const [showIntroduction, setShowIntroduction] = useState(true);
-  const [isStorageLoaded, setIsStorageLoaded] = useState(false);
   const [theme, setTheme] = useState<Theme>('light');
 
   // UI state for resizing and minimization
@@ -145,86 +175,117 @@ export function ChatBox({
   const startSizeRef = useRef({ width: 0, height: 0 });
   const messageEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  
-  // Typing effect interval
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const typingIntervalRef = useRef<any>(null);
 
   // Auto-scroll to the latest message
   useEffect(() => {
     messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [visibleMessages, typingEffect, currentTypingMessage]);
+  }, [visibleMessages, isOpen, isMinimized]);
 
   // Focus input when chat opens
   useEffect(() => {
-    if (isOpen && !isMinimized && !isAwaitingAnswer) {
+    if (isOpen && !isMinimized) {
       setTimeout(() => {
         inputRef.current?.focus();
       }, 300);
     }
-  }, [isOpen, isMinimized, isAwaitingAnswer]);
+  }, [isOpen, isMinimized]);
 
   // Filter out system messages for display
   useEffect(() => {
     setVisibleMessages(messages.filter(msg => msg.role !== 'system'));
   }, [messages]);
 
+  const loadGuest = async() => {
+    // Create guest if new user
+    guestId.current = await getGuestId();
+    if(guestId.current) {
+      try {
+        // Load guest info
+        const res = await axios.get(`${API_URL}/guests/${guestId.current}`);
+        const guest: Guest = res.data;
+        // Make sure guest exists on backend(sync)
+        if(guest && guest.id === guestId.current){
+          CHAT_STORAGE_KEY.current = 'chat_'+guest.id;
+          GUEST_INFO_KEY.current = 'guest_'+guest.id;
+          const storedGuestInfo = localStorage.getItem(GUEST_INFO_KEY.current);
+          const remoteGuestInfo = {
+            id: guest.id,
+            name: guest.name,
+            company: guest.company,
+            industry: guest.industry,
+            project_type: guest.project_type,
+            budget: guest.budget,
+            timeline: guest.timeline,
+            contact_info: guest.contact_info,
+            pain_points: guest.pain_points,
+            current_tech: guest.current_tech,
+            additional_notes: guest.additional_notes
+          }
+          // Load guest info
+          if (storedGuestInfo) {
+            try {
+              const data: GuestInfo = JSON.parse(storedGuestInfo);
+              setGuestInfo({
+                ...remoteGuestInfo,
+                sessionCount: data.sessionCount + 1,
+                questionsAnswered: data.questionsAnswered
+              });
+            } catch (error) {
+              console.error("Failed to parse guest info:", error);
+            }
+          } else {
+            localStorage.setItem(GUEST_INFO_KEY.current, JSON.stringify({
+              ...remoteGuestInfo,
+              sessionCount: guestInfo.sessionCount + 1,
+              questionsAnswered: guestInfo.questionsAnswered
+            }));
+          }
+          // Load chat history
+          const stored = localStorage.getItem(CHAT_STORAGE_KEY.current);
+          if (stored) {
+            try {
+              const data = JSON.parse(stored);
+              if (Array.isArray(data) && data.length > 0) {
+                // Ensure we have a system prompt
+                if (!data.some(msg => msg.role === 'system')) {
+                  data.unshift({
+                    id: generateId(),
+                    role: 'system',
+                    content: SYSTEM_PROMPT,
+                    timestamp: new Date().toISOString()
+                  });
+                }
+                setMessages(data);
+                if(data.length > 2) setShowIntroduction(false);
+              }
+            } catch (error) {
+              console.error("Failed to parse chat history:", error);
+            }
+          } else {
+            localStorage.setItem(CHAT_STORAGE_KEY.current, JSON.stringify(messages));
+          }
+          setIsStorageLoaded(true);
+        } else {
+          throw Error('Out of sync with backend');
+        }
+      } catch {
+        console.error('Failed to retrieve guest');
+        // If out of sync, remove guest and recreate when guest returns
+        if(guestId.current) {
+          localStorage.removeItem('theoforge_guest_id');
+          localStorage.removeItem('chat_'+guestId.current);
+          localStorage.removeItem('guest_'+guestId.current);
+        }
+      }
+    }
+  }
+  
   // Load chat history and guest info on mount
   useEffect(() => {
-    try {
-      // Load chat history
-      const stored = localStorage.getItem(CHAT_STORAGE_KEY.current);
-      if (stored) {
-        try {
-          const data = JSON.parse(stored);
-          if (Array.isArray(data) && data.length > 0) {
-            // Ensure we have a system prompt
-            if (!data.some(msg => msg.role === 'system')) {
-              data.unshift({
-                id: generateId(),
-                role: 'system',
-                content: SYSTEM_PROMPT,
-                timestamp: new Date().toISOString()
-              });
-            }
-            setMessages(data);
-            setShowIntroduction(false);
-          }
-        } catch (error) {
-          console.error("Failed to parse chat history:", error);
-        }
-      } else {
-        localStorage.setItem(CHAT_STORAGE_KEY.current, JSON.stringify(messages));
-      }
-      
-      // Load guest info
-      const storedGuestInfo = localStorage.getItem(GUEST_INFO_KEY.current);
-      if (storedGuestInfo) {
-        try {
-          const data = JSON.parse(storedGuestInfo);
-          setGuestInfo({
-            ...data,
-            lastVisit: new Date().toISOString(),
-            sessionCount: (data.sessionCount || 0) + 1
-          });
-          
-          // Notify parent component about guest info
-          if (onGuestIdentified) {
-            onGuestIdentified({
-              ...data,
-              lastVisit: new Date().toISOString(),
-              sessionCount: (data.sessionCount || 0) + 1
-            });
-          }
-        } catch (error) {
-          console.error("Failed to parse guest info:", error);
-        }
-      } else {
-        localStorage.setItem(GUEST_INFO_KEY.current, JSON.stringify(guestInfo));
-      }
-      setIsStorageLoaded(true);
-    } catch (e) {
-      console.warn("Could not access localStorage:", e);
+    // Prevent react strict mode remount from making API call twice in development
+    if(!initialized.current){
+      initialized.current = true;
+      loadGuest();
     }
   }, []);
 
@@ -232,159 +293,26 @@ export function ChatBox({
   useEffect(() => {
     if (isStorageLoaded) {
       try {
-        localStorage.setItem(CHAT_STORAGE_KEY.current, JSON.stringify(messages));
+        if (CHAT_STORAGE_KEY.current) localStorage.setItem(CHAT_STORAGE_KEY.current, JSON.stringify(messages));
+        else console.warn('Could not load messages');
       } catch (e) {
         console.warn("Could not save to localStorage:", e);
       }
     }
   }, [messages]);
   
-  // Persist guest info on every update
+  // Persist and sync guest info with backend with every update
   useEffect(() => {
     if (isStorageLoaded) {
       try {
-        localStorage.setItem(GUEST_INFO_KEY.current, JSON.stringify(guestInfo));
-        
-        // Notify parent component about guest info
-        if (onGuestIdentified) {
-          onGuestIdentified(guestInfo);
-        }
+        axios.put(`${API_URL}/guests/${guestId.current}`, guestInfo);
+        if(GUEST_INFO_KEY.current) localStorage.setItem(GUEST_INFO_KEY.current, JSON.stringify(guestInfo));
+        else console.warn('No guest info key');
       } catch (e) {
         console.warn("Could not save guest info:", e);
       }
     }
-  }, [guestInfo, onGuestIdentified]);
-
-  // Initial prompt handling
-  useEffect(() => {
-    if (initialPrompt && messages.length === INITIAL_MESSAGES.length) {
-      handleSend(initialPrompt);
-    }
-  }, [initialPrompt]);
-  
-  // Decision maker for when to ask questions
-  useEffect(() => {
-    if ((messages.length > 3 && !isAwaitingAnswer && !currentQuestion/* && Math.random() > 0*/) ||
-      GUEST_QUESTIONS.find(question => question.question === messages[messages.length-1].content)
-    ) {
-      const nextQuestion = getNextQuestionToAsk();
-      if (nextQuestion) {
-        // Ask a specific question to the guest
-        setIsAwaitingAnswer(true);
-        setCurrentQuestion(nextQuestion.id);
-        // Do not re-ask questions
-        if(messages[messages.length-1].content !== nextQuestion.question) {
-          const questionMessage: Message = {
-            id: generateId(),
-            role: 'assistant',
-            content: nextQuestion.question,
-            timestamp: new Date().toISOString(),
-            isQuestion: true,
-            questionId: nextQuestion.id
-          };
-          
-          // Use typing effect for the question
-          setFullMessageContent(nextQuestion.question);
-          setCurrentTypingMessage('');
-          setTypingEffect(true);
-          setMessages(prev => [...prev, questionMessage]);
-        }
-      }
-    }
-  }, [messages]);
-  
-  // Typing effect for AI messages
-  useEffect(() => {
-    if (typingEffect && fullMessageContent) {
-      let currentIndex = 0;
-      
-      clearInterval(typingIntervalRef.current);
-      
-      typingIntervalRef.current = setInterval(() => {
-        if (currentIndex <= fullMessageContent.length) {
-          setCurrentTypingMessage(fullMessageContent.substring(0, currentIndex));
-          currentIndex++;
-        } else {
-          clearInterval(typingIntervalRef.current);
-          setTypingEffect(false);
-        }
-      }, 15); // Speed of typing
-      
-      return () => clearInterval(typingIntervalRef.current);
-    }
-  }, [typingEffect, fullMessageContent]);
-
-  // Get the next question to ask based on what's already been answered
-  const getNextQuestionToAsk = () => {
-    if (!guestInfo.questionsAnswered) return GUEST_QUESTIONS[0];
-    
-    for (const question of GUEST_QUESTIONS) {
-      if (!guestInfo.questionsAnswered.includes(question.id)) {
-        return question;
-      }
-    }
-    
-    return null; // All questions have been asked
-  };
-  
-  // Process the answer to a question
-  const processQuestionAnswer = (questionId: string, answer: string) => {
-    // Update guest info based on the question
-    const updatedInfo = { ...guestInfo };
-    
-    switch (questionId) {
-      case 'name':
-        updatedInfo.name = answer;
-        break;
-      case 'company':
-        updatedInfo.company = answer;
-        break;
-      case 'interests':
-        updatedInfo.interests = answer.split(/,\s*/).map(i => i.trim());
-        break;
-      case 'email':
-        // Only store email if it appears to be valid
-        if (answer.includes('@') && answer.includes('.')) {
-          updatedInfo.email = answer;
-        }
-        break;
-    }
-    
-    // Mark this question as answered
-    if (!updatedInfo.questionsAnswered.includes(questionId)) {
-      updatedInfo.questionsAnswered.push(questionId);
-    }
-    
-    setGuestInfo(updatedInfo);
-    setCurrentQuestion(null);
-    setIsAwaitingAnswer(false);
-    
-    // Return a contextual response based on the question
-    let response = "";
-    
-    switch (questionId) {
-      case 'name':
-        response = `Nice to meet you, ${answer}! I'll remember your name for future conversations.`;
-        break;
-      case 'company':
-        response = `Thanks for letting me know you're with ${answer}. That helps me provide more relevant information for your industry.`;
-        break;
-      case 'interests':
-        response = `I appreciate you sharing your data and AI challenges. Theoforge has expertise in those areas and can definitely help address them.`;
-        break;
-      case 'email':
-        if (answer.includes('@') && answer.includes('.')) {
-          response = `Perfect! Someone from our team will send resources about our solutions to ${answer} shortly. In the meantime, is there anything specific you'd like to know more about?`;
-        } else {
-          response = `No problem. You can always request information later if you change your mind. Is there anything specific about our services you'd like to know more about?`;
-        }
-        break;
-      default:
-        response = "Thank you for sharing that information. How else can I assist you today?";
-    }
-    
-    return response;
-  };
+  }, [guestInfo]);
 
   // RESIZING HANDLERS
   const handleResizeStart = (e: React.MouseEvent) => {
@@ -420,49 +348,26 @@ export function ChatBox({
     setIsMinimized(prev => !prev);
   };
 
-  // Utility: Format timestamp
-  const formatTime = (timestamp: string) => {
-    const d = new Date(timestamp);
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
-
   // Get AI response using sendMessage
-  const getAIResponse = async (context: Message[]): Promise<string> => {
+  const getAIResponse = async (context: Message[], updatedMessages: Message[]): Promise<string> => {
     setIsThinking(true);
     setError(null);
     
-    try {
-      // If this was in response to a question, process the answer
-      if (currentQuestion) {
-        const userMessage = context[context.length-1];
-        if (userMessage) {
-          const questionResponse = processQuestionAnswer(currentQuestion, userMessage.content);
-          return questionResponse;
-        }
-      }
-      
+    try {      
       // Prepare messages for the API
       const apiMessages = context.map(m => ({ 
         role: m.role, 
         content: m.content 
       }));
       
-      // Add guest info to system message if available
-      if (guestInfo.name || guestInfo.company || guestInfo.interests) {
-        let guestContext = "Current guest information:\n";
-        if (guestInfo.name) guestContext += `- Name: ${guestInfo.name}\n`;
-        if (guestInfo.company) guestContext += `- Company: ${guestInfo.company}\n`;
-        if (guestInfo.interests && guestInfo.interests.length > 0) {
-          guestContext += `- Interests: ${guestInfo.interests.join(', ')}\n`;
-        }
-        
-        // Add this context to the first system message
-        apiMessages[0].content = `${SYSTEM_PROMPT}\n\n${guestContext}`;
-      }
+      // COLLECT GUEST INFO
+      // Add this context to the first system message
+      apiMessages[0].content = `You are an AI assistant that collects information about guests and generates JSON.
+      The following info has already been filled out.
+      info: """${JSON.stringify(guestInfo)}"""
+      Examine the messages for information about the guest and correct the info if needed.`;
+      apiMessages[0].role = 'system';
       
-      // Use environment variable for API key
-      const apiKey = process.env.VITE_OPENAI_API_KEY || '';
-      console.log("API: ", apiKey);
       const response = await fetch(AI_ENDPOINT, {
         method: "POST",
         headers: {
@@ -470,10 +375,73 @@ export function ChatBox({
           "Authorization": `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          model: "gpt-3.5-turbo",
+          model: "gpt-4o",
           messages: apiMessages,
           max_tokens: 500,
-          temperature: 0.7
+          temperature: 0.7,
+          response_format: {
+            "type": "json_schema",
+            "json_schema": {
+              "name": "guestInfo",
+              "strict": true,
+              "schema": {
+                "type": "object",
+                "properties":{
+                  "name": {
+                    "description": "Guest's full name",
+                    "type": ["string", "null"]
+                  },
+                  "company": {
+                    "description": "Company associated with the guest",
+                    "type": ["string", "null"]
+                  },
+                  "industry": {
+                    "description": "Industry of the guest",
+                    "type": ["string", "null"]
+                  },
+                  "project_type": {
+                    "description": "Type of project guest is interested in",
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "budget": {
+                    "description": "Estimated budget for the project",
+                    "type": ["string", "null"]
+                  },
+                  "timeline": {
+                    "description": "Project timeline",
+                    "type": ["string", "null"]
+                  },
+                  "contact_info": {
+                    "description": "Guest's contact information",
+                    "type": ["string", "null"]
+                  },
+                  "pain_points": {
+                    "description": "Challenges or problems the guest is facing",
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "current_tech": {
+                    "description": "Guest's current technology stack",
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "additional_notes": {
+                    "description": "Any additional notes",
+                    "type": ["string", "null"]
+                  }
+                },
+                "required": ["name", "company", "industry", "project_type", "budget", "timeline", "contact_info", "pain_points", "current_tech", "additional_notes"],
+                "additionalProperties": false
+              }
+            }
+          }
         })
       });
       
@@ -483,8 +451,65 @@ export function ChatBox({
       }
       
       const data = await response.json();
-      return data.choices[0].message.content;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setGuestInfo(JSON.parse(data.choices[0].message.content));
+      
+      // Create response
+      // Add system prompt and context to the first system message
+      apiMessages[0].content = `${SYSTEM_PROMPT}
+      The following guest info has been collected.
+      info: """${JSON.stringify(guestInfo)}"""`;
+      apiMessages[0].role = 'system';
+      // Use openai streaming api
+      const streamResponse = await fetch(AI_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: "gpt-4o",
+          messages: apiMessages,
+          max_tokens: 500,
+          temperature: 0.7,
+          stream: true
+        })
+      });
+      if (!streamResponse.body){
+        throw new Error('Failed to get response body');
+      }
+      const reader = streamResponse.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let aiResponse = "";
+      // Read until stream is done
+      while(true) {
+        const {done, value} = await reader.read();
+        if(done) {
+          break;
+        }
+        // While streaming, decode the stream
+        const decodedChunk = decoder.decode(value);
+        const lines = decodedChunk.split("\n");
+        // Parse the result
+        const parsedLines = lines.map(
+          (line) => line.replace(/^data: /, "").trim()
+        ).filter(
+          (line) => line !== "" && line !== "[DONE]"
+        ).map((line) => JSON.parse(line));
+        for (const parsedLine of parsedLines) {
+          // Extract the content
+          const content = parsedLine.choices[0].delta.content;
+          if (content) {
+            setMessages([...updatedMessages, {
+              id: generateId(),
+              role: 'assistant',
+              content: aiResponse+content,
+              timestamp: new Date().toISOString()
+            }]);
+            aiResponse+=content;
+          }
+        }
+      }
+      return 'Done'
     } catch (error: any) {
       console.error("Error generating AI response:", error);
       setError(error.message || "Failed to get response from AI service");
@@ -498,11 +523,9 @@ export function ChatBox({
   const clearChat = () => {
     if (window.confirm("Are you sure you want to clear the chat history?")) {
       setMessages(INITIAL_MESSAGES);
-      setCurrentQuestion(null);
-      setIsAwaitingAnswer(false);
       setShowIntroduction(true);
       try {
-        localStorage.removeItem(CHAT_STORAGE_KEY.current);
+        if(CHAT_STORAGE_KEY.current) localStorage.removeItem(CHAT_STORAGE_KEY.current);
       } catch (e) {
         console.warn("Could not access localStorage:", e);
       }
@@ -547,22 +570,7 @@ export function ChatBox({
     }
     
     // Get AI response
-    const aiReply = await getAIResponse(context);
-    
-    // Add AI response to messages
-    const aiMessage: Message = {
-      id: generateId(),
-      role: 'assistant',
-      content: aiReply,
-      timestamp: new Date().toISOString()
-    };
-    
-    // Use typing effect for AI response
-    setFullMessageContent(aiReply);
-    setCurrentTypingMessage('');
-    setTypingEffect(true);
-    
-    setMessages([...updatedMessages, aiMessage]);
+    await getAIResponse(context, updatedMessages);
   };
 
   // Allow sending message with Enter key (without Shift)
@@ -650,9 +658,9 @@ export function ChatBox({
       ];
     }
     
-    if (guestInfo.interests?.length) {
+    if (guestInfo.pain_points?.length) {
       return [
-        `How do you handle ${guestInfo.interests[0]}?`,
+        `How do you handle ${guestInfo.pain_points[0]}?`,
         "What are your pricing options?",
         "Can you share some case studies?"
       ];
@@ -838,10 +846,10 @@ export function ChatBox({
                     : msg.isQuestion
                       ? themeClasses.message.question
                       : themeClasses.message.assistant
-                } ${msg === visibleMessages[visibleMessages.length - 1] && typingEffect ? 'animate-pulse' : ''}`}
+                }`}
               >
-                {msg === visibleMessages[visibleMessages.length - 1] && typingEffect 
-                  ? <Typography className="text-sm whitespace-pre-wrap">{currentTypingMessage}<span className="animate-pulse">▌</span></Typography>
+                {msg === visibleMessages[visibleMessages.length - 1] && isThinking 
+                  ? <Typography className="text-sm whitespace-pre-wrap">{msg.content}<span className="animate-pulse">▌</span></Typography>
                   : <Typography className="text-sm whitespace-pre-wrap">{msg.content}</Typography>
                 }
                 <Typography 
@@ -854,22 +862,11 @@ export function ChatBox({
                         : themeClasses.message.timestamp.assistant
                   }`}
                 >
-                  {formatTime(msg.timestamp)}
+                  {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </Typography>
               </div>
             </div>
           ))}
-          
-          {isThinking && (
-            <div className="flex justify-start">
-              <div className={`max-w-[80%] p-4 rounded-xl shadow ${themeClasses.message.assistant}`}>
-                <div className="flex items-center gap-2">
-                  <Spinner className="h-4 w-4" color="teal" />
-                  <Typography className="text-sm">Thinking...</Typography>
-                </div>
-              </div>
-            </div>
-          )}
           
           {error && (
             <div className="flex justify-center">
@@ -898,7 +895,7 @@ export function ChatBox({
           )}
           
           {/* Quick Replies */}
-          {visibleMessages.length > 0 && !isThinking && !isAwaitingAnswer && !typingEffect && (
+          {!isThinking && (
             <div className="pt-2 flex flex-wrap gap-2 justify-center">
               {getSuggestions().map((suggestion, index) => (
                 <Button
@@ -925,8 +922,8 @@ export function ChatBox({
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={isAwaitingAnswer ? `Please answer the question...` : "Type your message..."}
-              className={`flex-grow border rounded-lg p-3 pr-10 focus:outline-none focus:ring-2 focus:ring-teal-500 ${themeClasses.input} ${isAwaitingAnswer ? `border-indigo-300 animate-pulse` : ''}`}
+              placeholder={"Type your message..."}
+              className={`flex-grow border rounded-lg p-3 pr-10 focus:outline-none focus:ring-2 focus:ring-teal-500 ${themeClasses.input}`}
               disabled={isThinking}
             />
             
@@ -941,19 +938,11 @@ export function ChatBox({
             </Button>
           </div>
           
-          {visibleMessages.length > 1 && !isAwaitingAnswer && (
+          {visibleMessages.length > 1 && (
             <div className="mt-2 text-center">
               <Typography variant="small" className="text-gray-500 dark:text-gray-400 text-xs flex items-center justify-center gap-1">
                 <LockClosedIcon className="h-3 w-3" />
                 Messages are saved locally on this device
-              </Typography>
-            </div>
-          )}
-          
-          {isAwaitingAnswer && (
-            <div className="mt-2 text-center">
-              <Typography variant="small" className="text-indigo-500 dark:text-indigo-400 text-xs font-medium">
-                Please answer the question above to continue
               </Typography>
             </div>
           )}
